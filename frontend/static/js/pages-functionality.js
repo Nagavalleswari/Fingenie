@@ -1623,6 +1623,11 @@ window.loadLoansPageData = async function() {
         // Display loans list
         const loansListContainer = document.getElementById('loansList');
         if (loansListContainer) {
+            // Ensure grid layout for 2 cards per row
+            loansListContainer.style.display = 'grid';
+            loansListContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
+            loansListContainer.style.gap = '1rem';
+            
             if (loans.length > 0) {
                 let html = '';
                 loans.forEach(loan => {
@@ -1651,52 +1656,48 @@ window.loadLoansPageData = async function() {
                     else if (loanType.includes('personal')) icon = 'wallet';
                     
                     html += `
-                        <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-primary); background: var(--bg-elevated); margin-bottom: 1rem; border-radius: var(--radius-md);">
+                        <div style="padding: 1.25rem; border: 1px solid var(--border-primary); background: var(--bg-elevated); border-radius: var(--radius-md); height: 100%; display: flex; flex-direction: column;">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                                <div style="flex: 1;">
-                                    <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1.1rem;">
-                                        <i class="fas fa-${icon}"></i>
+                                <div style="flex: 1; min-width: 0;">
+                                    <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <i class="fas fa-${icon}" style="color: var(--accent-danger); margin-right: 0.5rem;"></i>
                                         ${loan.name || (loan.type ? loan.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Loan')}
                                     </h4>
-                                    <div style="color: var(--text-tertiary); font-size: 0.9rem;">
-                                        ${loan.bank || 'Financial Institution'} • ${loan.interest_rate || 0}% Interest
+                                    <div style="color: var(--text-tertiary); font-size: 0.75rem;">
+                                        ${loan.bank || 'Financial Institution'} • ${loan.interest_rate || 0}%
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-danger);">₹${outstanding.toLocaleString()}</div>
-                                    <div style="font-size: 0.875rem; color: var(--text-tertiary);">Outstanding</div>
+                                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-danger); margin-bottom: 0.125rem;">₹${outstanding.toLocaleString('en-IN')}</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-tertiary);">Outstanding</div>
                                 </div>
                             </div>
                             
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm);">
                                 <div>
-                                    <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Principal</div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">₹${principal.toLocaleString()}</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Principal</div>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${principal.toLocaleString('en-IN')}</div>
                                 </div>
                                 <div>
-                                    <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Monthly EMI</div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">₹${monthlyEMI.toLocaleString()}</div>
-                                </div>
-                                <div>
-                                    <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Remaining</div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">${remainingMonths} months</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">EMI</div>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${monthlyEMI.toLocaleString('en-IN')}</div>
                                 </div>
                             </div>
                             
-                            <div style="margin-top: 1rem;">
-                                <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">
-                                    <span>Repayment Progress</span>
-                                    <span>${progress}%</span>
+                            <div style="margin-bottom: 1rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">
+                                    <span>Progress</span>
+                                    <span style="font-weight: 600; color: var(--text-primary);">${progress}%</span>
                                 </div>
                                 <div style="width: 100%; height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden;">
-                                    <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, var(--accent-success), var(--accent-primary)); transition: width 0.3s;"></div>
+                                    <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, var(--accent-success), var(--accent-primary)); transition: width 0.3s; border-radius: 4px;"></div>
                                 </div>
                             </div>
                             
                             ${loan.next_payment_date ? `
-                                <div style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm); display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-calendar-alt" style="color: var(--accent-warning);"></i>
-                                    <span style="color: var(--text-secondary); font-size: 0.9rem;">Next payment due: <strong>${loan.next_payment_date}</strong></span>
+                                <div style="padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm); display: flex; align-items: center; gap: 0.5rem; margin-top: auto; font-size: 0.8rem;">
+                                    <i class="fas fa-calendar-alt" style="color: var(--accent-warning); font-size: 0.85rem;"></i>
+                                    <span style="color: var(--text-secondary);"><strong>${loan.next_payment_date}</strong></span>
                                 </div>
                             ` : ''}
                         </div>
@@ -1717,20 +1718,24 @@ window.loadLoansPageData = async function() {
                 loanTypes.forEach(loan => {
                     if (loan.amount > 0) {
                         html += `
-                            <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-primary); background: var(--bg-elevated); margin-bottom: 1rem; border-radius: var(--radius-md);">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div style="display: flex; align-items: center; gap: 1rem;">
-                                        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--gradient-danger); display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-${loan.icon}" style="color: white; font-size: 1.25rem;"></i>
+                            <div style="padding: 1.25rem; border: 1px solid var(--border-primary); background: var(--bg-elevated); border-radius: var(--radius-md); height: 100%; display: flex; flex-direction: column;">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+                                        <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--gradient-danger); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-${loan.icon}" style="color: white; font-size: 1.1rem;"></i>
                                         </div>
-                                        <div>
-                                            <h4 style="margin: 0; color: var(--text-primary);">${loan.name}</h4>
-                                            <div style="color: var(--text-tertiary); font-size: 0.9rem; margin-top: 0.25rem;">Outstanding Balance</div>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <h4 style="margin: 0; color: var(--text-primary); font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${loan.name}</h4>
+                                            <div style="color: var(--text-tertiary); font-size: 0.75rem; margin-top: 0.25rem;">Outstanding</div>
                                         </div>
                                     </div>
                                     <div style="text-align: right;">
-                                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-danger);">₹${loan.amount.toLocaleString()}</div>
+                                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-danger); margin-bottom: 0.125rem;">₹${loan.amount.toLocaleString('en-IN')}</div>
                                     </div>
+                                </div>
+                                <div style="padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm); margin-top: auto;">
+                                    <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Balance</div>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${loan.amount.toLocaleString('en-IN')}</div>
                                 </div>
                             </div>
                         `;
@@ -1741,7 +1746,7 @@ window.loadLoansPageData = async function() {
                     loansListContainer.innerHTML = html;
                 } else {
                     loansListContainer.innerHTML = `
-                        <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">
+                        <p style="color: var(--text-tertiary); text-align: center; padding: 2rem; grid-column: 1 / -1;">
                             <i class="fas fa-check-circle" style="color: var(--accent-success); font-size: 2rem; margin-bottom: 0.5rem;"></i><br>
                             No loans or debts found. Great job managing your finances!
                         </p>
