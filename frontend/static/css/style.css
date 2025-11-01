@@ -119,13 +119,39 @@ body {
     overflow-x: hidden;
 }
 
-/* Smooth theme transitions */
-*,
-*::before,
-*::after {
+/* Smooth theme transitions for backgrounds and borders only */
+* {
     transition: background-color 0.2s ease,
                 border-color 0.2s ease,
-                color 0.2s ease;
+                box-shadow 0.2s ease;
+}
+
+/* Force immediate color changes for text */
+body,
+.sidebar-logo-text,
+.menu-item,
+.menu-item-text,
+.menu-section-title,
+.topbar-title,
+.topbar-search-input,
+.page-title,
+.page-subtitle,
+.card-title,
+.stat-card-value,
+.stat-card-label,
+.text-primary,
+.text-secondary,
+.text-tertiary,
+.text-muted,
+.sidebar-user-name,
+.sidebar-user-email,
+.form-label,
+.form-control,
+.toast-title,
+.toast-message {
+    transition: background-color 0.2s ease,
+                border-color 0.2s ease,
+                box-shadow 0.2s ease !important;
 }
 
 /* Subtle grid pattern background */
