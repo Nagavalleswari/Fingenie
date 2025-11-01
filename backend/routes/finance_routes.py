@@ -19,8 +19,8 @@ from utils.loan_calculator import (
 
 finance_bp = Blueprint('finance', __name__)
 
-# Load mock data
-def load_mock_data():
+# Load mock data from JSON file
+def load_mock_data_from_file():
     """Load mock data from JSON file"""
     try:
         mock_data_path = os.path.join(parent_dir, 'mock_data.json')
@@ -84,9 +84,12 @@ def init_finance_routes(db):
             if error:
                 return jsonify({'error': error}), 400
             
-            # If no data exists, return mock data for demo purposes
-            if not data:
-                mock_data_file = load_mock_data()
+            # If no data exists OR data is empty (only has _id and user_id), return mock data for demo purposes
+            has_financial_data = data and (data.get('assets') or data.get('liabilities') or data.get('goals'))
+            print(f"📊 User {user_id} - Has financial data: {has_financial_data}, Data: {data}")
+            
+            if not has_financial_data:
+                mock_data_file = load_mock_data_from_file()
                 if mock_data_file and 'financial_data' in mock_data_file:
                     mock_data = mock_data_file['financial_data']
                     mock_data['is_mock'] = True  # Flag to indicate this is mock data
@@ -95,35 +98,10 @@ def init_finance_routes(db):
                         'data': mock_data
                     }), 200
                 else:
-                    # Fallback to inline mock data
-                    mock_data = {
-                        'assets': {
-                            'savings': 45000,
-                            'mutual_funds': 120000,
-                            'stocks': 50000
-                        },
-                        'liabilities': {
-                            'loan': 30000,
-                            'credit_card_due': 5000
-                        },
-                        'goals': [
-                            {
-                                'name': 'Buy Car',
-                                'target': 500000,
-                                'year': 2027
-                            },
-                            {
-                                'name': 'Emergency Fund',
-                                'target': 100000,
-                                'year': 2026
-                            }
-                        ],
-                        'last_updated': None,
-                        'is_mock': True
-                    }
+                    # No mock data file available - return empty data
                     return jsonify({
-                        'message': 'No financial data found. Showing mock data for demo.',
-                        'data': mock_data
+                        'message': 'No financial data found. Please add your financial information.',
+                        'data': {}
                     }), 200
             
             return jsonify({
@@ -137,53 +115,30 @@ def init_finance_routes(db):
     @finance_bp.route('/load_mock_data', methods=['POST'])
     @require_auth
     def load_mock_data():
-        """Load mock financial data (for demo/testing purposes)"""
+        """Load mock financial data from mock_data.json (for demo/testing purposes)"""
         try:
             user_id = request.user_id
             
-            # Mock financial data
-            mock_assets = {
-                'savings': 45000,
-                'mutual_funds': 120000,
-                'stocks': 50000
-            }
+            # Load mock data from JSON file - NO HARDCODED DATA
+            mock_data_file = load_mock_data_from_file()
+            if not mock_data_file or 'financial_data' not in mock_data_file:
+                return jsonify({'error': 'Mock data file not found or invalid'}), 400
             
-            mock_liabilities = {
-                'loan': 30000,
-                'credit_card_due': 5000
-            }
+            mock_data = mock_data_file['financial_data']
             
-            mock_goals = [
-                {
-                    'name': 'Buy Car',
-                    'target': 500000,
-                    'year': 2027
-                },
-                {
-                    'name': 'Emergency Fund',
-                    'target': 100000,
-                    'year': 2026
-                },
-                {
-                    'name': 'Vacation',
-                    'target': 50000,
-                    'year': 2025
-                }
-            ]
-            
-            # Add or update data with mock values
+            # Add or update data with mock values from JSON file
             result, error = finance_model.add_or_update_data(
                 user_id,
-                assets=mock_assets,
-                liabilities=mock_liabilities,
-                goals=mock_goals
+                assets=mock_data.get('assets', {}),
+                liabilities=mock_data.get('liabilities', {}),
+                goals=mock_data.get('goals', [])
             )
             
             if error:
                 return jsonify({'error': error}), 400
             
             return jsonify({
-                'message': 'Mock financial data loaded successfully',
+                'message': 'Mock financial data loaded successfully from mock_data.json',
                 'data': result
             }), 200
             
@@ -290,7 +245,7 @@ def init_finance_routes(db):
     def get_loan_presets():
         """Get loan calculator presets"""
         try:
-            mock_data_file = load_mock_data()
+            mock_data_file = load_mock_data_from_file()
             if mock_data_file and 'loan_calculators' in mock_data_file:
                 presets = mock_data_file['loan_calculators'].get('presets', [])
             else:
@@ -309,7 +264,7 @@ def init_finance_routes(db):
     def get_all_mock_data():
         """Get all mock data for testing/demo"""
         try:
-            mock_data_file = load_mock_data()
+            mock_data_file = load_mock_data_from_file()
             if mock_data_file:
                 return jsonify({
                     'message': 'Mock data retrieved successfully',

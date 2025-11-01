@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 import sys
 import os
+import json
 
 # Add parent directory to path for imports
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -12,6 +13,17 @@ from utils.gemini_client import GeminiClient
 from models.finance_model import FinanceModel
 
 chat_bp = Blueprint('chat', __name__)
+
+# Load mock data from JSON file
+def load_mock_data_from_file():
+    """Load mock data from JSON file"""
+    try:
+        mock_data_path = os.path.join(parent_dir, 'mock_data.json')
+        with open(mock_data_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading mock data: {e}")
+        return None
 
 def init_chat_routes(db):
     """Initialize chat routes with database connection"""
@@ -34,7 +46,17 @@ def init_chat_routes(db):
             # Get user's financial data for context
             financial_data, _ = finance_model.get_data(user_id)
             
-            # Generate AI response
+            # If no data exists, use mock data for demo purposes (same as finance routes)
+            if not financial_data:
+                mock_data_file = load_mock_data_from_file()
+                if mock_data_file and 'financial_data' in mock_data_file:
+                    financial_data = mock_data_file['financial_data']
+                    financial_data['is_mock'] = True  # Flag to indicate this is mock data
+                else:
+                    # Fallback to empty data
+                    financial_data = {}
+            
+            # Generate AI response with complete financial data
             ai_response = gemini_client.generate_response(
                 user_message, 
                 user_financial_data=financial_data
