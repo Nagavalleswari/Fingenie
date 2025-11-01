@@ -227,8 +227,18 @@ if (document.getElementById('loginForm')) {
 
 // Signup functionality
 if (document.getElementById('signupForm')) {
+    let isSubmitting = false; // Flag to prevent double submission
+    
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // Prevent double submission
+        if (isSubmitting) {
+            console.log('Signup already in progress, ignoring duplicate submission');
+            return;
+        }
+        
+        isSubmitting = true;
         
         const name = document.getElementById('name').value;
         const email = document.getElementById('email').value;
@@ -255,6 +265,7 @@ if (document.getElementById('signupForm')) {
             toast.error(error.message || 'Signup failed. Please try again.', 'error');
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnHtml;
+            isSubmitting = false; // Reset flag on error
         }
     });
 }

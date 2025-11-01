@@ -85,29 +85,70 @@ def init_finance_routes(db):
             if error:
                 return jsonify({'error': error}), 400
             
-            # If no data exists OR data is empty (only has _id and user_id), return mock data for demo purposes
-            has_financial_data = data and (data.get('assets') or data.get('liabilities') or data.get('goals'))
-            print(f"📊 User {user_id} - Has financial data: {has_financial_data}, Data: {data}")
+            # Always load mock data first
+            mock_data_file = load_mock_data_from_file()
+            mock_data = mock_data_file.get('financial_data', {}) if mock_data_file else {}
             
-            if not has_financial_data:
-                mock_data_file = load_mock_data_from_file()
-                if mock_data_file and 'financial_data' in mock_data_file:
-                    mock_data = mock_data_file['financial_data']
-                    mock_data['is_mock'] = True  # Flag to indicate this is mock data
+            # If user has NO data in database, return mock data only
+            if not data:
+                if mock_data:
+                    mock_data['is_mock'] = True
                     return jsonify({
                         'message': 'No financial data found. Showing mock data for demo.',
                         'data': mock_data
                     }), 200
                 else:
-                    # No mock data file available - return empty data
                     return jsonify({
                         'message': 'No financial data found. Please add your financial information.',
                         'data': {}
                     }), 200
             
+            # If user has data, merge with mock data (user data takes precedence, but fill missing from mock)
+            merged_data = {}
+            
+            # Merge assets (user data overrides mock)
+            if data.get('assets'):
+                merged_data['assets'] = {**mock_data.get('assets', {}), **data.get('assets', {})}
+            else:
+                merged_data['assets'] = mock_data.get('assets', {})
+            
+            # Merge liabilities (user data overrides mock)
+            if data.get('liabilities'):
+                merged_data['liabilities'] = {**mock_data.get('liabilities', {}), **data.get('liabilities', {})}
+            else:
+                merged_data['liabilities'] = mock_data.get('liabilities', {})
+            
+            # Merge goals - always prefer mock_data goals unless user has explicitly saved ALL goals
+            # If user has fewer goals than mock_data, assume they want to use mock_data as base
+            mock_goals_count = len(mock_data.get('goals', []))
+            user_goals = data.get('goals', [])
+            user_goals_count = len(user_goals) if isinstance(user_goals, list) else 0
+            
+            if user_goals_count >= mock_goals_count and user_goals_count > 0:
+                # User has explicitly saved goals (same or more than mock) - use those
+                merged_data['goals'] = user_goals
+            else:
+                # Use mock goals (either no user goals, or fewer than mock_data)
+                merged_data['goals'] = mock_data.get('goals', [])
+                merged_data['is_mock'] = True  # Flag that goals are from mock
+            
+            # Merge other fields (budget, transactions, investments, etc.)
+            merged_data['budget'] = data.get('budget') or mock_data.get('budget', {})
+            merged_data['transactions'] = data.get('transactions') or mock_data.get('transactions', [])
+            merged_data['investments'] = data.get('investments') or mock_data.get('investments', {})
+            merged_data['financial_health_metrics'] = data.get('financial_health_metrics') or mock_data.get('financial_health_metrics', {})
+            
+            # Preserve user_id and _id from database
+            if data.get('_id'):
+                merged_data['_id'] = data.get('_id')
+            if data.get('user_id'):
+                merged_data['user_id'] = data.get('user_id')
+            
+            print(f"📊 User {user_id} - Merged data (User goals: {len(data.get('goals', []))}, Mock goals: {len(mock_data.get('goals', []))}, Final: {len(merged_data.get('goals', []))})")
+            
             return jsonify({
                 'message': 'Financial data retrieved successfully',
-                'data': data
+                'data': merged_data
             }), 200
             
         except Exception as e:

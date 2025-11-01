@@ -386,6 +386,99 @@
         </div>
     </div>
 
+    <!-- Edit Goal Modal -->
+    <div id="editGoalModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit" style="margin-right: 0.5rem;"></i>Edit Financial Goal</h3>
+                <button class="modal-close" onclick="closeModal('editGoalModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editGoalForm">
+                    <input type="hidden" id="editGoalId">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-bullseye"></i> Goal Name
+                        </label>
+                        <input type="text" class="form-control" id="editGoalName" placeholder="e.g., Buy Car, Emergency Fund" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-rupee-sign"></i> Current Amount (₹)
+                        </label>
+                        <input type="number" class="form-control" id="editGoalCurrent" placeholder="Enter current amount saved" step="0.01" min="0" required>
+                        <small style="color: var(--text-tertiary); font-size: 0.875rem; margin-top: 0.25rem; display: block;">
+                            Update this to track your progress towards the goal
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-tag"></i> Target Amount (₹)
+                        </label>
+                        <input type="number" class="form-control" id="editGoalTarget" placeholder="Enter target amount" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-calendar"></i> Target Year
+                        </label>
+                        <input type="number" class="form-control" id="editGoalYear" placeholder="2025" min="2025" max="2100" required>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('editGoalModal')" style="flex: 1;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">
+                            <i class="fas fa-save"></i> Update Goal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Goal Confirmation Modal -->
+    <div id="deleteGoalModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent-danger);">
+                <h3 style="color: var(--accent-danger);">
+                    <i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>Delete Goal
+                </h3>
+                <button class="modal-close" onclick="closeModal('deleteGoalModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <div style="width: 80px; height: 80px; margin: 0 auto 1rem; border-radius: 50%; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-trash" style="font-size: 2rem; color: var(--accent-danger);"></i>
+                    </div>
+                    <h3 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">Are you sure?</h3>
+                    <p style="color: var(--text-secondary); margin: 0; line-height: 1.6;">
+                        You are about to delete the goal <strong id="deleteGoalName" style="color: var(--text-primary);"></strong>.
+                        <br>This action cannot be undone.
+                    </p>
+                </div>
+                <div style="background: var(--bg-elevated); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; border-left: 4px solid var(--accent-warning);">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary);">
+                        <i class="fas fa-info-circle" style="color: var(--accent-warning);"></i>
+                        <span style="font-size: 0.875rem;">All progress and data associated with this goal will be permanently removed.</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('deleteGoalModal')" style="flex: 1;">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" class="btn" onclick="confirmDeleteGoal()" style="flex: 1; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none;" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 4px 12px rgba(239, 68, 68, 0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                        <i class="fas fa-trash"></i> Delete Goal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="deleteGoalId">
+
     <!-- Add Transaction Modal -->
     <div id="addTransactionModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 600px;">
@@ -2118,6 +2211,105 @@
         window.loadPageContent = loadPageContent;
         window.getPageContent = getPageContent;
 
+        // Edit Goal Function
+        window.editGoal = function(goalId) {
+            console.log('Editing goal:', goalId);
+            if (typeof getFinancialData === 'function') {
+                getFinancialData().then(data => {
+                    const goals = data.goals || [];
+                    const goal = goals.find(g => g.id === goalId);
+                    
+                    if (!goal) {
+                        alert('Goal not found');
+                        return;
+                    }
+                    
+                    // Populate edit form
+                    document.getElementById('editGoalId').value = goal.id;
+                    document.getElementById('editGoalName').value = goal.name || '';
+                    document.getElementById('editGoalCurrent').value = (goal.current || goal.current_amount || 0);
+                    document.getElementById('editGoalTarget').value = goal.target || 0;
+                    document.getElementById('editGoalYear').value = goal.year || new Date().getFullYear() + 1;
+                    
+                    // Show modal
+                    document.getElementById('editGoalModal').style.display = 'flex';
+                }).catch(error => {
+                    console.error('Error loading goal:', error);
+                    alert('Failed to load goal details');
+                });
+            } else {
+                alert('Financial data service not available');
+            }
+        };
+        
+        // Open Delete Goal Modal
+        window.openDeleteGoalModal = function(goalId, goalName) {
+            console.log('Opening delete modal for goal:', goalId, goalName);
+            document.getElementById('deleteGoalId').value = goalId;
+            document.getElementById('deleteGoalName').textContent = goalName || 'this goal';
+            document.getElementById('deleteGoalModal').style.display = 'flex';
+        };
+        
+        // Confirm Delete Goal
+        window.confirmDeleteGoal = async function() {
+            const goalId = parseInt(document.getElementById('deleteGoalId').value);
+            console.log('Deleting goal:', goalId);
+            
+            try {
+                // Get current financial data
+                if (typeof getFinancialData !== 'function') {
+                    alert('Financial data service not available');
+                    return;
+                }
+                
+                const data = await getFinancialData(true); // Force refresh
+                const goals = data.goals || [];
+                
+                // Remove the goal
+                const filteredGoals = goals.filter(g => g.id !== goalId);
+                
+                if (filteredGoals.length === goals.length) {
+                    alert('Goal not found');
+                    closeModal('deleteGoalModal');
+                    return;
+                }
+                
+                // Save to backend
+                const response = await apiRequest('/finance/add_data', 'POST', {
+                    goals: filteredGoals
+                });
+                
+                if (response && !response.error) {
+                    // Clear cache and reload
+                    if (typeof clearFinancialDataCache === 'function') {
+                        clearFinancialDataCache();
+                    }
+                    
+                    closeModal('deleteGoalModal');
+                    
+                    // Reload goals page data
+                    if (typeof loadGoalsPageData === 'function') {
+                        await loadGoalsPageData();
+                    }
+                    
+                    // Show success message
+                    const toast = document.createElement('div');
+                    toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1rem 1.5rem; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 10000; animation: slideInRight 0.3s ease;';
+                    toast.innerHTML = '<i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> Goal deleted successfully!';
+                    document.body.appendChild(toast);
+                    setTimeout(() => {
+                        toast.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                } else {
+                    throw new Error(response?.error || 'Failed to delete goal');
+                }
+            } catch (error) {
+                console.error('Error deleting goal:', error);
+                alert('Failed to delete goal: ' + error.message);
+            }
+        };
+
         let goalInputCount = 1;
         window.addGoalInput = function() {
             const container = document.getElementById('goalsInputContainer');
@@ -2178,6 +2370,79 @@
         });
 
         // Handle add goal form submission
+        // Edit Goal Form Handler
+        document.getElementById('editGoalForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const goalId = parseInt(document.getElementById('editGoalId').value);
+            const goalName = document.getElementById('editGoalName').value.trim();
+            const goalCurrent = parseFloat(document.getElementById('editGoalCurrent').value) || 0;
+            const goalTarget = parseFloat(document.getElementById('editGoalTarget').value);
+            const goalYear = parseInt(document.getElementById('editGoalYear').value);
+            
+            if (!goalName || !goalTarget || !goalYear) {
+                alert('Please fill all required fields');
+                return;
+            }
+            
+            try {
+                // Get current financial data
+                const data = await getFinancialData(true); // Force refresh
+                const goals = data.goals || [];
+                
+                // Find and update the goal
+                const goalIndex = goals.findIndex(g => g.id === goalId);
+                if (goalIndex === -1) {
+                    alert('Goal not found');
+                    return;
+                }
+                
+                // Update goal
+                goals[goalIndex] = {
+                    ...goals[goalIndex],
+                    name: goalName,
+                    current: goalCurrent,
+                    current_amount: goalCurrent,
+                    target: goalTarget,
+                    year: goalYear
+                };
+                
+                // Save to backend
+                const response = await apiRequest('/finance/add_data', 'POST', {
+                    goals: goals
+                });
+                
+                if (response && !response.error) {
+                    // Clear cache and reload
+                    if (typeof clearFinancialDataCache === 'function') {
+                        clearFinancialDataCache();
+                    }
+                    
+                    closeModal('editGoalModal');
+                    
+                    // Reload goals page data
+                    if (typeof loadGoalsPageData === 'function') {
+                        await loadGoalsPageData();
+                    }
+                    
+                    // Show success message
+                    const toast = document.createElement('div');
+                    toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1rem 1.5rem; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 10000; animation: slideInRight 0.3s ease;';
+                    toast.innerHTML = '<i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i> Goal updated successfully!';
+                    document.body.appendChild(toast);
+                    setTimeout(() => {
+                        toast.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                } else {
+                    throw new Error(response?.error || 'Failed to update goal');
+                }
+            } catch (error) {
+                console.error('Error updating goal:', error);
+                alert('Failed to update goal: ' + error.message);
+            }
+        });
+
         document.getElementById('addGoalForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
             

@@ -34,10 +34,13 @@ def init_auth_routes(db):
             if len(password) < 6:
                 return jsonify({'error': 'Password must be at least 6 characters'}), 400
             
-            # Create user
+            # Create user (with duplicate check in create_user method)
             user, error = user_model.create_user(name, email, password)
             
             if error:
+                # Check if it's a duplicate error
+                if 'already exists' in error.lower():
+                    return jsonify({'success': False, 'error': error, 'message': error}), 409  # 409 Conflict
                 return jsonify({'success': False, 'error': error, 'message': error}), 400
             
             # Generate token
@@ -57,6 +60,9 @@ def init_auth_routes(db):
             return response, 201
             
         except Exception as e:
+            # Handle duplicate key error from MongoDB
+            if 'duplicate key' in str(e).lower() or 'E11000' in str(e):
+                return jsonify({'success': False, 'error': 'User with this email already exists', 'message': 'User with this email already exists'}), 409
             return jsonify({'success': False, 'error': f'Server error: {str(e)}', 'message': f'Server error: {str(e)}'}), 500
     
     @auth_bp.route('/login', methods=['POST'])

@@ -172,6 +172,13 @@ async function getFinancialData(forceRefresh = false) {
     }
 }
 
+// Function to clear financial data cache
+window.clearFinancialDataCache = function() {
+    financialDataCache = null;
+    financialDataCacheTime = null;
+    console.log('✅ Financial data cache cleared');
+};
+
 // ========== ANALYTICS PAGE ==========
 async function loadAnalyticsData() {
     try {
@@ -1181,7 +1188,7 @@ window.loadGoalsPageData = async function() {
                     const yearsRemaining = Math.max(0, goal.year - new Date().getFullYear());
                     
                     html += `
-                        <div style="padding: 1.5rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-tertiary); margin-bottom: 1rem;">
+                        <div style="padding: 1.5rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-tertiary); margin-bottom: 1rem; position: relative;">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                                 <div style="flex: 1;">
                                     <h4 style="margin: 0 0 0.5rem 0;"><i class="fas fa-bullseye" style="color: var(--accent-cyan); margin-right: 0.5rem;"></i>${goal.name}</h4>
@@ -1196,9 +1203,20 @@ window.loadGoalsPageData = async function() {
                             <div style="background: var(--bg-elevated); border-radius: var(--radius-md); height: 10px; overflow: hidden; margin-bottom: 0.75rem;">
                                 <div style="background: var(--gradient-primary); height: 100%; width: ${progress}%; transition: width 0.5s ease;"></div>
                             </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-tertiary);">
-                                <span>Progress: ₹${current.toLocaleString()} / ₹${target.toLocaleString()}</span>
-                                <span>Remaining: ₹${Math.max(0, target - current).toLocaleString()}</span>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; color: var(--text-tertiary); margin-bottom: 1rem;">
+                                <div>
+                                    <span>Progress: ₹${current.toLocaleString()} / ₹${target.toLocaleString()}</span>
+                                    <span style="margin-left: 1rem;">Remaining: ₹${Math.max(0, target - current).toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <!-- Action Buttons -->
+                            <div style="display: flex; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--border-primary);">
+                                <button onclick="editGoal(${goal.id})" class="btn btn-sm" style="flex: 1; background: var(--gradient-primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.3)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button onclick="openDeleteGoalModal(${goal.id}, '${goal.name.replace(/'/g, "\\'")}')" class="btn btn-sm" style="flex: 1; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 0.5rem 1rem; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 4px 12px rgba(239, 68, 68, 0.3)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
                             </div>
                         </div>
                     `;
