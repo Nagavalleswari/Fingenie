@@ -652,12 +652,31 @@
                         <label class="form-label">Monthly Budget (₹)</label>
                         <input type="number" class="form-control" id="budgetCategoryAmountModal" step="0.01" min="0" required>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Icon</label>
+                        <select class="form-control" id="budgetCategoryIconModal">
+                            <option value="fa-circle">Default</option>
+                            <option value="fa-utensils">Food & Dining</option>
+                            <option value="fa-car">Transport</option>
+                            <option value="fa-shopping-bag">Shopping</option>
+                            <option value="fa-file-invoice-dollar">Bills & Utilities</option>
+                            <option value="fa-gamepad">Entertainment</option>
+                            <option value="fa-heartbeat">Healthcare</option>
+                            <option value="fa-graduation-cap">Education</option>
+                            <option value="fa-home">Home</option>
+                            <option value="fa-credit-card">Credit Card</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Color</label>
+                        <input type="color" class="form-control" id="budgetCategoryColorModal" value="#10b981" style="height: 45px;">
+                    </div>
                     <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                         <button type="button" class="btn btn-secondary" onclick="closeModal('addBudgetCategoryModal')" style="flex: 1;">
                             Cancel
                         </button>
                         <button type="submit" class="btn btn-primary" style="flex: 1;">
-                            <i class="fas fa-save"></i> Add Category
+                            <i class="fas fa-save"></i> Save Category
                         </button>
                     </div>
                 </form>
@@ -1096,6 +1115,25 @@
                     </div>
                 `,
                 'budget': `
+                    <!-- Monthly Income -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-rupee-sign"></i> Monthly Income</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="flex: 1;">
+                                    <label class="form-label">Monthly Income (₹)</label>
+                                    <input type="number" class="form-control" id="monthlyIncomeInput" step="0.01" min="0" placeholder="Enter monthly income">
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Current Income</div>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-primary);" id="monthlyIncome">₹0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Budget Overview -->
                     <div class="grid grid-cols-3 mb-4">
                         <div class="stat-card fade-in">

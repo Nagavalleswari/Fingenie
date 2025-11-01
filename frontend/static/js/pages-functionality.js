@@ -407,7 +407,7 @@ function loadAnalyticsPeriod(period) {
 // ========== BUDGET PAGE ==========
 async function loadBudgetData() {
     try {
-        console.log('🔄 Loading Budget data from mock_data.json...');
+        console.log('🔄 Loading Budget data...');
         const data = await getFinancialData();
         console.log('✅ Budget data loaded:', data);
         const budget = data.budget || {};
@@ -420,6 +420,7 @@ async function loadBudgetData() {
         const totalBudget = budgetCategories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
         const budgetSpent = budgetCategories.reduce((sum, cat) => sum + (cat.spent || 0), 0);
         const budgetRemaining = totalBudget > 0 ? ((totalBudget - budgetSpent) / totalBudget * 100).toFixed(0) : 0;
+        const remainingAmount = totalBudget - budgetSpent;
         
         updateElement('totalBudget', '₹' + totalBudget.toLocaleString());
         updateElement('budgetSpent', '₹' + budgetSpent.toLocaleString());
@@ -431,85 +432,167 @@ async function loadBudgetData() {
             monthlyIncomeEl.textContent = '₹' + monthlyIncome.toLocaleString();
         }
         
-        // Create budget chart with actual data
-        const ctx = document.getElementById('budgetChart');
-        if (ctx && typeof Chart !== 'undefined') {
-            // Destroy existing chart if it exists
-            if (ctx.chart) {
-                ctx.chart.destroy();
-            }
-            
-            const labels = budgetCategories.map(cat => cat.name || 'Category');
-            const budgetData = budgetCategories.map(cat => cat.budget || 0);
-            const spentData = budgetCategories.map(cat => cat.spent || 0);
-            
-            ctx.chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Budget',
-                        data: budgetData,
-                        backgroundColor: '#10b981'
-                    }, {
-                        label: 'Spent',
-                        data: spentData,
-                        backgroundColor: '#f59e0b'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '₹' + value.toLocaleString();
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+        // Update monthly income input if exists
+        const monthlyIncomeInput = document.getElementById('monthlyIncomeInput');
+        if (monthlyIncomeInput) {
+            monthlyIncomeInput.value = monthlyIncome;
         }
         
-        // Update budget categories list if element exists
-        const categoriesList = document.getElementById('budgetCategoriesList');
-        if (categoriesList && budgetCategories.length > 0) {
-            let html = '';
-            budgetCategories.forEach(cat => {
-                const spent = cat.spent || 0;
-                const budgetAmt = cat.budget || 0;
-                const percent = budgetAmt > 0 ? ((spent / budgetAmt) * 100).toFixed(0) : 0;
-                const isOver = spent > budgetAmt;
-                const statusColor = isOver ? '#ef4444' : '#10b981';
-                
-                html += `
-                    <div style="padding: 1rem; border-bottom: 1px solid var(--border-primary);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <strong>${cat.name || 'Category'}</strong>
-                            <span style="color: ${statusColor};">${percent}%</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-tertiary);">
-                            <span>Spent: ₹${spent.toLocaleString()}</span>
-                            <span>Budget: ₹${budgetAmt.toLocaleString()}</span>
-                        </div>
-                        <div style="width: 100%; height: 8px; background: var(--bg-tertiary); border-radius: 4px; margin-top: 0.5rem; overflow: hidden;">
-                            <div style="width: ${Math.min(100, percent)}%; height: 100%; background: ${statusColor}; transition: width 0.3s;"></div>
-                        </div>
-                    </div>
-                `;
-            });
-            categoriesList.innerHTML = html;
-        }
+        // Create budget chart with actual data
+        createBudgetChart(budgetCategories);
+        
+        // Update budget categories list
+        renderBudgetCategories(budgetCategories);
+        
         console.log('✅ Budget page data rendered successfully');
     } catch (error) {
         console.error('❌ Error loading budget data:', error);
     }
+}
+
+function createBudgetChart(budgetCategories) {
+    const ctx = document.getElementById('budgetChart');
+    if (!ctx || typeof Chart === 'undefined') return;
+    
+    // Destroy existing chart if it exists
+    if (ctx.chart) {
+        ctx.chart.destroy();
+    }
+    
+    const labels = budgetCategories.map(cat => cat.name || 'Category');
+    const budgetData = budgetCategories.map(cat => cat.budget || 0);
+    const spentData = budgetCategories.map(cat => cat.spent || 0);
+    const colors = budgetCategories.map(cat => cat.color || '#10b981');
+    
+    ctx.chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Budget',
+                data: budgetData,
+                backgroundColor: colors.map(c => c + '80'), // Add transparency
+                borderColor: colors,
+                borderWidth: 2
+            }, {
+                label: 'Spent',
+                data: spentData,
+                backgroundColor: '#f59e0b',
+                borderColor: '#f59e0b',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.parsed.y || 0;
+                            const budgetVal = context.datasetIndex === 0 ? value : budgetData[context.dataIndex];
+                            const spentVal = context.datasetIndex === 1 ? value : spentData[context.dataIndex];
+                            
+                            if (context.datasetIndex === 0) {
+                                return `${label}: ₹${value.toLocaleString('en-IN')}`;
+                            } else {
+                                const remaining = budgetVal - spentVal;
+                                const percent = budgetVal > 0 ? ((spentVal / budgetVal) * 100).toFixed(1) : 0;
+                                return [
+                                    `${label}: ₹${value.toLocaleString('en-IN')}`,
+                                    `Budget: ₹${budgetVal.toLocaleString('en-IN')}`,
+                                    `Remaining: ₹${remaining.toLocaleString('en-IN')} (${100 - percent}%)`
+                                ];
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toLocaleString('en-IN');
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderBudgetCategories(budgetCategories) {
+    const categoriesList = document.getElementById('budgetCategoriesList');
+    if (!categoriesList) return;
+    
+    if (budgetCategories.length === 0) {
+        categoriesList.innerHTML = `
+            <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">
+                <i class="fas fa-wallet" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+                No budget categories set. Create your monthly budget to start tracking!
+            </p>
+        `;
+        return;
+    }
+    
+    let html = '';
+    budgetCategories.forEach(cat => {
+        const spent = cat.spent || 0;
+        const budgetAmt = cat.budget || 0;
+        const percent = budgetAmt > 0 ? ((spent / budgetAmt) * 100).toFixed(1) : 0;
+        const isOver = spent > budgetAmt;
+        const statusColor = isOver ? '#ef4444' : (percent > 80 ? '#f59e0b' : '#10b981');
+        const icon = cat.icon || 'fa-circle';
+        const color = cat.color || statusColor;
+        const remaining = Math.max(0, budgetAmt - spent);
+        const categoryId = cat.id || Date.now();
+        const escapedName = (cat.name || 'Category').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        
+        html += `
+            <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-primary); background: var(--bg-elevated); border-radius: var(--radius-md); margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: ${color}20; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas ${icon}" style="color: ${color}; font-size: 1.25rem;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 0.25rem 0; color: var(--text-primary); font-size: 1.1rem;">${cat.name || 'Category'}</h4>
+                            <div style="font-size: 0.875rem; color: var(--text-tertiary);">
+                                Budget: ₹${budgetAmt.toLocaleString('en-IN')} • Spent: ₹${spent.toLocaleString('en-IN')}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: ${statusColor}; margin-bottom: 0.25rem;">${percent}%</div>
+                        <div style="font-size: 0.75rem; color: var(--text-tertiary);">₹${remaining.toLocaleString('en-IN')} left</div>
+                    </div>
+                </div>
+                
+                <div style="width: 100%; height: 10px; background: var(--bg-tertiary); border-radius: 5px; margin-bottom: 1rem; overflow: hidden;">
+                    <div style="width: ${Math.min(100, parseFloat(percent))}%; height: 100%; background: ${statusColor}; transition: width 0.3s; border-radius: 5px;"></div>
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="editBudgetCategory(${categoryId})" class="btn btn-secondary btn-sm" style="flex: 1;">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button onclick="updateBudgetSpent(${categoryId}, '${escapedName}')" class="btn btn-primary btn-sm" style="flex: 1;">
+                        <i class="fas fa-pencil-alt"></i> Update Spent
+                    </button>
+                    <button onclick="deleteBudgetCategory(${categoryId})" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    categoriesList.innerHTML = html;
 }
 
 function setupBudgetHandlers() {
@@ -519,50 +602,214 @@ function setupBudgetHandlers() {
             showBudgetCategoryModal();
         });
     }
-}
-
-function showBudgetCategoryModal() {
-    document.getElementById('addBudgetCategoryModal').style.display = 'flex';
     
-    // Setup form handler
-    const form = document.getElementById('addBudgetCategoryFormModal');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const name = document.getElementById('budgetCategoryNameModal').value;
-            const amount = parseFloat(document.getElementById('budgetCategoryAmountModal').value);
-            
-            // Add to budget categories list
-            const container = document.getElementById('budgetCategoriesList');
-            if (container && container.querySelector('p')) {
-                container.innerHTML = '';
-            }
-            
-            const categoryItem = document.createElement('div');
-            categoryItem.style.cssText = 'padding: 1rem; border-bottom: 1px solid var(--border-primary);';
-            categoryItem.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong>${name}</strong>
-                        <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.25rem;">
-                            Budget: ₹${amount.toLocaleString()}
-                        </div>
-                    </div>
-                    <button class="btn btn-danger btn-sm" onclick="this.closest('div').remove()">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `;
-            if (container) {
-                container.appendChild(categoryItem);
-            }
-            
-            toast.success('Budget category added!', 'success');
-            closeModal('addBudgetCategoryModal');
-            form.reset();
+    // Monthly income update handler
+    const monthlyIncomeInput = document.getElementById('monthlyIncomeInput');
+    if (monthlyIncomeInput) {
+        monthlyIncomeInput.addEventListener('change', async function() {
+            await updateMonthlyIncome(parseFloat(this.value) || 0);
         });
     }
 }
+
+async function saveBudgetToBackend(budget) {
+    try {
+        await apiRequest('/finance/update_budget', 'POST', { budget });
+        return true;
+    } catch (error) {
+        console.error('Error saving budget:', error);
+        toast.error(error.message || 'Failed to save budget', 'error');
+        return false;
+    }
+}
+
+async function updateMonthlyIncome(income) {
+    try {
+        const data = await getFinancialData();
+        const budget = data.budget || {};
+        budget.monthly_budget = income;
+        budget.monthly_income = income;
+        
+        const success = await saveBudgetToBackend(budget);
+        if (success) {
+            toast.success('Monthly income updated!', 'success');
+            await loadBudgetData();
+        }
+    } catch (error) {
+        console.error('Error updating monthly income:', error);
+    }
+}
+
+async function showBudgetCategoryModal(categoryId = null) {
+    const modal = document.getElementById('addBudgetCategoryModal');
+    if (!modal) return;
+    
+    modal.style.display = 'flex';
+    
+    const form = document.getElementById('addBudgetCategoryFormModal');
+    const title = modal.querySelector('h3');
+    if (title) {
+        title.textContent = categoryId ? 'Edit Budget Category' : 'Add Budget Category';
+    }
+    
+    // Load category data if editing
+    if (categoryId) {
+        try {
+            const data = await getFinancialData();
+            const categories = data.budget?.categories || [];
+            const category = categories.find(c => c.id === categoryId);
+            
+            if (category) {
+                document.getElementById('budgetCategoryNameModal').value = category.name || '';
+                document.getElementById('budgetCategoryAmountModal').value = category.budget || 0;
+                if (document.getElementById('budgetCategoryIconModal')) {
+                    document.getElementById('budgetCategoryIconModal').value = category.icon || 'fa-circle';
+                }
+                if (document.getElementById('budgetCategoryColorModal')) {
+                    document.getElementById('budgetCategoryColorModal').value = category.color || '#10b981';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading category:', error);
+        }
+    } else {
+        form.reset();
+    }
+    
+    // Setup form handler
+    if (form) {
+        // Remove old listener
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        newForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('budgetCategoryNameModal').value.trim();
+            const amount = parseFloat(document.getElementById('budgetCategoryAmountModal').value) || 0;
+            const icon = document.getElementById('budgetCategoryIconModal')?.value || 'fa-circle';
+            const color = document.getElementById('budgetCategoryColorModal')?.value || '#10b981';
+            
+            if (!name || amount <= 0) {
+                toast.error('Please enter a valid name and amount', 'error');
+                return;
+            }
+            
+            try {
+                const data = await getFinancialData();
+                let budget = data.budget || {};
+                let categories = budget.categories || [];
+                
+                if (categoryId) {
+                    // Update existing category
+                    const index = categories.findIndex(c => c.id === categoryId);
+                    if (index !== -1) {
+                        categories[index] = {
+                            ...categories[index],
+                            name: name,
+                            budget: amount,
+                            icon: icon,
+                            color: color
+                        };
+                    }
+                } else {
+                    // Add new category
+                    const maxId = categories.length > 0 ? Math.max(...categories.map(c => c.id || 0)) : 0;
+                    categories.push({
+                        id: maxId + 1,
+                        name: name,
+                        budget: amount,
+                        spent: 0,
+                        icon: icon,
+                        color: color
+                    });
+                }
+                
+                budget.categories = categories;
+                
+                const success = await saveBudgetToBackend(budget);
+                if (success) {
+                    toast.success(categoryId ? 'Category updated!' : 'Category added!', 'success');
+                    closeModal('addBudgetCategoryModal');
+                    await loadBudgetData();
+                }
+            } catch (error) {
+                console.error('Error saving category:', error);
+            }
+        });
+    }
+}
+
+async function editBudgetCategory(categoryId) {
+    await showBudgetCategoryModal(categoryId);
+}
+
+async function deleteBudgetCategory(categoryId) {
+    if (!confirm('Are you sure you want to delete this budget category?')) {
+        return;
+    }
+    
+    try {
+        const data = await getFinancialData();
+        const budget = data.budget || {};
+        let categories = budget.categories || [];
+        
+        categories = categories.filter(c => c.id !== categoryId);
+        budget.categories = categories;
+        
+        const success = await saveBudgetToBackend(budget);
+        if (success) {
+            toast.success('Category deleted!', 'success');
+            await loadBudgetData();
+        }
+    } catch (error) {
+        console.error('Error deleting category:', error);
+    }
+}
+
+async function updateBudgetSpent(categoryId, categoryName) {
+    const currentData = await getFinancialData();
+    const categories = currentData.budget?.categories || [];
+    const category = categories.find(c => c.id === categoryId);
+    
+    if (!category) return;
+    
+    const currentSpent = category.spent || 0;
+    const newSpent = prompt(`Update spent amount for "${categoryName}":`, currentSpent);
+    
+    if (newSpent === null) return; // User cancelled
+    
+    const spentAmount = parseFloat(newSpent);
+    if (isNaN(spentAmount) || spentAmount < 0) {
+        toast.error('Please enter a valid amount', 'error');
+        return;
+    }
+    
+    try {
+        const data = await getFinancialData();
+        const budget = data.budget || {};
+        let categories = budget.categories || [];
+        
+        const index = categories.findIndex(c => c.id === categoryId);
+        if (index !== -1) {
+            categories[index].spent = spentAmount;
+        }
+        
+        budget.categories = categories;
+        
+        const success = await saveBudgetToBackend(budget);
+        if (success) {
+            toast.success('Spent amount updated!', 'success');
+            await loadBudgetData();
+        }
+    } catch (error) {
+        console.error('Error updating spent amount:', error);
+    }
+}
+
+// Expose functions globally
+window.editBudgetCategory = editBudgetCategory;
+window.deleteBudgetCategory = deleteBudgetCategory;
+window.updateBudgetSpent = updateBudgetSpent;
 
 // ========== INVESTMENTS PAGE ==========
 async function loadInvestmentsData() {
