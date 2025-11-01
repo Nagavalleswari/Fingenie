@@ -531,9 +531,14 @@ function renderBudgetCategories(budgetCategories) {
     const categoriesList = document.getElementById('budgetCategoriesList');
     if (!categoriesList) return;
     
+    // Ensure grid layout for 2 cards per row
+    categoriesList.style.display = 'grid';
+    categoriesList.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    categoriesList.style.gap = '1rem';
+    
     if (budgetCategories.length === 0) {
         categoriesList.innerHTML = `
-            <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">
+            <p style="color: var(--text-tertiary); text-align: center; padding: 2rem; grid-column: 1 / -1;">
                 <i class="fas fa-wallet" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
                 No budget categories set. Create your monthly budget to start tracking!
             </p>
@@ -555,39 +560,50 @@ function renderBudgetCategories(budgetCategories) {
         const escapedName = (cat.name || 'Category').replace(/'/g, "\\'").replace(/\"/g, '&quot;');
         
         html += `
-            <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-primary); background: var(--bg-elevated); border-radius: var(--radius-md); margin-bottom: 1rem;">
+            <div style="padding: 1.25rem; background: var(--bg-elevated); border-radius: var(--radius-md); border: 1px solid var(--border-primary); height: 100%; display: flex; flex-direction: column;">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
-                        <div style="width: 48px; height: 48px; border-radius: 50%; background: ${color}20; display: flex; align-items: center; justify-content: center;">
-                            <i class=\"fas ${icon}\" style=\"color: ${color}; font-size: 1.25rem;\"></i>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: ${color}20; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas ${icon}" style="color: ${color}; font-size: 1.1rem;"></i>
                         </div>
-                        <div style="flex: 1;">
-                            <h4 style="margin: 0 0 0.25rem 0; color: var(--text-primary); font-size: 1.1rem;">${cat.name || 'Category'}</h4>
-                            <div style="font-size: 0.875rem; color: var(--text-tertiary);">
-                                Budget: ₹${budgetAmt.toLocaleString('en-IN')} • Spent: ₹${spent.toLocaleString('en-IN')}
+                        <div style="flex: 1; min-width: 0;">
+                            <h4 style="margin: 0 0 0.25rem 0; color: var(--text-primary); font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.name || 'Category'}</h4>
+                            <div style="font-size: 0.75rem; color: var(--text-tertiary);">
+                                Budget: ₹${budgetAmt.toLocaleString('en-IN')}
                             </div>
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style=\"font-size: 1.5rem; font-weight: 700; color: ${statusColor}; margin-bottom: 0.25rem; display: inline-flex; align-items: center; gap: 0.4rem;\"><i class=\"fas fa-circle\" style=\"color: ${statusColor}; font-size: 0.65rem;\"></i>${percent}%</div>
-                        <div style="font-size: 0.75rem; color: var(--text-tertiary);">₹${remaining.toLocaleString('en-IN')} left</div>
+                        <div style="font-size: 1.25rem; font-weight: 700; color: ${statusColor}; margin-bottom: 0.125rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                            <i class="fas fa-circle" style="color: ${statusColor}; font-size: 0.65rem;"></i>${percent}%
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--text-tertiary);">₹${remaining.toLocaleString('en-IN')} left</div>
                     </div>
                 </div>
                 
-                <div style="width: 100%; height: 10px; background: var(--bg-tertiary); border-radius: 5px; margin-bottom: 1rem; overflow: hidden;">
-                    <div style=\"width: ${Math.min(100, parseFloat(percent))}%; height: 100%; background: ${statusColor}; transition: width 0.3s; border-radius: 5px;\"></div>
+                <div style="width: 100%; height: 8px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 1rem; overflow: hidden;">
+                    <div style="width: ${Math.min(100, parseFloat(percent))}%; height: 100%; background: ${statusColor}; transition: width 0.3s; border-radius: 4px;"></div>
                 </div>
                 
-                <div style="display: flex; justify-content:end; gap: 0.5rem;">
-                    <button onclick="editBudgetCategory(${categoryId})" class="btn btn-secondary btn-sm" ">
-                        <i class="fas fa-edit"></i> Edit
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm);">
+                    <div>
+                        <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Spent</div>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${spent.toLocaleString('en-IN')}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Budget</div>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${budgetAmt.toLocaleString('en-IN')}</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem; margin-top: auto;">
+                    <button onclick="editBudgetCategory(${categoryId})" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                        <i class="fas fa-edit"></i>
                     </button>
-                    <button onclick="updateBudgetSpent(${categoryId}, '${escapedName}')" class="btn btn-primary
-                     btn-sm" ">
+                    <button onclick="updateBudgetSpent(${categoryId}, '${escapedName}')" class="btn btn-primary btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
                         <i class="fa-solid fa-indian-rupee-sign"></i>
                     </button>
-                    <button onclick="deleteBudgetCategory(${categoryId}, '${escapedName}')" class="btn btn-danger
-                     btn-sm" ">
+                    <button onclick="deleteBudgetCategory(${categoryId})" class="btn btn-danger btn-sm" style="font-size: 0.8rem; padding: 0.4rem 0.6rem;">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -1828,8 +1844,13 @@ window.loadGoalsPageData = async function() {
         // Display goals
         const container = document.getElementById('goalsPageList');
         if (container) {
+            // Ensure grid layout for 2 cards per row
+            container.style.display = 'grid';
+            container.style.gridTemplateColumns = 'repeat(2, 1fr)';
+            container.style.gap = '1rem';
+            
             if (goals.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">No goals set yet.</p>';
+                container.innerHTML = '<p style="color: var(--text-tertiary); text-align: center; padding: 2rem; grid-column: 1 / -1;">No goals set yet.</p>';
                 console.log('✅ Updated goalsPageList with empty message');
             } else {
                 let html = '';
@@ -1839,39 +1860,47 @@ window.loadGoalsPageData = async function() {
                     const target = goal.target || 0;
                     const progress = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
                     const yearsRemaining = Math.max(0, goal.year - new Date().getFullYear());
+                    const remaining = Math.max(0, target - current);
                     
                     // Escape goal name for use in HTML attribute
                     const escapedGoalName = (goal.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     
                     html += `
-                        <div style="padding: 1.5rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-tertiary); margin-bottom: 1rem; position: relative;">
+                        <div style="padding: 1.25rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-elevated); height: 100%; display: flex; flex-direction: column;">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                                <div style="flex: 1;">
-                                    <h4 style="margin: 0 0 0.5rem 0;"><i class="fas fa-bullseye" style="color: var(--accent-cyan); margin-right: 0.5rem;"></i>${goal.name}</h4>
-                                    <div style="font-size: 0.875rem; color: var(--text-tertiary);">
-                                        Target: ₹${goal.target.toLocaleString()} by ${goal.year} • ${yearsRemaining} years remaining
+                                <div style="flex: 1; min-width: 0;">
+                                    <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <i class="fas fa-bullseye" style="color: var(--accent-cyan); margin-right: 0.5rem; font-size: 0.9rem;"></i>${goal.name}
+                                    </h4>
+                                    <div style="font-size: 0.75rem; color: var(--text-tertiary);">
+                                        Target: ₹${goal.target.toLocaleString('en-IN')} by ${goal.year}
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-cyan);">${progress}%</div>
+                                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.125rem;">${progress}%</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-tertiary);">${yearsRemaining} yrs left</div>
                                 </div>
                             </div>
-                            <div style="background: var(--bg-elevated); border-radius: var(--radius-md); height: 10px; overflow: hidden; margin-bottom: 0.75rem;">
-                                <div style="background: var(--gradient-primary); height: 100%; width: ${progress}%; transition: width 0.5s ease;"></div>
+                            <div style="width: 100%; height: 8px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 1rem; overflow: hidden;">
+                                <div style="background: var(--gradient-primary); height: 100%; width: ${progress}%; transition: width 0.5s ease; border-radius: 4px;"></div>
                             </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; color: var(--text-tertiary); margin-bottom: 1rem;">
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm);">
                                 <div>
-                                    <span>Progress: ₹${current.toLocaleString()} / ₹${target.toLocaleString()}</span>
-                                    <span style="margin-left: 1rem;">Remaining: ₹${Math.max(0, target - current).toLocaleString()}</span>
+                                    <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Progress</div>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${current.toLocaleString('en-IN')}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Remaining</div>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${remaining.toLocaleString('en-IN')}</div>
                                 </div>
                             </div>
                             <!-- Action Buttons -->
-                            <div style="display: flex; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--border-primary);">
-                                <button onclick="editGoal(${goal.id})" class="btn btn-secondary btn-animated" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                    <i class="fas fa-pen-to-square"></i> Edit
+                            <div style="display: flex; gap: 0.5rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-primary);">
+                                <button onclick="editGoal(${goal.id})" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                                    <i class="fas fa-edit"></i>
                                 </button>
-                                <button onclick="openDeleteGoalModal(${goal.id}, '${escapedGoalName}')" class="btn btn-danger btn-animated" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                    <i class="fas fa-trash"></i> Delete
+                                <button onclick="openDeleteGoalModal(${goal.id}, '${escapedGoalName}')" class="btn btn-danger btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
@@ -3211,3 +3240,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 500);
 });
+
