@@ -338,6 +338,17 @@
             }
         });
 
+        // Press Enter to send (Shift+Enter for new line)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const form = document.getElementById('chatForm');
+                if (form) {
+                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }
+            }
+        });
+
         function sendQuickMessage(message) {
             // Hide suggestions immediately
             const suggestionsDiv = document.querySelector('.chat-input-suggestions');
@@ -854,14 +865,14 @@ toast.success('Export ready');
             textDiv.innerHTML = formattedText;
             messageBubble.appendChild(textDiv);
             
-            // Action buttons (shown on hover)
+            // Action buttons (shown on hover) - moved BELOW the card
             const actions = document.createElement('div');
             actions.className = 'message-actions';
             
             const copyBtn = document.createElement('button');
             copyBtn.className = 'message-action-btn';
             copyBtn.title = 'Copy';
-            copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
             copyBtn.onclick = () => copyToClipboard(text.replace(/`/g, '\\`').replace(/\$/g, '\\$').replace(/\\/g, '\\\\'));
             
             actions.appendChild(copyBtn);
@@ -883,8 +894,9 @@ toast.success('Export ready');
                 actions.appendChild(dislikeBtn);
             }
             
-            messageBubble.appendChild(actions);
+            // Append bubble first, then actions below it
             messageContentDiv.appendChild(messageBubble);
+            messageContentDiv.appendChild(actions);
             
             messageGroupInner.appendChild(avatar);
             messageGroupInner.appendChild(messageContentDiv);
