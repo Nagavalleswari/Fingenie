@@ -137,9 +137,9 @@
                 <!-- Chat Sidebar - Conversation History -->
                 <div class="chat-sidebar">
                     <div class="chat-sidebar-header">
-                        <button class="new-chat-btn" onclick="startNewChat()">
+                        <button class="new-chat-btn1" onclick="startNewChat()">
                             <i class="fas fa-plus"></i>
-                            New Conversation
+                            New Chat
                         </button>
 
                         <!-- Search -->
@@ -150,21 +150,7 @@
                         </div>
 
                         <!-- Actions Row -->
-                        <div style="display:flex; gap:0.5rem; margin-top: 0.75rem;">
-                            <button class="new-chat-btn" onclick="toggleSelectionMode()" id="selectModeBtn"
-                                    style="flex:1; background: var(--bg-tertiary); border: 1px solid var(--border-primary);">
-                                <i class="fas fa-check-square"></i>
-                                Select
-                            </button>
-                            <button class="new-chat-btn" onclick="exportChats('json')" title="Export (JSON)"
-                                    style="background: var(--bg-tertiary); border: 1px solid var(--border-primary);">
-                                <i class="fas fa-file-export"></i> JSON
-                            </button>
-                            <button class="new-chat-btn" onclick="exportChats('md')" title="Export (Markdown)"
-                                    style="background: var(--bg-tertiary); border: 1px solid var(--border-primary);">
-                                <i class="fas fa-file-alt"></i> MD
-                            </button>
-                        </div>
+                        
 
                         <!-- Bulk Actions Row (visible in selection mode) -->
                         <div id="bulkActionsRow" style="display:none; margin-top:0.5rem;">

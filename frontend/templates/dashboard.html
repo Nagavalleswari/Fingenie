@@ -26,7 +26,7 @@
         <div class="sidebar-menu">
             <div class="menu-section">
                 <div class="menu-section-title">Main</div>
-                <a href="/dashboard" class="menu-item active">
+                <a href="#" class="menu-item active" onclick="showPage('dashboard', event)">
                     <div class="menu-item-icon"><i class="fas fa-chart-line"></i></div>
                     <span class="menu-item-text">Dashboard</span>
                 </a>
@@ -35,7 +35,7 @@
                     <span class="menu-item-text">AI Assistant</span>
                     <span class="menu-item-badge">New</span>
                 </a>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('analytics')">
+                <a href="#analytics" class="menu-item" onclick="showPage('analytics', event)">
                     <div class="menu-item-icon"><i class="fas fa-chart-bar"></i></div>
                     <span class="menu-item-text">Analytics</span>
                 </a>
@@ -43,27 +43,27 @@
 
             <div class="menu-section">
                 <div class="menu-section-title">Finance</div>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('budget')">
+                <a href="#budget" class="menu-item" onclick="showPage('budget', event)">
                     <div class="menu-item-icon"><i class="fas fa-wallet"></i></div>
                     <span class="menu-item-text">Budget</span>
                 </a>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('investments')">
+                <a href="#investments" class="menu-item" onclick="showPage('investments', event)">
                     <div class="menu-item-icon"><i class="fas fa-chart-pie"></i></div>
                     <span class="menu-item-text">Investments</span>
                 </a>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('transactions')">
+                <a href="#transactions" class="menu-item" onclick="showPage('transactions', event)">
                     <div class="menu-item-icon"><i class="fas fa-exchange-alt"></i></div>
                     <span class="menu-item-text">Transactions</span>
                 </a>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('goals')">
+                <a href="#goals" class="menu-item" onclick="showPage('goals', event)">
                     <div class="menu-item-icon"><i class="fas fa-bullseye"></i></div>
                     <span class="menu-item-text">Goals</span>
                 </a>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('loans')">
+                <a href="#loans" class="menu-item" onclick="showPage('loans', event)">
                     <div class="menu-item-icon"><i class="fas fa-file-invoice-dollar"></i></div>
                     <span class="menu-item-text">Loans & Debt</span>
                 </a>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('loan-calculator', event);">
+                <a href="#loan-calculator" class="menu-item" onclick="showPage('loan-calculator', event)">
                     <div class="menu-item-icon"><i class="fas fa-calculator"></i></div>
                     <span class="menu-item-text">Loan Calculator</span>
                 </a>
@@ -71,11 +71,11 @@
 
             <div class="menu-section">
                 <div class="menu-section-title">Reports</div>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('reports')">
+                <a href="#reports" class="menu-item" onclick="showPage('reports', event)">
                     <div class="menu-item-icon"><i class="fas fa-file-alt"></i></div>
                     <span class="menu-item-text">Reports</span>
                 </a>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('insights')">
+                <a href="#insights" class="menu-item" onclick="showPage('insights', event)">
                     <div class="menu-item-icon"><i class="fas fa-lightbulb"></i></div>
                     <span class="menu-item-text">Insights</span>
                 </a>
@@ -83,11 +83,11 @@
 
             <div class="menu-section">
                 <div class="menu-section-title">Account</div>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); if(typeof window.showPage === 'function') { window.showPage('profile', event); }">
+                <a href="#profile" class="menu-item" onclick="showPage('profile', event)">
                     <div class="menu-item-icon"><i class="fas fa-user"></i></div>
                     <span class="menu-item-text">Profile</span>
                 </a>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); if(typeof window.showPage === 'function') { window.showPage('settings', event); }">
+                <a href="#settings" class="menu-item" onclick="showPage('settings', event)">
                     <div class="menu-item-icon"><i class="fas fa-cog"></i></div>
                     <span class="menu-item-text">Settings</span>
                 </a>
@@ -787,6 +787,17 @@
                 'settings': { title: 'Settings', subtitle: 'Customize your FinGenie experience' }
             };
 
+            // Sync URL hash without page reload
+            if (page && page !== 'dashboard') {
+                if (window.location.hash !== '#' + page) {
+                    window.location.hash = page;
+                }
+            } else if (page === 'dashboard') {
+                if (window.location.hash) {
+                    history.replaceState(null, '', window.location.pathname);
+                }
+            }
+
             // Update active menu item
             document.querySelectorAll('.menu-item').forEach(item => {
                 item.classList.remove('active');
@@ -854,6 +865,22 @@
             } else {
                 sidebarToggle.style.display = 'none';
                 sidebar.classList.remove('active');
+            }
+        });
+
+        // Load initial page from URL hash and handle hash changes
+        document.addEventListener('DOMContentLoaded', () => {
+            const hashPage = (window.location.hash || '').replace('#', '');
+            if (hashPage) {
+                showPage(hashPage);
+            }
+        });
+        window.addEventListener('hashchange', () => {
+            const hashPage = (window.location.hash || '').replace('#', '');
+            if (hashPage) {
+                showPage(hashPage);
+            } else {
+                showPage('dashboard');
             }
         });
 

@@ -172,12 +172,23 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
 // Check if user is authenticated
 function checkAuth() {
     const token = getAuthToken();
-    console.log('Auth check - Token found:', !!token, 'Path:', window.location.pathname);
-    if (!token && (window.location.pathname === '/dashboard' || window.location.pathname === '/chat')) {
+    const path = window.location.pathname;
+    console.log('Auth check - Token found:', !!token, 'Path:', path);
+
+    // If NOT logged in and trying to access protected pages, redirect to login
+    if (!token && (path === '/dashboard' || path === '/chat')) {
         console.log('No token found, redirecting to login');
         window.location.href = '/login';
         return false;
     }
+
+    // If logged in and trying to access auth pages, redirect to dashboard
+    if (token && (path === '/login' || path === '/signup')) {
+        console.log('Token found on auth page, redirecting to dashboard');
+        window.location.href = '/dashboard';
+        return false;
+    }
+
     return true;
 }
 
