@@ -552,14 +552,14 @@ function renderBudgetCategories(budgetCategories) {
         const color = cat.color || statusColor;
         const remaining = Math.max(0, budgetAmt - spent);
         const categoryId = cat.id || Date.now();
-        const escapedName = (cat.name || 'Category').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const escapedName = (cat.name || 'Category').replace(/'/g, "\\'").replace(/\"/g, '&quot;');
         
         html += `
             <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-primary); background: var(--bg-elevated); border-radius: var(--radius-md); margin-bottom: 1rem;">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                     <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
                         <div style="width: 48px; height: 48px; border-radius: 50%; background: ${color}20; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas ${icon}" style="color: ${color}; font-size: 1.25rem;"></i>
+                            <i class=\"fas ${icon}\" style=\"color: ${color}; font-size: 1.25rem;\"></i>
                         </div>
                         <div style="flex: 1;">
                             <h4 style="margin: 0 0 0.25rem 0; color: var(--text-primary); font-size: 1.1rem;">${cat.name || 'Category'}</h4>
@@ -569,23 +569,21 @@ function renderBudgetCategories(budgetCategories) {
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 1.5rem; font-weight: 700; color: ${statusColor}; margin-bottom: 0.25rem;">${percent}%</div>
+                        <div style=\"font-size: 1.5rem; font-weight: 700; color: ${statusColor}; margin-bottom: 0.25rem; display: inline-flex; align-items: center; gap: 0.4rem;\"><i class=\"fas fa-circle\" style=\"color: ${statusColor}; font-size: 0.65rem;\"></i>${percent}%</div>
                         <div style="font-size: 0.75rem; color: var(--text-tertiary);">₹${remaining.toLocaleString('en-IN')} left</div>
                     </div>
                 </div>
                 
                 <div style="width: 100%; height: 10px; background: var(--bg-tertiary); border-radius: 5px; margin-bottom: 1rem; overflow: hidden;">
-                    <div style="width: ${Math.min(100, parseFloat(percent))}%; height: 100%; background: ${statusColor}; transition: width 0.3s; border-radius: 5px;"></div>
+                    <div style=\"width: ${Math.min(100, parseFloat(percent))}%; height: 100%; background: ${statusColor}; transition: width 0.3s; border-radius: 5px;\"></div>
                 </div>
                 
-                <div style="display: flex; gap: 0.5rem;">
-                    <button onclick="editBudgetCategory(${categoryId})" class="btn btn-secondary btn-sm" style="flex: 1;">
+                <div style="display: flex; justify-content:end; gap: 0.5rem;">
+                    <button onclick="editBudgetCategory(${categoryId})" class="btn btn-secondary btn-sm" ">
                         <i class="fas fa-edit"></i> Edit
                     </button>
-                    <button onclick="updateBudgetSpent(${categoryId}, '${escapedName}')" class="btn btn-primary btn-sm" style="flex: 1;">
-                        <i class="fas fa-pencil-alt"></i> Update Spent
-                    </button>
-                    <button onclick="deleteBudgetCategory(${categoryId})" class="btn btn-danger btn-sm">
+                    <button onclick="updateBudgetSpent(${categoryId}, '${escapedName}')" class="btn btn-danger
+                     btn-sm" ">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
