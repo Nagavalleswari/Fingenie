@@ -209,8 +209,8 @@ async function loadAnalyticsData() {
         updateElement('analyticsROI', roiEstimate + '%');
         
         // Update performance metrics
-        updateElement('assetGrowthVal', '+₹' + totalAssets.toLocaleString());
-        updateElement('investmentPerfVal', '+₹' + ((assets.mutual_funds || 0) + (assets.stocks || 0)).toLocaleString());
+        updateElement('assetGrowthVal', formatCurrencyWithSign(totalAssets, true));
+        updateElement('investmentPerfVal', formatCurrencyWithSign(((assets.mutual_funds || 0) + (assets.stocks || 0)), true));
         
         // Calculate goal progress properly
         const avgGoalProgress = goals.length > 0 
@@ -311,7 +311,7 @@ function createMonthlyTrendChartFromData(monthlyTrends) {
                     beginAtZero: false,
                     ticks: {
                         callback: function(value) {
-                            return '₹' + value.toLocaleString();
+                            return formatCurrency(value);
                         }
                     }
                 }
@@ -412,14 +412,14 @@ async function loadBudgetData() {
         const budgetRemaining = totalBudget > 0 ? ((totalBudget - budgetSpent) / totalBudget * 100).toFixed(0) : 0;
         const remainingAmount = totalBudget - budgetSpent;
         
-        updateElement('totalBudget', '₹' + totalBudget.toLocaleString());
-        updateElement('budgetSpent', '₹' + budgetSpent.toLocaleString());
+        updateElement('totalBudget', formatCurrency(totalBudget));
+        updateElement('budgetSpent', formatCurrency(budgetSpent));
         updateElement('budgetRemaining', budgetRemaining + '%');
         
         // Update monthly income if element exists
         const monthlyIncomeEl = document.getElementById('monthlyIncome');
         if (monthlyIncomeEl) {
-            monthlyIncomeEl.textContent = '₹' + monthlyIncome.toLocaleString();
+            monthlyIncomeEl.textContent = formatCurrency(monthlyIncome);
         }
         
         // Update monthly income input if exists
@@ -489,14 +489,14 @@ function createBudgetChart(budgetCategories) {
                             const spentVal = context.datasetIndex === 1 ? value : spentData[context.dataIndex];
                             
                             if (context.datasetIndex === 0) {
-                                return `${label}: ₹${value.toLocaleString('en-IN')}`;
+                                return `${label}: ${formatCurrency(value)}`;
                             } else {
                                 const remaining = budgetVal - spentVal;
                                 const percent = budgetVal > 0 ? ((spentVal / budgetVal) * 100).toFixed(1) : 0;
                                 return [
-                                    `${label}: ₹${value.toLocaleString('en-IN')}`,
-                                    `Budget: ₹${budgetVal.toLocaleString('en-IN')}`,
-                                    `Remaining: ₹${remaining.toLocaleString('en-IN')} (${100 - percent}%)`
+                                    `${label}: ${formatCurrency(value)}`,
+                                    `Budget: ${formatCurrency(budgetVal)}`,
+                                    `Remaining: ${formatCurrency(remaining)} (${100 - percent}%)`
                                 ];
                             }
                         }
@@ -508,7 +508,7 @@ function createBudgetChart(budgetCategories) {
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return '₹' + value.toLocaleString('en-IN');
+                            return formatCurrency(value);
                         }
                     }
                 }
@@ -559,7 +559,7 @@ function renderBudgetCategories(budgetCategories) {
                         <div style="flex: 1; min-width: 0;">
                             <h4 style="margin: 0 0 0.25rem 0; color: var(--text-primary); font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.name || 'Category'}</h4>
                             <div style="font-size: 0.75rem; color: var(--text-tertiary);">
-                                Budget: ₹${budgetAmt.toLocaleString('en-IN')}
+                                Budget: ${formatCurrency(budgetAmt)}
                             </div>
                         </div>
                     </div>
@@ -567,7 +567,7 @@ function renderBudgetCategories(budgetCategories) {
                         <div style="font-size: 1.25rem; font-weight: 700; color: ${statusColor}; margin-bottom: 0.125rem; display: inline-flex; align-items: center; gap: 0.4rem;">
                             <i class="fas fa-circle" style="color: ${statusColor}; font-size: 0.65rem;"></i>${percent}%
                         </div>
-                        <div style="font-size: 0.7rem; color: var(--text-tertiary);">₹${remaining.toLocaleString('en-IN')} left</div>
+                        <div style="font-size: 0.7rem; color: var(--text-tertiary);">${formatCurrency(remaining)} left</div>
                     </div>
                 </div>
                 
@@ -578,11 +578,11 @@ function renderBudgetCategories(budgetCategories) {
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm);">
                     <div>
                         <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Spent</div>
-                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${spent.toLocaleString('en-IN')}</div>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${formatCurrency(spent)}</div>
                     </div>
                     <div>
                         <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Budget</div>
-                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${budgetAmt.toLocaleString('en-IN')}</div>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${formatCurrency(budgetAmt)}</div>
                     </div>
                 </div>
                 
@@ -845,8 +845,8 @@ async function loadInvestmentsData() {
         const roi = totalInvested > 0 ? ((totalGains / totalInvested) * 100).toFixed(2) : 0;
         
         // Update stat cards
-        updateElement('totalInvestments', '₹' + portfolioValue.toLocaleString('en-IN'));
-        updateElement('investmentReturns', '₹' + totalGains.toLocaleString('en-IN'));
+        updateElement('totalInvestments', formatCurrency(portfolioValue));
+        updateElement('investmentReturns', formatCurrencyWithSign(totalGains, true));
         updateElement('investmentROI', roi + '%');
         updateElement('investmentCount', investments.length);
         
@@ -919,7 +919,7 @@ function renderInvestmentsList(investments) {
                     </div>
                     <div style="text-align: right;">
                         <div style="font-size: 1.25rem; font-weight: 700; color: ${color}; margin-bottom: 0.125rem;">
-                            ${sign}₹${Math.abs(gainLoss).toLocaleString('en-IN')}
+                            ${sign}${formatCurrency(Math.abs(gainLoss))}
                         </div>
                         <div style="font-size: 0.75rem; color: ${color};">
                             ${sign}${returns}%
@@ -930,11 +930,11 @@ function renderInvestmentsList(investments) {
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm); flex: 1;">
                     <div>
                         <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Invested</div>
-                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${invested.toLocaleString('en-IN')}</div>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${formatCurrency(invested)}</div>
                     </div>
                     <div>
                         <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Current</div>
-                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${current.toLocaleString('en-IN')}</div>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${formatCurrency(current)}</div>
                     </div>
                 </div>
                 
@@ -1064,7 +1064,7 @@ function createInvestmentDistributionChart(investments) {
                             const value = context.parsed || 0;
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                            return `${label}: ₹${value.toLocaleString('en-IN')} (${percentage}%)`;
+                            return `${label}: ${formatCurrency(value)} (${percentage}%)`;
                         }
                     }
                 }
@@ -1147,9 +1147,9 @@ function createInvestmentPerformanceChart(investments) {
                             return [
                                 `Investment: ${data.name}`,
                                 `Returns: ${data.returns >= 0 ? '+' : ''}${data.returns.toFixed(2)}%`,
-                                `Invested: ₹${data.invested.toLocaleString('en-IN')}`,
-                                `Current: ₹${data.current.toLocaleString('en-IN')}`,
-                                `Gain/Loss: ${data.gainLoss >= 0 ? '+' : ''}₹${data.gainLoss.toLocaleString('en-IN')}`
+                                `Invested: ${formatCurrency(data.invested)}`,
+                                `Current: ${formatCurrency(data.current)}`,
+                                `Gain/Loss: ${formatCurrencyWithSign(data.gainLoss, true)}`
                             ];
                         }
                     }
@@ -1462,10 +1462,10 @@ async function loadTransactionsData() {
     const totalExpenses = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const netAmount = totalIncome - totalExpenses;
     
-    updateElement('totalIncome', '₹' + totalIncome.toLocaleString());
-    updateElement('totalExpenses', '₹' + totalExpenses.toLocaleString());
+    updateElement('totalIncome', formatCurrency(totalIncome));
+    updateElement('totalExpenses', formatCurrency(totalExpenses));
     updateElement('totalTransactions', filteredTransactions.length);
-    updateElement('netTransaction', '₹' + netAmount.toLocaleString());
+    updateElement('netTransaction', formatCurrency(netAmount));
     
     displayTransactions(filteredTransactions);
     
@@ -1507,7 +1507,7 @@ function displayTransactions(transactions) {
                     </div>
                 </div>
                 <div style="font-size: 1.25rem; font-weight: 700; color: ${color};">
-                    ${sign}₹${t.amount.toLocaleString()}
+                    ${sign}${formatCurrency(Math.abs(t.amount))}
                 </div>
             </div>
         `;
@@ -1602,12 +1602,12 @@ window.loadLoansPageData = async function() {
         const debtRatio = totalAssets > 0 ? Math.round((totalLoans / totalAssets) * 100) : 0;
         
         // Update summary cards
-        updateElement('totalLoans', '₹' + totalLoans.toLocaleString());
-        updateElement('homeLoanAmount', '₹' + homeLoan.toLocaleString());
-        updateElement('carLoanAmount', '₹' + carLoan.toLocaleString());
-        updateElement('personalLoanAmount', '₹' + personalLoan.toLocaleString());
-        updateElement('creditCardDue', '₹' + creditCardDue.toLocaleString());
-        updateElement('otherLoans', '₹' + otherLoans.toLocaleString());
+        updateElement('totalLoans', formatCurrency(totalLoans));
+        updateElement('homeLoanAmount', formatCurrency(homeLoan));
+        updateElement('carLoanAmount', formatCurrency(carLoan));
+        updateElement('personalLoanAmount', formatCurrency(personalLoan));
+        updateElement('creditCardDue', formatCurrency(creditCardDue));
+        updateElement('otherLoans', formatCurrency(otherLoans));
         updateElement('debtRatioDisplay', debtRatio + '%');
         
         // Display loans list
@@ -1658,7 +1658,7 @@ window.loadLoansPageData = async function() {
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-danger); margin-bottom: 0.125rem;">₹${outstanding.toLocaleString('en-IN')}</div>
+                                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-danger); margin-bottom: 0.125rem;">${formatCurrency(outstanding)}</div>
                                     <div style="font-size: 0.7rem; color: var(--text-tertiary);">Outstanding</div>
                                 </div>
                             </div>
@@ -1666,11 +1666,11 @@ window.loadLoansPageData = async function() {
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm);">
                                 <div>
                                     <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Principal</div>
-                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${principal.toLocaleString('en-IN')}</div>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${formatCurrency(principal)}</div>
                                 </div>
                                 <div>
                                     <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">EMI</div>
-                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${monthlyEMI.toLocaleString('en-IN')}</div>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${formatCurrency(monthlyEMI)}</div>
                                 </div>
                             </div>
                             
@@ -1720,12 +1720,12 @@ window.loadLoansPageData = async function() {
                                         </div>
                                     </div>
                                     <div style="text-align: right;">
-                                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-danger); margin-bottom: 0.125rem;">₹${loan.amount.toLocaleString('en-IN')}</div>
+                                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-danger); margin-bottom: 0.125rem;">${formatCurrency(loan.amount)}</div>
                                     </div>
                                 </div>
                                 <div style="padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm); margin-top: auto;">
                                     <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Balance</div>
-                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${loan.amount.toLocaleString('en-IN')}</div>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${formatCurrency(loan.amount)}</div>
                                 </div>
                             </div>
                         `;
@@ -1868,7 +1868,7 @@ window.loadGoalsPageData = async function() {
                                         <i class="fas fa-bullseye" style="color: var(--accent-cyan); margin-right: 0.5rem; font-size: 0.9rem;"></i>${goal.name}
                                     </h4>
                                     <div style="font-size: 0.75rem; color: var(--text-tertiary);">
-                                        Target: ₹${goal.target.toLocaleString('en-IN')} by ${goal.year}
+                                        Target: ${formatCurrency(goal.target)} by ${goal.year}
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
@@ -1882,11 +1882,11 @@ window.loadGoalsPageData = async function() {
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm);">
                                 <div>
                                     <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Progress</div>
-                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${current.toLocaleString('en-IN')}</div>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${formatCurrency(current)}</div>
                                 </div>
                                 <div>
                                     <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Remaining</div>
-                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${remaining.toLocaleString('en-IN')}</div>
+                                    <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${formatCurrency(remaining)}</div>
                                 </div>
                             </div>
                             <!-- Action Buttons -->
@@ -2857,6 +2857,46 @@ function formatInsightDetails(text) {
     return formatted || escapeHtml(cleaned);
 }
 
+// Update sidebar user info
+async function updateSidebarUserInfo() {
+    try {
+        // Try to fetch from backend first
+        try {
+            const profileResponse = await apiRequest('/auth/profile', 'GET');
+            
+            if (profileResponse.success && profileResponse.user) {
+                const user = profileResponse.user;
+                const nameEl = document.querySelector('.sidebar-user-name');
+                const emailEl = document.querySelector('.sidebar-user-email');
+                if (nameEl) nameEl.textContent = user.name || 'User';
+                if (emailEl) emailEl.textContent = user.email || 'user@example.com';
+                return;
+            }
+        } catch (error) {
+            console.warn('Could not fetch profile for sidebar, using token:', error);
+        }
+        
+        // Fallback to token
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const nameEl = document.querySelector('.sidebar-user-name');
+                const emailEl = document.querySelector('.sidebar-user-email');
+                if (nameEl) nameEl.textContent = payload.name || 'User';
+                if (emailEl) emailEl.textContent = payload.email || 'user@example.com';
+            } catch (e) {
+                console.warn('Could not decode token for sidebar:', e);
+            }
+        }
+    } catch (error) {
+        console.error('Error updating sidebar user info:', error);
+    }
+}
+
+// Make it globally available
+window.updateSidebarUserInfo = updateSidebarUserInfo;
+
 // ========== PROFILE PAGE ==========
 async function loadProfileData() {
     try {
@@ -2872,6 +2912,12 @@ async function loadProfileData() {
                 // Update display header
                 updateElement('profileDisplayName', user.name || 'User');
                 updateElement('profileDisplayEmail', user.email || 'user@example.com');
+                
+                // Update sidebar user info
+                const nameEl = document.querySelector('.sidebar-user-name');
+                const emailEl = document.querySelector('.sidebar-user-email');
+                if (nameEl) nameEl.textContent = user.name || 'User';
+                if (emailEl) emailEl.textContent = user.email || 'user@example.com';
                 
                 // Populate form fields
                 const nameInput = document.getElementById('profileName');
@@ -2891,6 +2937,10 @@ async function loadProfileData() {
                         const payload = JSON.parse(atob(token.split('.')[1]));
                         updateElement('profileDisplayName', payload.name || 'User');
                         updateElement('profileDisplayEmail', payload.email || 'user@example.com');
+                        // Update sidebar
+                        if (typeof updateSidebarUserInfo === 'function') {
+                            updateSidebarUserInfo();
+                        }
                         if (document.getElementById('profileName')) document.getElementById('profileName').value = payload.name || '';
                         if (document.getElementById('profileEmail')) document.getElementById('profileEmail').value = payload.email || '';
                     } catch (e) {
@@ -2907,6 +2957,10 @@ async function loadProfileData() {
                     const payload = JSON.parse(atob(token.split('.')[1]));
                     updateElement('profileDisplayName', payload.name || 'User');
                     updateElement('profileDisplayEmail', payload.email || 'user@example.com');
+                    // Update sidebar
+                    if (typeof updateSidebarUserInfo === 'function') {
+                        updateSidebarUserInfo();
+                    }
                     if (document.getElementById('profileName')) document.getElementById('profileName').value = payload.name || '';
                     if (document.getElementById('profileEmail')) document.getElementById('profileEmail').value = payload.email || '';
                 } catch (e) {
@@ -3032,8 +3086,16 @@ function setupProfileHandlers() {
                     if (response.token) {
                         localStorage.setItem('token', response.token);
                         toast.success('Profile updated successfully! Please refresh the page.');
+                        // Update sidebar before refresh
+                        if (typeof updateSidebarUserInfo === 'function') {
+                            updateSidebarUserInfo();
+                        }
                     } else {
                         toast.success('Profile updated successfully!');
+                        // Update sidebar immediately
+                        if (typeof updateSidebarUserInfo === 'function') {
+                            updateSidebarUserInfo();
+                        }
                     }
                 } else {
                     toast.error(response.error || 'Failed to update profile');
@@ -3055,34 +3117,152 @@ function setupProfileHandlers() {
         document.getElementById('enable2FA').addEventListener('change', async function(e) {
             const enabled = this.checked;
             
-            try {
-                toast.info(enabled ? 'Enabling two-factor authentication...' : 'Disabling two-factor authentication...');
-                
-                const response = await apiRequest('/auth/update_2fa', 'POST', {
-                    enabled: enabled
-                });
-                
-                if (response.success) {
-                    update2FAToggle(enabled);
-                    toast.success(enabled 
-                        ? 'Two-factor authentication enabled successfully!' 
-                        : 'Two-factor authentication disabled successfully!');
-                } else {
+            if (enabled) {
+                // Show setup modal when enabling
+                show2FASetupModal();
+                // Revert checkbox until setup is complete
+                this.checked = false;
+                update2FAToggle(false);
+            } else {
+                // Disable 2FA
+                try {
+                    toast.info('Disabling two-factor authentication...');
+                    
+                    const response = await apiRequest('/auth/update_2fa', 'POST', {
+                        enabled: false
+                    });
+                    
+                    if (response.success) {
+                        update2FAToggle(false);
+                        toast.success('Two-factor authentication disabled successfully!');
+                    } else {
+                        // Revert checkbox state on error
+                        this.checked = true;
+                        update2FAToggle(true);
+                        toast.error(response.error || 'Failed to disable two-factor authentication');
+                    }
+                } catch (error) {
+                    console.error('Error disabling 2FA:', error);
                     // Revert checkbox state on error
-                    this.checked = !enabled;
-                    update2FAToggle(!enabled);
-                    toast.error(response.error || 'Failed to update two-factor authentication');
+                    this.checked = true;
+                    update2FAToggle(true);
+                    toast.error(error.message || 'Failed to disable two-factor authentication');
                 }
-            } catch (error) {
-                console.error('Error updating 2FA:', error);
-                // Revert checkbox state on error
-                this.checked = !enabled;
-                update2FAToggle(!enabled);
-                toast.error(error.message || 'Failed to update two-factor authentication');
             }
         });
     }
 }
+
+window.show2FASetupModal = async function() {
+    try {
+        toast.info('Generating 2FA setup...');
+        
+        // Get TOTP secret and QR code
+        const setupResponse = await apiRequest('/auth/setup_2fa', 'POST');
+        
+        if (!setupResponse.success) {
+            toast.error(setupResponse.error || 'Failed to generate 2FA setup');
+            return;
+        }
+        
+        const { secret, qr_code, manual_entry_key } = setupResponse;
+        let currentSecret = secret; // Store for verification
+        
+        showInfoModal(
+            'Setup Two-Factor Authentication',
+            `
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Scan this QR code with your authenticator app:</p>
+                <div style="display: flex; justify-content: center; margin-bottom: 1rem; padding: 1rem; background: white; border-radius: var(--radius-md);">
+                    <img src="${qr_code}" alt="2FA QR Code" style="max-width: 250px; height: auto;">
+                </div>
+                <p style="color: var(--text-tertiary); font-size: 0.875rem; margin-bottom: 0.5rem;">Or enter this code manually:</p>
+                <div style="background: var(--bg-tertiary); padding: 0.75rem; border-radius: var(--radius-sm); font-family: monospace; font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 1rem;">
+                    ${manual_entry_key}
+                </div>
+            </div>
+            <form id="verify2FAForm">
+                <div class="form-group">
+                    <label class="form-label">Enter the 6-digit code from your authenticator app</label>
+                    <input type="text" class="form-control" id="totpCode" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem; font-family: monospace;">
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-check"></i> Verify & Enable
+                </button>
+                <button type="button" class="btn btn-secondary w-100" onclick="closeModal('infoModal')" style="margin-top: 0.5rem;">
+                    Cancel
+                </button>
+            </form>
+            `
+        );
+        
+        // Focus on code input
+        setTimeout(() => {
+            const codeInput = document.getElementById('totpCode');
+            if (codeInput) {
+                codeInput.focus();
+                // Auto-format as user types
+                codeInput.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                });
+            }
+        }, 100);
+        
+        // Handle form submission
+        setTimeout(() => {
+            const verifyForm = document.getElementById('verify2FAForm');
+            if (verifyForm) {
+                verifyForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const code = document.getElementById('totpCode').value.trim();
+                    
+                    if (code.length !== 6) {
+                        toast.error('Please enter a valid 6-digit code');
+                        return;
+                    }
+                    
+                    try {
+                        toast.info('Verifying code...');
+                        
+                        const response = await apiRequest('/auth/verify_2fa_setup', 'POST', {
+                            code: code,
+                            secret: currentSecret
+                        });
+                        
+                        if (response.success) {
+                            toast.success('Two-factor authentication enabled successfully!');
+                            closeModal('infoModal');
+                            
+                            // Update toggle state
+                            const checkbox = document.getElementById('enable2FA');
+                            if (checkbox) {
+                                checkbox.checked = true;
+                                update2FAToggle(true);
+                            }
+                            
+                            // Reload profile to get updated state
+                            await loadProfileData();
+                        } else {
+                            toast.error(response.error || 'Invalid code. Please try again.');
+                            document.getElementById('totpCode').value = '';
+                            document.getElementById('totpCode').focus();
+                        }
+                    } catch (error) {
+                        console.error('Error verifying 2FA:', error);
+                        toast.error(error.message || 'Failed to verify code');
+                        document.getElementById('totpCode').value = '';
+                        document.getElementById('totpCode').focus();
+                    }
+                });
+            }
+        }, 100);
+        
+    } catch (error) {
+        console.error('Error setting up 2FA:', error);
+        toast.error(error.message || 'Failed to setup two-factor authentication');
+    }
+};
 
 window.showChangePasswordModal = function() {
     showInfoModal(
@@ -3169,59 +3349,298 @@ window.showChangePasswordModal = function() {
 };
 
 // ========== SETTINGS PAGE ==========
-function loadSettingsData() {
-    // Load saved settings from localStorage
-    const currency = localStorage.getItem('currency') || 'INR';
-    const language = localStorage.getItem('language') || 'en';
-    const dateFormat = localStorage.getItem('dateFormat') || 'DD/MM/YYYY';
-    const emailNotifications = localStorage.getItem('emailNotifications') === 'true';
-    const financialAlerts = localStorage.getItem('financialAlerts') !== 'false';
-    const goalReminders = localStorage.getItem('goalReminders') !== 'false';
-    const insightUpdates = localStorage.getItem('insightUpdates') !== 'false';
-    
-    if (document.getElementById('currencySetting')) document.getElementById('currencySetting').value = currency;
-    if (document.getElementById('languageSetting')) document.getElementById('languageSetting').value = language;
-    if (document.getElementById('dateFormatSetting')) document.getElementById('dateFormatSetting').value = dateFormat;
-    if (document.getElementById('emailNotifications')) document.getElementById('emailNotifications').checked = emailNotifications;
-    if (document.getElementById('financialAlerts')) document.getElementById('financialAlerts').checked = financialAlerts;
-    if (document.getElementById('goalReminders')) document.getElementById('goalReminders').checked = goalReminders;
-    if (document.getElementById('insightUpdates')) document.getElementById('insightUpdates').checked = insightUpdates;
+async function loadSettingsData() {
+    try {
+        // Load settings from backend
+        const response = await apiRequest('/auth/settings', 'GET');
+        
+        if (response.success && response.settings) {
+            const settings = response.settings;
+            
+            // General settings
+            const currency = settings.currency || 'INR';
+            const language = settings.language || 'en';
+            const dateFormat = settings.dateFormat || 'DD/MM/YYYY';
+            
+            // Notification settings
+            const emailNotifications = settings.emailNotifications !== false;
+            const financialAlerts = settings.financialAlerts !== false;
+            const goalReminders = settings.goalReminders !== false;
+            const insightUpdates = settings.insightUpdates !== false;
+            
+            // Set form values
+            if (document.getElementById('currencySetting')) {
+                document.getElementById('currencySetting').value = currency;
+            }
+            if (document.getElementById('languageSetting')) {
+                document.getElementById('languageSetting').value = language;
+            }
+            if (document.getElementById('dateFormatSetting')) {
+                document.getElementById('dateFormatSetting').value = dateFormat;
+            }
+            if (document.getElementById('emailNotifications')) {
+                document.getElementById('emailNotifications').checked = emailNotifications;
+            }
+            if (document.getElementById('financialAlerts')) {
+                document.getElementById('financialAlerts').checked = financialAlerts;
+            }
+            if (document.getElementById('goalReminders')) {
+                document.getElementById('goalReminders').checked = goalReminders;
+            }
+            if (document.getElementById('insightUpdates')) {
+                document.getElementById('insightUpdates').checked = insightUpdates;
+            }
+        } else {
+            // Use defaults if no settings found
+            loadSettingsDataDefaults();
+        }
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        // Load defaults on error
+        loadSettingsDataDefaults();
+    }
+}
+
+function loadSettingsDataDefaults() {
+    // Set default values
+    if (document.getElementById('currencySetting')) {
+        document.getElementById('currencySetting').value = 'INR';
+    }
+    if (document.getElementById('languageSetting')) {
+        document.getElementById('languageSetting').value = 'en';
+    }
+    if (document.getElementById('dateFormatSetting')) {
+        document.getElementById('dateFormatSetting').value = 'DD/MM/YYYY';
+    }
+    if (document.getElementById('emailNotifications')) {
+        document.getElementById('emailNotifications').checked = false;
+    }
+    if (document.getElementById('financialAlerts')) {
+        document.getElementById('financialAlerts').checked = true;
+    }
+    if (document.getElementById('goalReminders')) {
+        document.getElementById('goalReminders').checked = true;
+    }
+    if (document.getElementById('insightUpdates')) {
+        document.getElementById('insightUpdates').checked = true;
+    }
+}
+
+async function saveSettingsToBackend(settings) {
+    try {
+        const response = await apiRequest('/auth/settings', 'POST', {
+            settings: settings
+        });
+        
+        if (response.success) {
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        return false;
+    }
 }
 
 function setupSettingsHandlers() {
     const form = document.getElementById('settingsForm');
     if (form) {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
             const currency = document.getElementById('currencySetting').value;
             const language = document.getElementById('languageSetting').value;
             const dateFormat = document.getElementById('dateFormatSetting').value;
             
-            localStorage.setItem('currency', currency);
-            localStorage.setItem('language', language);
-            localStorage.setItem('dateFormat', dateFormat);
-            
-            toast.success('General settings saved!');
+            // Get current settings and update general settings
+            try {
+                const currentResponse = await apiRequest('/auth/settings', 'GET');
+                const currentSettings = (currentResponse.success && currentResponse.settings) ? currentResponse.settings : {};
+                
+                const updatedSettings = {
+                    ...currentSettings,
+                    currency: currency,
+                    language: language,
+                    dateFormat: dateFormat
+                };
+                
+                const saved = await saveSettingsToBackend(updatedSettings);
+                if (saved) {
+                    toast.success('General settings saved successfully!');
+                    // Reload settings and trigger refresh
+                    if (typeof loadUserSettings === 'function') {
+                        await loadUserSettings();
+                        // Trigger refresh of all displayed data
+                        window.dispatchEvent(new CustomEvent('settingsUpdated'));
+                        // Reload current page data if available
+                        if (typeof loadFinancialData === 'function') {
+                            setTimeout(() => loadFinancialData(), 500);
+                        }
+                        // Reload budget if on budget page
+                        if (typeof loadBudgetData === 'function' && document.getElementById('budgetCategoriesList')) {
+                            setTimeout(() => loadBudgetData(), 500);
+                        }
+                        // Reload investments if on investments page
+                        if (typeof loadInvestmentsData === 'function' && document.getElementById('investmentsList')) {
+                            setTimeout(() => loadInvestmentsData(), 500);
+                        }
+                    }
+                } else {
+                    toast.error('Failed to save settings');
+                }
+            } catch (error) {
+                console.error('Error saving general settings:', error);
+                toast.error('Failed to save settings');
+            }
         });
     }
     
-    // Notification toggles
+    // Notification toggles - save on change
     ['emailNotifications', 'financialAlerts', 'goalReminders', 'insightUpdates'].forEach(id => {
         const checkbox = document.getElementById(id);
         if (checkbox) {
-            checkbox.addEventListener('change', function() {
-                localStorage.setItem(id, this.checked);
-                toast.success('Notification settings updated!');
+            checkbox.addEventListener('change', async function() {
+                try {
+                    // Get current settings and update notification settings
+                    const currentResponse = await apiRequest('/auth/settings', 'GET');
+                    const currentSettings = (currentResponse.success && currentResponse.settings) ? currentResponse.settings : {};
+                    
+                    const updatedSettings = {
+                        ...currentSettings,
+                        [id]: this.checked
+                    };
+                    
+                    const saved = await saveSettingsToBackend(updatedSettings);
+                    if (saved) {
+                        toast.success('Notification settings updated!');
+                    } else {
+                        // Revert checkbox on error
+                        this.checked = !this.checked;
+                        toast.error('Failed to update notification settings');
+                    }
+                } catch (error) {
+                    console.error('Error updating notification setting:', error);
+                    // Revert checkbox on error
+                    this.checked = !this.checked;
+                    toast.error('Failed to update notification settings');
+                }
             });
         }
     });
 }
 
-function showDeleteAccountModal() {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-        toast.error('Account deletion feature coming soon. Please contact support.');
+window.exportData = async function() {
+    try {
+        toast.info('Preparing your data export...');
+        
+        const response = await apiRequest('/auth/export-data', 'GET');
+        
+        if (response.success && response.data) {
+            // Create a blob and download
+            const dataStr = JSON.stringify(response.data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `fingenie-data-export-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            toast.success('Data exported successfully!');
+        } else {
+            toast.error('Failed to export data');
+        }
+    } catch (error) {
+        console.error('Error exporting data:', error);
+        toast.error('Failed to export data');
     }
-}
+};
+
+window.showDeleteAccountModal = function() {
+    showInfoModal(
+        'Delete Account',
+        `
+        <div style="margin-bottom: 1.5rem;">
+            <div style="background: var(--danger-light, #fee); border: 1px solid var(--danger, #f00); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
+                <p style="color: var(--danger, #d00); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning: This action cannot be undone!</strong>
+                </p>
+            </div>
+            <p style="color: var(--text-secondary);">
+                Deleting your account will permanently remove:
+            </p>
+            <ul style="color: var(--text-secondary); margin: 0.5rem 0 1rem 1.5rem;">
+                <li>Your profile and account information</li>
+                <li>All financial data, goals, and investments</li>
+                <li>Custom graphs and reports</li>
+                <li>All settings and preferences</li>
+            </ul>
+        </div>
+        <form id="deleteAccountForm">
+            <div class="form-group">
+                <label class="form-label">Type "delete my account" to confirm:</label>
+                <input 
+                    type="text" 
+                    class="form-control" 
+                    id="deleteConfirm" 
+                    placeholder="delete my account"
+                    required
+                >
+            </div>
+            <button type="submit" class="btn btn-danger w-100" style="margin-top: 1rem;">
+                <i class="fas fa-trash"></i> Delete My Account Permanently
+            </button>
+            <button type="button" class="btn btn-secondary w-100" onclick="closeModal('infoModal')" style="margin-top: 0.5rem;">
+                Cancel
+            </button>
+        </form>
+        `
+    );
+    
+    // Handle form submission
+    setTimeout(() => {
+        const deleteForm = document.getElementById('deleteAccountForm');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const confirmText = document.getElementById('deleteConfirm').value.trim();
+                
+                if (confirmText.toLowerCase() !== 'delete my account') {
+                    toast.error('Please type "delete my account" exactly to confirm');
+                    return;
+                }
+                
+                try {
+                    toast.info('Deleting your account...');
+                    
+                    const response = await apiRequest('/auth/delete-account', 'POST', {
+                        confirm: confirmText
+                    });
+                    
+                    if (response.success) {
+                        toast.success('Account deleted successfully. You will be logged out.');
+                        closeModal('infoModal');
+                        
+                        // Clear local storage and redirect to login
+                        setTimeout(() => {
+                            localStorage.clear();
+                            window.location.href = '/login';
+                        }, 2000);
+                    } else {
+                        toast.error(response.error || 'Failed to delete account');
+                    }
+                } catch (error) {
+                    console.error('Error deleting account:', error);
+                    toast.error(error.message || 'Failed to delete account');
+                }
+            });
+        }
+    }, 100);
+};
 
 // ========== UTILITY FUNCTIONS ==========
 function updateElement(id, value) {
@@ -3406,9 +3825,9 @@ function renderGraphPreview(config) {
                             if (chartType === 'pie' || chartType === 'doughnut') {
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${label}: ₹${value.toLocaleString('en-IN')} (${percentage}%)`;
+                                return `${label}: ${formatCurrency(value)} (${percentage}%)`;
                             } else {
-                                return `${label}: ₹${value.toLocaleString('en-IN')}`;
+                                return `${label}: ${formatCurrency(value)}`;
                             }
                         },
                         afterLabel: function(context) {
@@ -3665,9 +4084,9 @@ function renderCustomGraph(canvasId, config) {
                             if (chartType === 'pie' || chartType === 'doughnut') {
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${label}: ₹${value.toLocaleString('en-IN')} (${percentage}%)`;
+                                return `${label}: ${formatCurrency(value)} (${percentage}%)`;
                             } else {
-                                return `${label}: ₹${value.toLocaleString('en-IN')}`;
+                                return `${label}: ${formatCurrency(value)}`;
                             }
                         },
                         afterLabel: function(context) {
@@ -3832,7 +4251,12 @@ window.saveCustomGraph = window.saveCustomGraph;
 window.deleteCustomGraph = window.deleteCustomGraph;
 
 // Initialize pages when DOM is ready
+// Update sidebar user info on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Update sidebar with user info immediately
+    if (typeof updateSidebarUserInfo === 'function') {
+        updateSidebarUserInfo();
+    }
     console.log('📄 pages-functionality.js loaded, initializePages is available:', typeof window.initializePages);
     // Wait for page to be loaded dynamically
     setTimeout(() => {

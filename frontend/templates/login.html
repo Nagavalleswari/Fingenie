@@ -29,7 +29,7 @@
                 <p class="login-subtitle">Sign in to access your financial dashboard</p>
             </div>
 
-            <form id="loginForm">
+            <form id="loginForm" onsubmit="return false;">
                 <div class="form-group">
                     <label class="form-label">Email Address</label>
                     <div class="input-group">
@@ -77,55 +77,183 @@
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        let requires2FA = false;
+        
+        function show2FALoginInput() {
+            const loginForm = document.getElementById('loginForm');
+            let totpContainer = document.getElementById('totpLoginContainer');
+            
+            if (!totpContainer) {
+                totpContainer = document.createElement('div');
+                totpContainer.id = 'totpLoginContainer';
+                totpContainer.style.marginTop = '1rem';
+                totpContainer.innerHTML = `
+                    <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-shield-alt"></i>
+                            Two-Factor Authentication Code
+                        </label>
+                        <div class="input-group">
+                            <i class="fas fa-key input-icon"></i>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="totpCode" 
+                                placeholder="000000" 
+                                maxlength="6" 
+                                pattern="[0-9]{6}" 
+                                required
+                                style="text-align: center; font-size: 1.25rem; letter-spacing: 0.5rem; font-family: monospace;"
+                            >
+                        </div>
+                        <small style="color: var(--text-tertiary); font-size: 0.875rem; display: block; margin-top: 0.5rem;">
+                            Enter the 6-digit code from your authenticator app
+                        </small>
+                    </div>
+                `;
+                
+                const submitBtn = document.getElementById('loginBtn');
+                submitBtn.parentNode.insertBefore(totpContainer, submitBtn);
+                
+                setTimeout(() => {
+                    const totpInput = document.getElementById('totpCode');
+                    if (totpInput) {
+                        totpInput.focus();
+                        totpInput.addEventListener('input', function(e) {
+                            this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                        });
+                    }
+                }, 100);
+            }
+        }
+        
+        function hide2FALoginInput() {
+            const totpContainer = document.getElementById('totpLoginContainer');
+            if (totpContainer) {
+                totpContainer.remove();
+            }
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const totpCodeInput = document.getElementById('totpCode');
+            const totpCode = totpCodeInput ? totpCodeInput.value.trim() : '';
             const loginBtn = document.getElementById('loginBtn');
+            
+            // Prevent multiple submissions
+            if (loginBtn.disabled && !requires2FA) {
+                return false;
+            }
             
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
 
-             fetch('/login', {
-                 method: 'POST',
-                 headers: {
-                     'Content-Type': 'application/json'
-                 },
-                 credentials: 'include',
-                 body: JSON.stringify({ email, password })
-             })
-             .then(response => {
-                 if (!response.ok) {
-                     return response.json().then(err => {
-                         throw new Error(err.message || err.error || 'Login failed');
-                     });
-                 }
-                 return response.json();
-             })
-             .then(data => {
-                 if (data.success) {
-                     // Save token to localStorage
-                     if (data.token) {
-                         localStorage.setItem('token', data.token);
-                     }
-toast.success('Login successful! Redirecting...');
-                     setTimeout(() => {
-                         window.location.href = '/dashboard';
-                     }, 1000);
-                 } else {
-toast.error(data.message || data.error || 'Login failed. Please try again.');
-                     loginBtn.disabled = false;
-                     loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
-                 }
-             })
-             .catch(error => {
-                 console.error('Error:', error);
-toast.error('An error occurred. Please try again.');
-                 loginBtn.disabled = false;
-                 loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
-             });
-        });
+            const loginData = { email, password };
+            if (totpCode) {
+                loginData.totp_code = totpCode;
+            }
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(loginData)
+                });
+                
+                let data;
+                try {
+                    data = await response.json();
+                } catch (jsonError) {
+                    console.error('JSON parse error:', jsonError);
+                    throw new Error('Invalid response from server');
+                }
+                
+                // Handle 2FA requirement (first step - password correct, need code)
+                if (data.requires_2fa && !totpCode) {
+                    // Show 2FA input
+                    requires2FA = true;
+                    show2FALoginInput();
+                    toast.info('Please enter your 2FA code', 3000);
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+                    return false; // Prevent any form submission
+                }
+                
+                // Handle 2FA verification failure (code provided but invalid)
+                if (data.requires_2fa && totpCode && !data.success) {
+                    // Invalid 2FA code
+                    requires2FA = true;
+                    if (!document.getElementById('totpLoginContainer')) {
+                        show2FALoginInput();
+                    }
+                    toast.error(data.message || data.error || 'Invalid 2FA code. Please try again.');
+                    if (totpCodeInput) {
+                        totpCodeInput.value = '';
+                        setTimeout(() => totpCodeInput.focus(), 100);
+                    }
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+                    return false; // Prevent form submission
+                }
+                
+                // Check for general errors
+                if (!response.ok || !data.success) {
+                    const errorMsg = data.message || data.error || 'Login failed';
+                    throw new Error(errorMsg);
+                }
+                
+                // Login successful
+                // Save token to localStorage
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                }
+                
+                toast.success('Login successful! Redirecting...');
+                // Update sidebar user info before redirect (if function is available)
+                if (typeof updateSidebarUserInfo === 'function') {
+                    updateSidebarUserInfo();
+                }
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1000);
+                return false; // Prevent form submission
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                
+                // Handle 2FA-related errors
+                const errorMsg = error.message || 'Login failed';
+                if (errorMsg.includes('2FA') || errorMsg.includes('2-factor') || requires2FA) {
+                    // Keep 2FA input visible for retry
+                    if (!document.getElementById('totpLoginContainer')) {
+                        show2FALoginInput();
+                    }
+                    requires2FA = true;
+                    toast.error(errorMsg || 'Invalid 2FA code. Please try again.');
+                    if (totpCodeInput) {
+                        totpCodeInput.value = '';
+                        setTimeout(() => totpCodeInput.focus(), 100);
+                    }
+                } else {
+                    // Regular login error - hide 2FA input
+                    hide2FALoginInput();
+                    requires2FA = false;
+                    toast.error(errorMsg || 'Login failed. Please check your credentials.');
+                }
+                
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+                return false; // Always prevent form submission
+            }
+        }, { passive: false });
     </script>
 </body>
 </html>

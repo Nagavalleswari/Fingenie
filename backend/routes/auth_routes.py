@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, make_response
 import sys
 import os
+from datetime import datetime
 
 # Add parent directory to path for imports
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -149,6 +150,32 @@ def init_auth_routes(db):
             
             if not is_valid:
                 return jsonify({'success': False, 'error': 'Invalid email or password', 'message': 'Invalid email or password'}), 401
+            
+            # Check if 2FA is enabled
+            two_factor_enabled = user.get('two_factor_enabled', False)
+            
+            # If 2FA is enabled, require TOTP code
+            if two_factor_enabled:
+                totp_code = data.get('totp_code', '').strip()
+                
+                if not totp_code:
+                    # First step: password is correct, but need TOTP code
+                    # Return 200 but with requires_2fa flag to prevent form submission
+                    return jsonify({
+                        'success': False,
+                        'requires_2fa': True,
+                        'message': 'Please enter your 2FA code',
+                        'error': '2FA code required'
+                    }), 200
+                
+                # Verify TOTP code
+                if not user_model.verify_totp(user['_id'], totp_code):
+                    return jsonify({
+                        'success': False,
+                        'requires_2fa': True,
+                        'error': 'Invalid 2FA code',
+                        'message': 'Invalid 2FA code. Please try again.'
+                    }), 401
             
             # Generate token
             token = encode_token(user['_id'], user['email'])
@@ -330,9 +357,130 @@ def init_auth_routes(db):
             traceback.print_exc()
             return jsonify({'error': f'Server error: {str(e)}'}), 500
     
+    @auth_bp.route('/setup_2fa', methods=['POST'])
+    def setup_2fa():
+        """Generate TOTP secret and QR code for 2FA setup"""
+        try:
+            from utils.jwt_handler import decode_token
+            import pyotp
+            import qrcode
+            from io import BytesIO
+            import base64
+            
+            # Get token from cookie or Authorization header
+            token = request.cookies.get('token') or (request.headers.get('Authorization') and request.headers.get('Authorization').replace('Bearer ', ''))
+            
+            if not token:
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            # Decode token
+            payload, error = decode_token(token)
+            if error or not payload:
+                return jsonify({'error': error or 'Invalid token'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            # Get user
+            user = user_model.find_by_id(user_id)
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            
+            # Generate TOTP secret
+            totp_secret = pyotp.random_base32()
+            
+            # Create TOTP URI for QR code
+            totp = pyotp.TOTP(totp_secret)
+            issuer = "FinGenie"
+            account_name = user.get('email', user.get('name', 'User'))
+            totp_uri = totp.provisioning_uri(
+                name=account_name,
+                issuer_name=issuer
+            )
+            
+            # Generate QR code
+            qr = qrcode.QRCode(version=1, box_size=10, border=5)
+            qr.add_data(totp_uri)
+            qr.make(fit=True)
+            
+            img = qr.make_image(fill_color="black", back_color="white")
+            buffer = BytesIO()
+            img.save(buffer, format='PNG')
+            buffer.seek(0)
+            
+            # Convert to base64 for frontend
+            qr_code_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            
+            return jsonify({
+                'success': True,
+                'secret': totp_secret,
+                'qr_code': f'data:image/png;base64,{qr_code_base64}',
+                'manual_entry_key': totp_secret  # For manual entry
+            }), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @auth_bp.route('/verify_2fa_setup', methods=['POST'])
+    def verify_2fa_setup():
+        """Verify TOTP code and enable 2FA"""
+        try:
+            from utils.jwt_handler import decode_token
+            import pyotp
+            
+            # Get token from cookie or Authorization header
+            token = request.cookies.get('token') or (request.headers.get('Authorization') and request.headers.get('Authorization').replace('Bearer ', ''))
+            
+            if not token:
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            # Decode token
+            payload, error = decode_token(token)
+            if error or not payload:
+                return jsonify({'error': error or 'Invalid token'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'No data provided'}), 400
+            
+            totp_code = data.get('code', '').strip()
+            totp_secret = data.get('secret', '').strip()
+            
+            if not totp_code or not totp_secret:
+                return jsonify({'error': 'TOTP code and secret are required'}), 400
+            
+            # Verify the TOTP code
+            totp = pyotp.TOTP(totp_secret)
+            if not totp.verify(totp_code, valid_window=1):
+                return jsonify({'error': 'Invalid TOTP code. Please try again.'}), 400
+            
+            # Enable 2FA and save the secret
+            success, error = user_model.update_2fa(user_id, True, totp_secret)
+            
+            if not success:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'success': True,
+                'message': 'Two-factor authentication enabled successfully!',
+                'two_factor_enabled': True
+            }), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
     @auth_bp.route('/update_2fa', methods=['POST'])
     def update_2fa():
-        """Update two-factor authentication setting"""
+        """Disable two-factor authentication"""
         try:
             from utils.jwt_handler import decode_token
             
@@ -357,16 +505,202 @@ def init_auth_routes(db):
             
             enabled = data.get('enabled', False)
             
-            # Update 2FA setting
-            success, error = user_model.update_2fa(user_id, enabled)
+            # Only allow disabling (setup is done via verify_2fa_setup)
+            if enabled:
+                return jsonify({'error': 'Please use the setup flow to enable 2FA'}), 400
+            
+            # Disable 2FA
+            success, error = user_model.update_2fa(user_id, False)
             
             if not success:
                 return jsonify({'error': error}), 400
             
             return jsonify({
                 'success': True,
-                'message': 'Two-factor authentication updated successfully',
-                'two_factor_enabled': enabled
+                'message': 'Two-factor authentication disabled successfully',
+                'two_factor_enabled': False
+            }), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @auth_bp.route('/settings', methods=['GET'])
+    def get_settings():
+        """Get user settings"""
+        try:
+            from utils.jwt_handler import decode_token
+            
+            # Get token from cookie or Authorization header
+            token = request.cookies.get('token') or (request.headers.get('Authorization') and request.headers.get('Authorization').replace('Bearer ', ''))
+            
+            if not token:
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            # Decode token
+            payload, error = decode_token(token)
+            if error or not payload:
+                return jsonify({'error': error or 'Invalid token'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            # Get settings from user model
+            settings = user_model.get_settings(user_id)
+            
+            return jsonify({
+                'success': True,
+                'settings': settings
+            }), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @auth_bp.route('/settings', methods=['POST'])
+    def save_settings():
+        """Save user settings"""
+        try:
+            from utils.jwt_handler import decode_token
+            
+            # Get token from cookie or Authorization header
+            token = request.cookies.get('token') or (request.headers.get('Authorization') and request.headers.get('Authorization').replace('Bearer ', ''))
+            
+            if not token:
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            # Decode token
+            payload, error = decode_token(token)
+            if error or not payload:
+                return jsonify({'error': error or 'Invalid token'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'No data provided'}), 400
+            
+            settings = data.get('settings', {})
+            
+            # Save settings
+            success, error = user_model.save_settings(user_id, settings)
+            
+            if not success:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'success': True,
+                'message': 'Settings saved successfully',
+                'settings': settings
+            }), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @auth_bp.route('/export-data', methods=['GET'])
+    def export_user_data():
+        """Export all user data as JSON"""
+        try:
+            from utils.jwt_handler import decode_token
+            
+            # Get token from cookie or Authorization header
+            token = request.cookies.get('token') or (request.headers.get('Authorization') and request.headers.get('Authorization').replace('Bearer ', ''))
+            
+            if not token:
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            # Decode token
+            payload, error = decode_token(token)
+            if error or not payload:
+                return jsonify({'error': error or 'Invalid token'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            # Get user profile
+            user = user_model.find_by_id(user_id)
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            
+            # Remove sensitive data
+            user_export = {
+                'name': user.get('name'),
+                'email': user.get('email'),
+                'phone': user.get('phone'),
+                'date_of_birth': user.get('date_of_birth'),
+                'created_at': user.get('created_at'),
+                'settings': user.get('settings', {})
+            }
+            
+            # Get financial data
+            financial_data, _ = finance_model.get_data(user_id)
+            
+            # Prepare export data
+            export_data = {
+                'user_profile': user_export,
+                'financial_data': financial_data,
+                'export_date': datetime.now().isoformat(),
+                'version': '1.0.0'
+            }
+            
+            return jsonify({
+                'success': True,
+                'data': export_data
+            }), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @auth_bp.route('/delete-account', methods=['POST'])
+    def delete_account():
+        """Delete user account and all associated data"""
+        try:
+            from utils.jwt_handler import decode_token
+            
+            # Get token from cookie or Authorization header
+            token = request.cookies.get('token') or (request.headers.get('Authorization') and request.headers.get('Authorization').replace('Bearer ', ''))
+            
+            if not token:
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            # Decode token
+            payload, error = decode_token(token)
+            if error or not payload:
+                return jsonify({'error': error or 'Invalid token'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            data = request.get_json()
+            confirm_text = data.get('confirm', '')
+            
+            # Require explicit confirmation
+            if confirm_text.lower() != 'delete my account':
+                return jsonify({'error': 'Please type "delete my account" to confirm'}), 400
+            
+            # Delete financial data
+            finance_model.collection.delete_many({"user_id": ObjectId(user_id)})
+            
+            # Delete user account
+            success, error = user_model.delete_account(user_id)
+            
+            if not success:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'success': True,
+                'message': 'Account deleted successfully'
             }), 200
             
         except Exception as e:

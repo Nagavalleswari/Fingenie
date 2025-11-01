@@ -2,6 +2,111 @@
 
 const API_BASE_URL = '/api';
 
+// Currency and Locale Settings
+let userSettings = {
+    currency: 'INR',
+    language: 'en',
+    dateFormat: 'DD/MM/YYYY'
+};
+
+// Currency configuration
+const CURRENCY_CONFIG = {
+    'INR': { symbol: '₹', locale: 'en-IN', position: 'before' },
+    'USD': { symbol: '$', locale: 'en-US', position: 'before' },
+    'EUR': { symbol: '€', locale: 'en-EU', position: 'before' },
+    'GBP': { symbol: '£', locale: 'en-GB', position: 'before' }
+};
+
+// Language locale mapping
+const LANGUAGE_LOCALES = {
+    'en': 'en-IN',
+    'hi': 'hi-IN'
+};
+
+// Load user settings from backend
+async function loadUserSettings() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            // Use defaults if not logged in
+            return;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/auth/settings`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.settings) {
+                userSettings = {
+                    currency: data.settings.currency || 'INR',
+                    language: data.settings.language || 'en',
+                    dateFormat: data.settings.dateFormat || 'DD/MM/YYYY'
+                };
+                
+                // Apply language to document
+                if (document.documentElement) {
+                    document.documentElement.lang = userSettings.language;
+                }
+                
+                // Trigger settings change event for other scripts
+                window.dispatchEvent(new CustomEvent('settingsUpdated'));
+            }
+        }
+    } catch (error) {
+        console.error('Error loading user settings:', error);
+    }
+}
+
+// Format currency based on user settings
+function formatCurrency(amount) {
+    const config = CURRENCY_CONFIG[userSettings.currency] || CURRENCY_CONFIG['INR'];
+    const locale = LANGUAGE_LOCALES[userSettings.language] || config.locale;
+    
+    // Format number with locale
+    const formattedAmount = typeof amount === 'number' 
+        ? amount.toLocaleString(locale, { 
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2 
+        })
+        : parseFloat(amount || 0).toLocaleString(locale, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        });
+    
+    // Add currency symbol
+    return config.position === 'before' 
+        ? `${config.symbol}${formattedAmount}`
+        : `${formattedAmount} ${config.symbol}`;
+}
+
+// Format currency for display (with sign)
+function formatCurrencyWithSign(amount, showPositiveSign = false) {
+    const sign = amount >= 0 ? (showPositiveSign ? '+' : '') : '-';
+    return sign + formatCurrency(Math.abs(amount));
+}
+
+// Initialize settings on page load
+if (typeof window !== 'undefined') {
+    // Load settings when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadUserSettings);
+    } else {
+        loadUserSettings();
+    }
+    
+    // Also load settings if user is already logged in (for dashboard)
+    if (localStorage.getItem('token')) {
+        loadUserSettings();
+    }
+}
+
 // Toast Notification System
 class ToastManager {
     constructor() {
@@ -201,7 +306,9 @@ function checkAuthDelayed() {
 }
 
 // Login functionality
-if (document.getElementById('loginForm')) {
+// Note: Login form handler is handled inline in login.html to support 2FA
+// This handler only runs if login.html doesn't override it
+if (document.getElementById('loginForm') && window.location.pathname !== '/login') {
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -217,19 +324,32 @@ if (document.getElementById('loginForm')) {
         try {
             const result = await apiRequest('/auth/login', 'POST', { email, password });
             
+            // Check if 2FA is required
+            if (result.requires_2fa) {
+                // This should not happen here since login.html handles it
+                toast.error('2FA is required. Please use the login page.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+                return;
+            }
+            
             // Save token to localStorage immediately
             if (result.token) {
                 saveAuthToken(result.token);
             }
             
-toast.success('Login successful! Redirecting...', 2000);
+            toast.success('Login successful! Redirecting...', 2000);
+            // Update sidebar user info before redirect
+            if (typeof updateSidebarUserInfo === 'function') {
+                updateSidebarUserInfo();
+            }
             // Small delay to ensure token is saved before redirect
             setTimeout(() => {
                 window.location.href = '/dashboard';
             }, 500);
         } catch (error) {
             console.error('Login error:', error);
-toast.error(error.message || 'Login failed. Please check your credentials.');
+            toast.error(error.message || 'Login failed. Please check your credentials.');
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnHtml;
         }
@@ -269,6 +389,10 @@ if (document.getElementById('signupForm')) {
             }
             
 toast.success('Account created successfully! Redirecting...', 2000);
+            // Update sidebar user info before redirect
+            if (typeof updateSidebarUserInfo === 'function') {
+                updateSidebarUserInfo();
+            }
             setTimeout(() => {
                 window.location.href = '/dashboard';
             }, 500);
@@ -352,6 +476,11 @@ if ((window.location.pathname === '/dashboard' || window.location.pathname === '
         
         console.log('🚀 Initializing dashboard...');
         dashboardInitialized = true;
+        
+        // Load user info in sidebar
+        if (typeof updateSidebarUserInfo === 'function') {
+            updateSidebarUserInfo();
+        }
         
         // Wait for Chart.js to be available
         let retries = 0;
@@ -552,7 +681,7 @@ window.updateDashboardWithData = async function(data, isMockData) {
     if (totalAssetsEl) {
         console.log('Updating totalAssets with value:', totalAssets);
         // Set value immediately first, then animate
-        totalAssetsEl.textContent = `₹${totalAssets.toLocaleString()}`;
+        totalAssetsEl.textContent = formatCurrency(totalAssets);
         animateNumber('totalAssets', totalAssets);
     } else {
         console.warn('❌ totalAssets element not found in DOM');
@@ -560,7 +689,7 @@ window.updateDashboardWithData = async function(data, isMockData) {
     if (totalLiabilitiesEl) {
         console.log('Updating totalLiabilities with value:', totalLiabilities);
         // Set value immediately first, then animate
-        totalLiabilitiesEl.textContent = `₹${totalLiabilities.toLocaleString()}`;
+        totalLiabilitiesEl.textContent = formatCurrency(totalLiabilities);
         animateNumber('totalLiabilities', totalLiabilities);
     } else {
         console.warn('❌ totalLiabilities element not found in DOM');
@@ -568,7 +697,7 @@ window.updateDashboardWithData = async function(data, isMockData) {
     if (netWorthEl) {
         console.log('Updating netWorth with value:', netWorth);
         // Set value immediately first, then animate
-        netWorthEl.textContent = `₹${netWorth.toLocaleString()}`;
+        netWorthEl.textContent = formatCurrency(netWorth);
         animateNumber('netWorth', netWorth);
     } else {
         console.warn('❌ netWorth element not found in DOM');
@@ -603,7 +732,7 @@ window.updateDashboardWithData = async function(data, isMockData) {
             if (data.assets && Object.keys(data.assets).length > 0) {
                 html += '<div class="col-md-4"><h6>Assets</h6><ul>';
                 for (const [key, value] of Object.entries(data.assets)) {
-                    html += `<li><strong>${key.replace('_', ' ')}:</strong> ₹${value.toLocaleString()}</li>`;
+                    html += `<li><strong>${key.replace('_', ' ')}:</strong> ${formatCurrency(value)}</li>`;
                 }
                 html += '</ul></div>';
             }
@@ -611,7 +740,7 @@ window.updateDashboardWithData = async function(data, isMockData) {
             if (data.liabilities && Object.keys(data.liabilities).length > 0) {
                 html += '<div class="col-md-4"><h6>Liabilities</h6><ul>';
                 for (const [key, value] of Object.entries(data.liabilities)) {
-                    html += `<li><strong>${key.replace('_', ' ')}:</strong> ₹${value.toLocaleString()}</li>`;
+                    html += `<li><strong>${key.replace('_', ' ')}:</strong> ${formatCurrency(value)}</li>`;
                 }
                 html += '</ul></div>';
             }
@@ -619,7 +748,7 @@ window.updateDashboardWithData = async function(data, isMockData) {
             if (data.goals && data.goals.length > 0) {
                 html += '<div class="col-md-4"><h6>Goals</h6><ul>';
                 data.goals.forEach(goal => {
-                    html += `<li><strong>${goal.name}:</strong> ₹${goal.target.toLocaleString()} by ${goal.year}</li>`;
+                    html += `<li><strong>${goal.name}:</strong> ${formatCurrency(goal.target)} by ${goal.year}</li>`;
                 });
                 html += '</ul></div>';
             }
@@ -963,11 +1092,11 @@ function animateNumber(elementId, finalValue) {
         const currentValue = startValue + (increment * currentStep);
         
         if (currentStep >= steps) {
-            element.textContent = `₹${finalValue.toLocaleString()}`;
+            element.textContent = formatCurrency(finalValue);
             element.classList.add('counter-animate');
             clearInterval(counter);
         } else {
-            element.textContent = `₹${Math.round(currentValue).toLocaleString()}`;
+            element.textContent = formatCurrency(Math.round(currentValue));
         }
     }, duration / steps);
 }
@@ -1076,7 +1205,7 @@ function updateCharts(data) {
                                 const value = context.parsed || 0;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
+                                return `${label}: ${formatCurrency(value)} (${percentage}%)`;
                             }
                         }
                     }
@@ -1157,7 +1286,7 @@ function updateCharts(data) {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return `₹${context.parsed.y.toLocaleString()}`;
+                                return formatCurrency(context.parsed.y);
                             }
                         }
                     }
@@ -1175,7 +1304,7 @@ function updateCharts(data) {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return '₹' + value.toLocaleString();
+                                return formatCurrency(value);
                             },
                             font: {
                                 family: 'Inter'
@@ -1263,7 +1392,7 @@ function updateGoalsProgress(goals) {
                                 ${goal.name}
                             </div>
                             <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; color: var(--text-tertiary); font-size: 0.9rem;">
-                                <span><i class="fas fa-tag"></i> Target: ₹${goal.target.toLocaleString()}</span>
+                                <span><i class="fas fa-tag"></i> Target: ${formatCurrency(goal.target)}</span>
                                 <span><i class="fas fa-calendar"></i> By ${goal.year}</span>
                                 <span><i class="fas fa-clock"></i> ${yearsRemaining} years remaining</span>
                             </div>
@@ -1279,9 +1408,9 @@ function updateGoalsProgress(goals) {
                         <div style="background: var(--gradient-primary); height: 100%; width: ${goalProgress}%; transition: width 0.5s ease; border-radius: var(--radius-md);"></div>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-tertiary); font-size: 0.875rem; padding-top: 0.5rem; border-top: 1px solid var(--border-primary);">
-                        <span><i class="fas fa-calculator"></i> ~₹${monthlyTarget.toLocaleString()}/month needed</span>
+                        <span><i class="fas fa-calculator"></i> ~${formatCurrency(monthlyTarget)}/month needed</span>
                         <span style="color: var(--accent-cyan); font-weight: 600;">
-                            ₹${Math.max(0, goal.target - goalCurrent).toLocaleString()} remaining
+                            ${formatCurrency(Math.max(0, goal.target - goalCurrent))} remaining
                         </span>
                     </div>
                 </div>
@@ -1356,7 +1485,7 @@ function showFinancialAnalysis(data, totalAssets, totalLiabilities, netWorth) {
             insights.push({
                 type: 'error',
                 icon: 'fa-exclamation-triangle',
-                text: `High debt-to-asset ratio (${debtRatio.toFixed(1)}%). Focus on paying off high-interest debt first. Consider paying ₹${Math.round(totalLiabilities * 0.2).toLocaleString()} monthly.`
+                text: `High debt-to-asset ratio (${debtRatio.toFixed(1)}%). Focus on paying off high-interest debt first. Consider paying ${formatCurrency(Math.round(totalLiabilities * 0.2))} monthly.`
             });
         } else if (debtRatio < 20) {
             insights.push({
@@ -1378,7 +1507,7 @@ function showFinancialAnalysis(data, totalAssets, totalLiabilities, netWorth) {
         insights.push({
             type: 'info',
             icon: 'fa-chart-line',
-            text: `Current net worth: ₹${netWorth.toLocaleString()}. With proper investment strategy, this could grow to ₹${(netWorth * 1.5).toLocaleString()} in 2-3 years.`
+            text: `Current net worth: ${formatCurrency(netWorth)}. With proper investment strategy, this could grow to ${formatCurrency(netWorth * 1.5)} in 2-3 years.`
         });
     }
     
@@ -1398,13 +1527,13 @@ function showFinancialAnalysis(data, totalAssets, totalLiabilities, netWorth) {
             insights.push({
                 type: 'info',
                 icon: 'fa-bullseye',
-                text: `Great progress! ${progressPercent.toFixed(1)}% towards your goals. Keep saving ₹${Math.round((totalGoalTarget - currentAvailable) / (goals.length * 12)).toLocaleString()} monthly to achieve them.`
+                text: `Great progress! ${progressPercent.toFixed(1)}% towards your goals. Keep saving ${formatCurrency(Math.round((totalGoalTarget - currentAvailable) / (goals.length * 12)))} monthly to achieve them.`
             });
         } else {
             insights.push({
                 type: 'warning',
                 icon: 'fa-bullseye',
-                text: `You're ${progressPercent.toFixed(1)}% towards your goals. Increase savings by ₹${Math.round((totalGoalTarget - currentAvailable) / (goals.length * 12)).toLocaleString()} monthly.`
+                text: `You're ${progressPercent.toFixed(1)}% towards your goals. Increase savings by ${formatCurrency(Math.round((totalGoalTarget - currentAvailable) / (goals.length * 12)))} monthly.`
             });
         }
     }

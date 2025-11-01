@@ -171,17 +171,26 @@ class UserModel:
         except Exception as e:
             return False, f"Error changing password: {str(e)}"
     
-    def update_2fa(self, user_id, enabled):
+    def update_2fa(self, user_id, enabled, totp_secret=None):
         """Update two-factor authentication setting"""
         try:
             user_obj_id = ObjectId(user_id)
             
+            update_doc = {
+                "two_factor_enabled": enabled,
+                "updated_at": datetime.now().isoformat()
+            }
+            
+            if totp_secret:
+                update_doc["totp_secret"] = totp_secret
+            
+            if not enabled:
+                # Clear TOTP secret if disabling 2FA
+                update_doc["totp_secret"] = None
+            
             result = self.collection.update_one(
                 {"_id": user_obj_id},
-                {"$set": {
-                    "two_factor_enabled": enabled,
-                    "updated_at": datetime.now().isoformat()
-                }}
+                {"$set": update_doc}
             )
             
             if result.matched_count == 0:
@@ -191,6 +200,31 @@ class UserModel:
             
         except Exception as e:
             return False, f"Error updating 2FA: {str(e)}"
+    
+    def get_totp_secret(self, user_id):
+        """Get TOTP secret for a user"""
+        try:
+            user = self.find_by_id(user_id)
+            if user:
+                return user.get('totp_secret')
+            return None
+        except Exception:
+            return None
+    
+    def verify_totp(self, user_id, totp_code):
+        """Verify TOTP code for a user"""
+        try:
+            import pyotp
+            totp_secret = self.get_totp_secret(user_id)
+            if not totp_secret:
+                return False
+            
+            totp = pyotp.TOTP(totp_secret)
+            return totp.verify(totp_code, valid_window=1)  # Allow 1 time step tolerance
+            
+        except Exception as e:
+            print(f"Error verifying TOTP: {e}")
+            return False
     
     def get_user_stats(self, user_id):
         """Get user account statistics"""
@@ -222,4 +256,53 @@ class UserModel:
         except Exception as e:
             print(f"Error getting user stats: {e}")
             return None
+    
+    def save_settings(self, user_id, settings):
+        """Save user settings"""
+        try:
+            user_obj_id = ObjectId(user_id)
+            
+            result = self.collection.update_one(
+                {"_id": user_obj_id},
+                {
+                    "$set": {
+                        "settings": settings,
+                        "settings_updated_at": datetime.now().isoformat()
+                    }
+                }
+            )
+            
+            if result.matched_count == 0:
+                return False, "User not found"
+            
+            return True, None
+            
+        except Exception as e:
+            return False, f"Error saving settings: {str(e)}"
+    
+    def get_settings(self, user_id):
+        """Get user settings"""
+        try:
+            user = self.find_by_id(user_id)
+            if user:
+                return user.get('settings', {})
+            return {}
+        except Exception:
+            return {}
+    
+    def delete_account(self, user_id):
+        """Delete user account and all associated data"""
+        try:
+            user_obj_id = ObjectId(user_id)
+            
+            # Delete user from users collection
+            result = self.collection.delete_one({"_id": user_obj_id})
+            
+            if result.deleted_count == 0:
+                return False, "User not found"
+            
+            return True, None
+            
+        except Exception as e:
+            return False, f"Error deleting account: {str(e)}"
 
