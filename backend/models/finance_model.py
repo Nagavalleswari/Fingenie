@@ -200,4 +200,59 @@ class FinanceModel:
         )
         
         return {"success": True, "updated": result.modified_count > 0}, None
+    
+    def save_report(self, user_id, report_data):
+        """Save a generated report for a user"""
+        try:
+            user_obj_id = ObjectId(user_id)
+        except Exception:
+            return None, "Invalid user ID"
+        
+        # Add timestamp and ID if not present
+        if "id" not in report_data:
+            report_data["id"] = str(ObjectId())
+        if "created_at" not in report_data:
+            report_data["created_at"] = datetime.now().isoformat()
+        
+        # Initialize reports array if it doesn't exist
+        result = self.collection.update_one(
+            {"user_id": user_obj_id},
+            {
+                "$set": {"last_updated": datetime.now().isoformat()},
+                "$push": {"reports": report_data}
+            },
+            upsert=True
+        )
+        
+        return {"success": True, "updated": result.modified_count > 0, "inserted": result.upserted_id is not None, "report_id": report_data["id"]}, None
+    
+    def get_reports(self, user_id):
+        """Get all saved reports for a user"""
+        try:
+            user_obj_id = ObjectId(user_id)
+        except Exception:
+            return [], "Invalid user ID"
+        
+        data = self.collection.find_one({"user_id": user_obj_id}, {"reports": 1})
+        if data and "reports" in data:
+            # Sort by created_at descending (most recent first)
+            reports = data["reports"]
+            if isinstance(reports, list) and len(reports) > 0:
+                reports.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+            return reports, None
+        return [], None
+    
+    def delete_report(self, user_id, report_id):
+        """Delete a report by ID"""
+        try:
+            user_obj_id = ObjectId(user_id)
+        except Exception:
+            return None, "Invalid user ID"
+        
+        result = self.collection.update_one(
+            {"user_id": user_obj_id},
+            {"$pull": {"reports": {"id": report_id}}}
+        )
+        
+        return {"success": True, "updated": result.modified_count > 0}, None
 

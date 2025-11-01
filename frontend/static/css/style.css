@@ -1335,3 +1335,22 @@ body::before {
         font-size: 1.125rem;
     }
 }
+
+/* Custom Scrollbar for Reports List */
+#recentReportsList::-webkit-scrollbar {
+    width: 8px;
+}
+
+#recentReportsList::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+#recentReportsList::-webkit-scrollbar-thumb {
+    background: var(--border-primary);
+    border-radius: 4px;
+}
+
+#recentReportsList::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}

@@ -83,6 +83,7 @@ window.initializePages = function() {
     if (reportForm && !initializedPages.has('reports')) {
         console.log('Initializing Reports page...');
         setupReportHandlers();
+        loadReportsData();
         initializedPages.add('reports');
     }
     
@@ -1963,6 +1964,158 @@ window.loadGoalsPageData = async function() {
 }
 
 // ========== REPORTS PAGE ==========
+window.loadReportsData = async function() {
+    try {
+        console.log('🔄 Loading saved reports...');
+        const result = await apiRequest('/finance/get_reports');
+        const reports = result.data || [];
+        
+        renderReportsList(reports);
+        console.log('✅ Reports loaded:', reports.length);
+    } catch (error) {
+        console.error('❌ Error loading reports:', error);
+        // Still show empty state
+        renderReportsList([]);
+    }
+};
+
+function renderReportsList(reports) {
+    const container = document.getElementById('recentReportsList');
+    if (!container) return;
+    
+    // Ensure grid layout for 2 cards per row with scrollable container
+    // Height is controlled by parent card to match the form card
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    container.style.gap = '1rem';
+    container.style.padding = '1.5rem';
+    container.style.flex = '1';
+    container.style.overflowY = 'auto';
+    container.style.overflowX = 'hidden';
+    container.style.minHeight = '0';
+    
+    // Custom scrollbar styling
+    container.style.scrollbarWidth = 'thin';
+    container.style.scrollbarColor = 'var(--border-primary) var(--bg-tertiary)';
+    
+    // Match height with left card (form card)
+    const reportForm = document.getElementById('reportForm');
+    const rightCard = container.closest('.card');
+    if (reportForm && rightCard) {
+        const leftCard = reportForm.closest('.card');
+        if (leftCard && rightCard) {
+            // Wait for layout to calculate heights
+            setTimeout(() => {
+                const leftCardHeight = leftCard.offsetHeight;
+                const rightCardHeader = rightCard.querySelector('.card-header');
+                const rightCardHeaderHeight = rightCardHeader ? rightCardHeader.offsetHeight : 0;
+                
+                // Set the right card height to match left card
+                rightCard.style.height = `${leftCardHeight}px`;
+                
+                // The scrollable area will automatically adjust with flexbox
+            }, 100);
+        }
+    }
+    
+    if (reports.length === 0) {
+        container.innerHTML = `
+            <p style="color: var(--text-tertiary); text-align: center; padding: 2rem; grid-column: 1 / -1;">
+                <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+                No reports generated yet. Create your first report above!
+            </p>
+        `;
+        return;
+    }
+    
+    let html = '';
+    reports.forEach(report => {
+        const reportType = report.type || 'Report';
+        const period = report.period || 'N/A';
+        const createdAt = report.created_at ? new Date(report.created_at).toLocaleDateString('en-IN', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        }) : 'Unknown';
+        const reportId = report.id || '';
+        
+        // Get icon based on report type
+        let icon = 'fa-file-alt';
+        let color = 'var(--accent-primary)';
+        if (reportType.includes('Summary')) icon = 'fa-chart-pie';
+        else if (reportType.includes('Monthly')) icon = 'fa-calendar-alt';
+        else if (reportType.includes('Annual')) icon = 'fa-calendar';
+        else if (reportType.includes('Goals')) icon = 'fa-bullseye';
+        else if (reportType.includes('Investment')) icon = 'fa-chart-line';
+        else if (reportType.includes('Complete')) icon = 'fa-file-alt';
+        
+        html += `
+            <div style="padding: 1.25rem; border: 1px solid var(--border-primary); background: var(--bg-elevated); border-radius: var(--radius-md); height: 100%; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: ${color}20; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas ${icon}" style="color: ${color}; font-size: 1.1rem;"></i>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <h4 style="margin: 0; color: var(--text-primary); font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${reportType}</h4>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">
+                            <i class="fas fa-calendar" style="margin-right: 0.25rem;"></i>${createdAt}
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-tertiary);">
+                            <i class="fas fa-clock" style="margin-right: 0.25rem;"></i>${period}
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-primary);">
+                    <button onclick="downloadSavedReport('${reportId}')" class="btn btn-primary btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button onclick="deleteReport('${reportId}')" class="btn btn-danger btn-sm" style="font-size: 0.8rem; padding: 0.4rem 0.6rem;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+window.deleteReport = async function(reportId) {
+    if (!confirm('Are you sure you want to delete this report?')) return;
+    
+    try {
+        await apiRequest('/finance/delete_report', 'POST', { report_id: reportId });
+        toast.success('Report deleted successfully');
+        loadReportsData();
+    } catch (error) {
+        console.error('Error deleting report:', error);
+        toast.error('Failed to delete report');
+    }
+};
+
+window.downloadSavedReport = async function(reportId) {
+    try {
+        const result = await apiRequest('/finance/get_reports');
+        const reports = result.data || [];
+        const report = reports.find(r => r.id === reportId);
+        
+        if (!report) {
+            toast.error('Report not found');
+            return;
+        }
+        
+        // Download as JSON
+        downloadJSON(report, `report-${report.type.toLowerCase().replace(/\s+/g, '-')}-${reportId.substring(0, 8)}.json`);
+        toast.success('Report downloaded!');
+    } catch (error) {
+        console.error('Error downloading report:', error);
+        toast.error('Failed to download report');
+    }
+};
+
 function setupReportHandlers() {
     const form = document.getElementById('reportForm');
     if (form) {
@@ -2034,17 +2187,64 @@ function setupReportHandlers() {
                         reportData = data;
                 }
                 
+                // Prepare report data for saving
+                const reportToSave = {
+                    ...reportData,
+                    type: reportData.type || reportType.charAt(0).toUpperCase() + reportType.slice(1) + ' Report',
+                    period: `${startDate} to ${endDate}`,
+                    format: format,
+                    generated_at: new Date().toISOString()
+                };
+                
+                // Save report to backend
+                try {
+                    await apiRequest('/finance/save_report', 'POST', reportToSave);
+                    toast.success('Report generated, downloaded, and saved!');
+                } catch (error) {
+                    console.error('Error saving report:', error);
+                    toast.warning('Report generated and downloaded, but failed to save to server');
+                }
+                
                 // Download report
                 if (format === 'json') {
                     downloadJSON(reportData, `report-${reportType}-${new Date().toISOString().split('T')[0]}.json`);
-                } else if (format === 'csv') {
-                    downloadCSV(reportData, `report-${reportType}-${new Date().toISOString().split('T')[0]}.csv`);
+                    // Reload reports list
+                    loadReportsData();
+                } else if (format === 'pdf') {
+                    // Generate PDF via backend (fetch for binary data)
+                    try {
+                        const token = localStorage.getItem('token');
+                        const pdfResponse = await fetch('/api/finance/generate_pdf', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify(reportToSave)
+                        });
+                        
+                        if (!pdfResponse.ok) {
+                            throw new Error('Failed to generate PDF');
+                        }
+                        
+                        const blob = await pdfResponse.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `report-${reportType}-${new Date().toISOString().split('T')[0]}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        
+                        toast.success('PDF report generated and downloaded!');
+                        // Reload reports list
+                        loadReportsData();
+                    } catch (error) {
+                        console.error('Error generating PDF:', error);
+                        toast.error('Failed to generate PDF report');
+                    }
                 }
-                
-                toast.success('Report generated and downloaded!');
-                
-                // Add to recent reports
-                addToRecentReports(reportType, startDate, endDate);
             } catch (error) {
                 toast.error('Failed to generate report');
             }
@@ -2069,79 +2269,119 @@ function downloadJSON(data, filename) {
     URL.revokeObjectURL(url);
 }
 
-function downloadCSV(data, filename) {
-    let csv = 'Type,Value\n';
-    if (data.assets) {
-        Object.entries(data.assets).forEach(([key, value]) => {
-            csv += `Asset: ${key},${value}\n`;
-        });
-    }
-    if (data.liabilities) {
-        Object.entries(data.liabilities).forEach(([key, value]) => {
-            csv += `Liability: ${key},${value}\n`;
-        });
-    }
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-}
+// CSV download function removed - PDF is now the primary format
 
-function addToRecentReports(type, startDate, endDate) {
-    const container = document.getElementById('recentReportsList');
-    if (container && container.querySelector('p')) {
-        container.innerHTML = '';
-    }
-    
-    const reportItem = document.createElement('div');
-    reportItem.style.cssText = 'padding: 1rem; border-bottom: 1px solid var(--border-primary);';
-    reportItem.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <strong><i class="fas fa-file-alt"></i> ${type.charAt(0).toUpperCase() + type.slice(1)} Report</strong>
-                <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.25rem;">
-                    ${startDate} to ${endDate}
-                </div>
-            </div>
-            <button class="btn btn-secondary btn-sm" onclick="downloadReport('${type}', '${startDate}', '${endDate}')">
-                <i class="fas fa-download"></i>
-            </button>
-        </div>
-    `;
-    if (container) {
-        container.insertBefore(reportItem, container.firstChild);
+// addToRecentReports is now replaced by loadReportsData() which fetches from backend
+
+async function exportMonthlyReport() {
+    try {
+        toast.info('Generating monthly report...');
+        const data = await getFinancialData();
+        const today = new Date();
+        const startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        const endDate = today.toISOString().split('T')[0];
+        
+        const reportData = {
+            type: 'Monthly Report',
+            period: `${startDate} to ${endDate}`,
+            month: today.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }),
+            assets: data.assets || {},
+            liabilities: data.liabilities || {},
+            budget: data.budget || {},
+            transactions: data.transactions || []
+        };
+        
+        // Save to backend
+        try {
+            await apiRequest('/finance/save_report', 'POST', {
+                ...reportData,
+                generated_at: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('Error saving report:', error);
+        }
+        
+        downloadJSON(reportData, `monthly-report-${new Date().toISOString().split('T')[0]}.json`);
+        toast.success('Monthly report downloaded and saved!');
+        loadReportsData();
+    } catch (error) {
+        console.error('Error generating monthly report:', error);
+        toast.error('Failed to generate monthly report');
     }
 }
 
-function exportMonthlyReport() {
-    toast.info('Generating monthly report...');
-    setTimeout(() => {
-        const data = { type: 'Monthly Report', date: new Date().toISOString().split('T')[0] };
-        downloadJSON(data, `monthly-report-${new Date().toISOString().split('T')[0]}.json`);
-        toast.success('Monthly report downloaded!');
-    }, 1000);
+async function exportGoalsReport() {
+    try {
+        toast.info('Generating goals report...');
+        const data = await getFinancialData();
+        const goals = data.goals || [];
+        const today = new Date();
+        
+        const reportData = {
+            type: 'Goals Progress Report',
+            period: `All time`,
+            goals: goals,
+            summary: {
+                total: goals.length,
+                completed: goals.filter(g => {
+                    const current = g.current || g.current_amount || 0;
+                    return current >= (g.target || 0) && g.target > 0;
+                }).length,
+                in_progress: goals.filter(g => {
+                    const current = g.current || g.current_amount || 0;
+                    const target = g.target || 0;
+                    return current > 0 && current < target && target > 0;
+                }).length
+            },
+            generated_at: today.toISOString()
+        };
+        
+        // Save to backend
+        try {
+            await apiRequest('/finance/save_report', 'POST', reportData);
+        } catch (error) {
+            console.error('Error saving report:', error);
+        }
+        
+        downloadJSON(reportData, `goals-report-${new Date().toISOString().split('T')[0]}.json`);
+        toast.success('Goals report downloaded and saved!');
+        loadReportsData();
+    } catch (error) {
+        console.error('Error generating goals report:', error);
+        toast.error('Failed to generate goals report');
+    }
 }
 
-function exportGoalsReport() {
-    toast.info('Generating goals report...');
-    setTimeout(() => {
-        const data = { type: 'Goals Report', date: new Date().toISOString().split('T')[0] };
-        downloadJSON(data, `goals-report-${new Date().toISOString().split('T')[0]}.json`);
-        toast.success('Goals report downloaded!');
-    }, 1000);
-}
-
-function exportInvestmentsReport() {
-    toast.info('Generating investments report...', 'info');
-    setTimeout(() => {
-        const data = { type: 'Investments Report', date: new Date().toISOString().split('T')[0] };
-        downloadJSON(data, `investments-report-${new Date().toISOString().split('T')[0]}.json`);
-        toast.success('Investments report downloaded!', 'success');
-    }, 1000);
+async function exportInvestmentsReport() {
+    try {
+        toast.info('Generating investments report...');
+        const data = await getFinancialData();
+        const investments = data.investments || [];
+        
+        const reportData = {
+            type: 'Investment Report',
+            period: `All time`,
+            investments: investments,
+            assets: data.assets || {},
+            portfolioValue: investments.reduce((sum, inv) => sum + (inv.current_value || 0), 0),
+            totalInvested: investments.reduce((sum, inv) => sum + (inv.amount_invested || 0), 0),
+            generated_at: new Date().toISOString()
+        };
+        
+        // Save to backend
+        try {
+            await apiRequest('/finance/save_report', 'POST', reportData);
+        } catch (error) {
+            console.error('Error saving report:', error);
+        }
+        
+        downloadJSON(reportData, `investments-report-${new Date().toISOString().split('T')[0]}.json`);
+        toast.success('Investments report downloaded and saved!');
+        loadReportsData();
+    } catch (error) {
+        console.error('Error generating investments report:', error);
+        toast.error('Failed to generate investments report');
+    }
 }
 
 // ========== INSIGHTS PAGE ==========

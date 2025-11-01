@@ -1,9 +1,16 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
+from io import BytesIO
 import sys
 import os
 import json
 import flask_cors
 from datetime import datetime
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 # Add parent directory to path for imports
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -688,6 +695,298 @@ Return ONLY the JSON configuration. Do not include any explanation, markdown cod
             return jsonify({
                 'message': 'Custom graph deleted successfully'
             }), 200
+            
+        except Exception as e:
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @finance_bp.route('/save_report', methods=['POST'])
+    @require_auth
+    def save_report():
+        """Save a generated report"""
+        try:
+            user_id = request.user_id
+            data = request.get_json()
+            
+            if not data:
+                return jsonify({'error': 'No report data provided'}), 400
+            
+            # Ensure required fields
+            if 'type' not in data or 'period' not in data:
+                return jsonify({'error': 'Report type and period are required'}), 400
+            
+            result, error = finance_model.save_report(user_id, data)
+            
+            if error:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'message': 'Report saved successfully',
+                'data': {'report_id': result.get('report_id')}
+            }), 200
+            
+        except Exception as e:
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @finance_bp.route('/get_reports', methods=['GET'])
+    @require_auth
+    def get_reports():
+        """Get all saved reports for the user"""
+        try:
+            user_id = request.user_id
+            
+            reports, error = finance_model.get_reports(user_id)
+            
+            if error:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'message': 'Reports retrieved successfully',
+                'data': reports
+            }), 200
+            
+        except Exception as e:
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @finance_bp.route('/delete_report', methods=['POST'])
+    @require_auth
+    def delete_report():
+        """Delete a saved report"""
+        try:
+            user_id = request.user_id
+            data = request.get_json()
+            
+            if not data or 'report_id' not in data:
+                return jsonify({'error': 'Report ID is required'}), 400
+            
+            report_id = data['report_id']
+            
+            result, error = finance_model.delete_report(user_id, report_id)
+            
+            if error:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'message': 'Report deleted successfully'
+            }), 200
+            
+        except Exception as e:
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @finance_bp.route('/generate_pdf', methods=['POST'])
+    @require_auth
+    def generate_pdf():
+        """Generate a PDF report"""
+        try:
+            user_id = request.user_id
+            data = request.get_json()
+            
+            if not data:
+                return jsonify({'error': 'No report data provided'}), 400
+            
+            # Create PDF in memory
+            buffer = BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                                   rightMargin=0.75*inch, leftMargin=0.75*inch,
+                                   topMargin=0.75*inch, bottomMargin=0.75*inch)
+            
+            # Container for PDF elements
+            elements = []
+            
+            # Styles
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=20,
+                textColor=colors.HexColor('#00d4ff'),
+                spaceAfter=30,
+                alignment=TA_CENTER,
+                fontName='Helvetica-Bold'
+            )
+            
+            heading_style = ParagraphStyle(
+                'CustomHeading',
+                parent=styles['Heading2'],
+                fontSize=14,
+                textColor=colors.HexColor('#a855f7'),
+                spaceAfter=12,
+                fontName='Helvetica-Bold'
+            )
+            
+            # Title
+            report_type = data.get('type', 'Financial Report')
+            elements.append(Paragraph(report_type, title_style))
+            elements.append(Spacer(1, 0.2*inch))
+            
+            # Report Period
+            period = data.get('period', 'N/A')
+            elements.append(Paragraph(f'<b>Period:</b> {period}', styles['Normal']))
+            elements.append(Paragraph(f'<b>Generated:</b> {datetime.now().strftime("%B %d, %Y at %I:%M %p")}', styles['Normal']))
+            elements.append(Spacer(1, 0.3*inch))
+            
+            # Financial Summary Section
+            if 'netWorth' in data or 'totalAssets' in data:
+                elements.append(Paragraph('Financial Summary', heading_style))
+                summary_data = [
+                    ['Metric', 'Amount (₹)'],
+                ]
+                if 'totalAssets' in data:
+                    summary_data.append(['Total Assets', f"{data['totalAssets']:,.2f}"])
+                if 'totalLiabilities' in data:
+                    summary_data.append(['Total Liabilities', f"{data['totalLiabilities']:,.2f}"])
+                if 'netWorth' in data:
+                    summary_data.append(['Net Worth', f"{data['netWorth']:,.2f}"])
+                
+                summary_table = Table(summary_data, colWidths=[3*inch, 2*inch])
+                summary_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#00d4ff')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 12),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ]))
+                elements.append(summary_table)
+                elements.append(Spacer(1, 0.3*inch))
+            
+            # Assets Section
+            if 'assets' in data and data['assets']:
+                elements.append(Paragraph('Assets', heading_style))
+                assets_data = [['Asset Type', 'Amount (₹)']]
+                for key, value in data['assets'].items():
+                    if isinstance(value, (int, float)) and value > 0:
+                        assets_data.append([key.replace('_', ' ').title(), f"{value:,.2f}"])
+                
+                if len(assets_data) > 1:
+                    assets_table = Table(assets_data, colWidths=[3*inch, 2*inch])
+                    assets_table.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 12),
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
+                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ]))
+                    elements.append(assets_table)
+                    elements.append(Spacer(1, 0.3*inch))
+            
+            # Liabilities Section
+            if 'liabilities' in data and data['liabilities']:
+                elements.append(Paragraph('Liabilities', heading_style))
+                liabilities_data = [['Liability Type', 'Amount (₹)']]
+                for key, value in data['liabilities'].items():
+                    if isinstance(value, (int, float)) and value > 0:
+                        liabilities_data.append([key.replace('_', ' ').title(), f"{value:,.2f}"])
+                
+                if len(liabilities_data) > 1:
+                    liabilities_table = Table(liabilities_data, colWidths=[3*inch, 2*inch])
+                    liabilities_table.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#ef4444')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 12),
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
+                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ]))
+                    elements.append(liabilities_table)
+                    elements.append(Spacer(1, 0.3*inch))
+            
+            # Goals Section
+            if 'goals' in data and isinstance(data['goals'], list) and len(data['goals']) > 0:
+                elements.append(Paragraph('Financial Goals', heading_style))
+                goals_data = [['Goal', 'Target (₹)', 'Current (₹)', 'Progress %']]
+                for goal in data['goals']:
+                    name = goal.get('name', 'Unnamed Goal')
+                    target = goal.get('target', 0)
+                    current = goal.get('current') or goal.get('current_amount', 0)
+                    progress = (current / target * 100) if target > 0 else 0
+                    goals_data.append([name, f"{target:,.2f}", f"{current:,.2f}", f"{progress:.1f}%"])
+                
+                goals_table = Table(goals_data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 1*inch])
+                goals_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#a855f7')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 10),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ]))
+                elements.append(goals_table)
+                elements.append(Spacer(1, 0.3*inch))
+            
+            # Investments Section
+            if 'investments' in data and isinstance(data['investments'], list) and len(data['investments']) > 0:
+                elements.append(Paragraph('Investments', heading_style))
+                investments_data = [['Investment', 'Amount Invested (₹)', 'Current Value (₹)', 'Returns %']]
+                for inv in data['investments']:
+                    name = inv.get('name', 'Unnamed Investment')
+                    invested = inv.get('amount_invested', 0)
+                    current = inv.get('current_value', 0)
+                    returns = ((current - invested) / invested * 100) if invested > 0 else 0
+                    investments_data.append([name, f"{invested:,.2f}", f"{current:,.2f}", f"{returns:.1f}%"])
+                
+                investments_table = Table(investments_data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 1*inch])
+                investments_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f59e0b')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 10),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ]))
+                elements.append(investments_table)
+                elements.append(Spacer(1, 0.3*inch))
+            
+            # Budget Section
+            if 'budget' in data and data['budget']:
+                budget = data['budget']
+                if isinstance(budget, dict) and 'categories' in budget:
+                    elements.append(Paragraph('Budget Overview', heading_style))
+                    budget_data = [['Category', 'Budget (₹)', 'Spent (₹)', 'Remaining (₹)']]
+                    for cat in budget['categories']:
+                        name = cat.get('name', 'Unnamed')
+                        budget_amt = cat.get('budget', 0)
+                        spent = cat.get('spent', 0)
+                        remaining = budget_amt - spent
+                        budget_data.append([name, f"{budget_amt:,.2f}", f"{spent:,.2f}", f"{remaining:,.2f}"])
+                    
+                    if len(budget_data) > 1:
+                        budget_table = Table(budget_data, colWidths=[2*inch, 1.25*inch, 1.25*inch, 1.25*inch])
+                        budget_table.setStyle(TableStyle([
+                            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#14b8a6')),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('FONTSIZE', (0, 0), (-1, 0), 10),
+                            ('BACKGROUND', (0, 1), (-1, -1), colors.lightgrey),
+                            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                            ('FONTSIZE', (0, 1), (-1, -1), 9),
+                        ]))
+                        elements.append(budget_table)
+                        elements.append(Spacer(1, 0.3*inch))
+            
+            # Build PDF
+            doc.build(elements)
+            
+            # Get PDF data
+            pdf_data = buffer.getvalue()
+            buffer.close()
+            
+            # Return PDF as response
+            response = Response(pdf_data, mimetype='application/pdf')
+            filename = f"{report_type.lower().replace(' ', '-')}-{datetime.now().strftime('%Y%m%d')}.pdf"
+            response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+            
+            return response
             
         except Exception as e:
             return jsonify({'error': f'Server error: {str(e)}'}), 500
