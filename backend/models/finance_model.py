@@ -116,6 +116,26 @@ class FinanceModel:
         """Set goals for a user"""
         return self.add_or_update_data(user_id, goals=goals)
     
+    def update_budget(self, user_id, budget):
+        """Update budget data for a user"""
+        try:
+            user_obj_id = ObjectId(user_id)
+        except Exception:
+            return None, "Invalid user ID"
+        
+        result = self.collection.update_one(
+            {"user_id": user_obj_id},
+            {
+                "$set": {
+                    "budget": budget,
+                    "last_updated": datetime.now().isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        return {"success": True, "updated": result.modified_count > 0, "inserted": result.upserted_id is not None}, None
+    
     def save_custom_graph(self, user_id, graph_data):
         """Save a custom graph configuration for a user"""
         try:

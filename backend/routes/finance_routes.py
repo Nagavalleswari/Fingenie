@@ -91,6 +91,37 @@ def init_finance_routes(db):
         except Exception as e:
             return jsonify({'error': f'Server error: {str(e)}'}), 500
     
+    @finance_bp.route('/update_budget', methods=['POST'])
+    @require_auth
+    def update_budget():
+        """Update user budget data"""
+        try:
+            user_id = request.user_id
+            data = request.get_json()
+            
+            if not data or 'budget' not in data:
+                return jsonify({'error': 'Budget data is required'}), 400
+            
+            budget = data.get('budget')
+            
+            # Validate budget structure
+            if not isinstance(budget, dict):
+                return jsonify({'error': 'Budget must be an object'}), 400
+            
+            # Update budget
+            result, error = finance_model.update_budget(user_id, budget)
+            
+            if error:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'message': 'Budget updated successfully',
+                'data': result
+            }), 200
+            
+        except Exception as e:
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
     @finance_bp.route('/get_data', methods=['GET'])
     @require_auth
     def get_data():
