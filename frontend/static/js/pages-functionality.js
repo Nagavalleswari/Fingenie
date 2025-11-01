@@ -582,7 +582,11 @@ function renderBudgetCategories(budgetCategories) {
                     <button onclick="editBudgetCategory(${categoryId})" class="btn btn-secondary btn-sm" ">
                         <i class="fas fa-edit"></i> Edit
                     </button>
-                    <button onclick="updateBudgetSpent(${categoryId}, '${escapedName}')" class="btn btn-danger
+                    <button onclick="updateBudgetSpent(${categoryId}, '${escapedName}')" class="btn btn-primary
+                     btn-sm" ">
+                        <i class="fa-solid fa-indian-rupee-sign"></i>
+                    </button>
+                    <button onclick="deleteBudgetCategory(${categoryId}, '${escapedName}')" class="btn btn-danger
                      btn-sm" ">
                         <i class="fas fa-trash"></i>
                     </button>
