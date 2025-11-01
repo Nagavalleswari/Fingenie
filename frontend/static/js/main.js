@@ -22,7 +22,7 @@ class ToastManager {
     show(message, type = 'info', duration = 5000) {
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        
+
         const icons = {
             success: '<i class="fas fa-check-circle"></i>',
             error: '<i class="fas fa-exclamation-circle"></i>',
@@ -439,8 +439,30 @@ if (document.getElementById('financeForm')) {
             }
         });
         
+        // IMPORTANT: Only save goals if user has entered ALL goals from mock_data (5 goals)
+        // Otherwise, don't send goals array - let backend use mock_data goals
+        const mockGoalsCount = 5; // From mock_data.json
+        let goalsToSave = null;
+        if (goals.length === mockGoalsCount) {
+            goalsToSave = goals;
+        } else if (goals.length > 0 && goals.length < mockGoalsCount) {
+            // Partial goals - don't save, backend will use mock_data goals
+            console.log(`⚠️ Not saving partial goals (${goals.length} goals). Backend will use mock_data goals instead.`);
+            toast.info(`You need to enter all ${mockGoalsCount} goals to save them. Currently showing goals from demo data.`, 'info', 3000);
+            goalsToSave = null;
+        } else if (goals.length === 0) {
+            // No goals entered - don't send goals field
+            goalsToSave = null;
+        }
+        
         try {
-            await apiRequest('/finance/add_data', 'POST', { assets, liabilities, goals });
+            // Only include goals in request if we have all 5, otherwise omit the field
+            const requestData = { assets, liabilities };
+            if (goalsToSave !== null) {
+                requestData.goals = goalsToSave;
+            }
+            
+            await apiRequest('/finance/add_data', 'POST', requestData);
             toast.success('Financial data saved successfully!', 'success');
             
             // Reload data
