@@ -6,238 +6,7 @@
     <title>Login - FinGenie</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 2rem;
-        }
-
-        .login-container {
-            width: 100%;
-            max-width: 450px;
-            animation: fadeIn 0.6s ease;
-        }
-
-        .login-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-primary);
-            border-radius: var(--radius-2xl);
-            padding: 3rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .login-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--gradient-primary);
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 2.5rem;
-        }
-
-        .login-logo {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
-            background: var(--gradient-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            box-shadow: var(--shadow-glow-cyan);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .login-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .login-subtitle {
-            color: var(--text-tertiary);
-            font-size: 1rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .input-group {
-            position: relative;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            font-size: 1.1rem;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 1rem 1rem 1rem 3rem;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-primary);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            transition: all var(--transition-fast);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-            background: var(--bg-elevated);
-        }
-
-        .form-control::placeholder {
-            color: var(--text-muted);
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 1rem;
-            background: var(--gradient-primary);
-            border: none;
-            border-radius: var(--radius-md);
-            color: var(--text-secondary);;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            margin-top: 1rem;
-            box-shadow: var(--shadow-glow-cyan);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .login-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .login-btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.4);
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 2rem 0;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border-primary);
-        }
-
-        .divider span {
-            padding: 0 1rem;
-        }
-
-        .signup-link {
-            text-align: center;
-            color: var(--text-tertiary);
-        }
-
-        .signup-link a {
-            color: var(--accent-cyan);
-            text-decoration: none;
-            font-weight: 600;
-            transition: all var(--transition-fast);
-        }
-
-        .signup-link a:hover {
-            color: var(--accent-purple);
-            text-decoration: underline;
-        }
-
-        .back-home {
-            position: absolute;
-            top: 2rem;
-            left: 2rem;
-            color: var(--text-secondary);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 500;
-            transition: all var(--transition-fast);
-        }
-
-        .back-home:hover {
-            color: var(--accent-cyan);
-            transform: translateX(-4px);
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-        }
-
-        @media (max-width: 576px) {
-            .login-card {
-                padding: 2rem;
-            }
-
-            .login-title {
-                font-size: 1.5rem;
-            }
-
-            .back-home {
-                position: static;
-                margin-bottom: 2rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 </head>
 <body>
     <a href="/" class="back-home">
@@ -340,19 +109,19 @@
                      if (data.token) {
                          localStorage.setItem('token', data.token);
                      }
-                     toast.success('Login successful! Redirecting...', 'success');
+toast.success('Login successful! Redirecting...');
                      setTimeout(() => {
                          window.location.href = '/dashboard';
                      }, 1000);
                  } else {
-                     toast.error(data.message || data.error || 'Login failed. Please try again.', 'error');
+toast.error(data.message || data.error || 'Login failed. Please try again.');
                      loginBtn.disabled = false;
                      loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
                  }
              })
              .catch(error => {
                  console.error('Error:', error);
-                 toast.error('An error occurred. Please try again.', 'error');
+toast.error('An error occurred. Please try again.');
                  loginBtn.disabled = false;
                  loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
              });

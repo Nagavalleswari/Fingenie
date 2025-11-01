@@ -211,14 +211,14 @@ if (document.getElementById('loginForm')) {
                 saveAuthToken(result.token);
             }
             
-            toast.success('Login successful! Redirecting...', 'success', 2000);
+toast.success('Login successful! Redirecting...', 2000);
             // Small delay to ensure token is saved before redirect
             setTimeout(() => {
                 window.location.href = '/dashboard';
             }, 500);
         } catch (error) {
             console.error('Login error:', error);
-            toast.error(error.message || 'Login failed. Please check your credentials.', 'error');
+toast.error(error.message || 'Login failed. Please check your credentials.');
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnHtml;
         }
@@ -257,12 +257,12 @@ if (document.getElementById('signupForm')) {
                 saveAuthToken(result.token);
             }
             
-            toast.success('Account created successfully! Redirecting...', 'success', 2000);
+toast.success('Account created successfully! Redirecting...', 2000);
             setTimeout(() => {
                 window.location.href = '/dashboard';
             }, 500);
         } catch (error) {
-            toast.error(error.message || 'Signup failed. Please try again.', 'error');
+toast.error(error.message || 'Signup failed. Please try again.');
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnHtml;
             isSubmitting = false; // Reset flag on error
@@ -313,19 +313,19 @@ window.loadFinancialData = async function() {
             await updateDashboardWithData(data, isMockData);
             
             if (isMockData) {
-                toast.info('Showing demo data. Add your financial information to replace it.', 'info', 4000);
+toast.info('Showing demo data. Add your financial information to replace it.', 4000);
             }
         } else {
             // Truly empty - backend should return mock data, but if not, show empty state
             console.log('⚠️ No data received from backend. Checking if backend is configured to return mock data...');
-            toast.warning('No financial data available. The backend should return mock data from mock_data.json if no user data exists.', 'warning');
+toast.warning('No financial data available. The backend should return mock data from mock_data.json if no user data exists.');
             // Don't try to load mock data explicitly - backend should handle it
             // Just show empty state
             await updateDashboardWithData({}, false);
         }
     } catch (error) {
         console.error('❌ Error loading financial data:', error);
-        toast.error('Failed to load financial data: ' + error.message, 'error');
+toast.error('Failed to load financial data: ' + error.message);
     }
 };
 
@@ -463,7 +463,7 @@ if (document.getElementById('financeForm')) {
             }
             
             await apiRequest('/finance/add_data', 'POST', requestData);
-            toast.success('Financial data saved successfully!', 'success');
+toast.success('Financial data saved successfully!');
             
             // Reload data
             await loadFinancialData();
@@ -723,8 +723,9 @@ function copyToClipboard(text) {
 
 // Toast notification CSS is now in style.css - no need for inline styles
 
-// Chat functionality
-if (document.getElementById('chatForm')) {
+// Chat functionality (disabled here if inline chat is present on the page)
+const hasInlineChat = document.body && document.body.getAttribute('data-chat-inline') === 'true';
+if (document.getElementById('chatForm') && !hasInlineChat) {
     const chatForm = document.getElementById('chatForm');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = chatForm.querySelector('button[type="submit"]');
@@ -999,7 +1000,7 @@ function updateCharts(data) {
         // Build labels and data arrays dynamically including all asset types
         const assetLabels = [];
         const assetData = [];
-        const assetColors = ['#059669', '#10b981', '#34d399', '#3b82f6', '#a855f7', '#ec4899'];
+        const assetColors = ['#00e600', '#0099ff', '#cc33ff', '#8c8c8c', '#ffff00', '#996633'];
         
         if (savings > 0) {
             assetLabels.push('Savings');
@@ -1097,10 +1098,22 @@ function updateCharts(data) {
         // Ensure canvas has proper size
         const canvasContainer = overviewCtx.parentElement;
         if (canvasContainer) {
-            canvasContainer.style.height = '300px';
+            canvasContainer.style.height = '320px';
             canvasContainer.style.position = 'relative';
         }
         
+        // Create gradient fills for bars
+        const gctx = overviewCtx.getContext('2d');
+        const gradAssets = gctx.createLinearGradient(0, 0, 0, 300);
+        gradAssets.addColorStop(0, '#34d399');
+        gradAssets.addColorStop(1, '#10b981');
+        const gradLiab = gctx.createLinearGradient(0, 0, 0, 300);
+        gradLiab.addColorStop(0, '#fca5a5');
+        gradLiab.addColorStop(1, '#ef4444');
+        const gradNet = gctx.createLinearGradient(0, 0, 0, 300);
+        gradNet.addColorStop(0, '#93c5fd');
+        gradNet.addColorStop(1, '#3b82f6');
+
         overviewChart = new Chart(overviewCtx, {
             type: 'bar',
             data: {
@@ -1108,13 +1121,18 @@ function updateCharts(data) {
                 datasets: [{
                     label: 'Amount (₹)',
                     data: [totalAssets, totalLiabilities, Math.max(0, netWorth)],
-                    backgroundColor: [
-                        '#10b981',
-                        '#dc2626',
-                        '#3b82f6'
-                    ],
-                    borderRadius: 8,
+                    backgroundColor: [gradAssets, gradLiab, gradNet],
+                    hoverBackgroundColor: [gradAssets, gradLiab, gradNet],
+                    borderColor: ['rgba(16,185,129,0.4)','rgba(239,68,68,0.4)','rgba(59,130,246,0.4)'],
+                    borderWidth: 1,
+                    borderRadius: 0,
+                    
                     borderSkipped: false,
+                    // Make bars thinner
+                    barThickness: 60,
+                    maxBarThickness: 66,
+                    categoryPercentage: 0.58,
+                    barPercentage: 0.68,
                 }]
             },
             options: {
@@ -1133,6 +1151,14 @@ function updateCharts(data) {
                         }
                     }
                 },
+                // Global defaults for bar width (Chart.js v3+)
+                datasets: {
+                    bar: {
+                        categoryPercentage: 0.58,
+                        barPercentage: 0.68,
+                        maxBarThickness: 34
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -1145,7 +1171,7 @@ function updateCharts(data) {
                             }
                         },
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
+                            color: 'rgba(148, 163, 184, 0.12)'
                         }
                     },
                     x: {

@@ -157,7 +157,7 @@ function exportChart(chartType) {
         a.download = `${chartType}-chart-${new Date().toISOString().split('T')[0]}.png`;
         a.click();
         if (typeof toast !== 'undefined') {
-            toast.success('Chart exported successfully!', 'success');
+toast.success('Chart exported successfully!');
         }
     }
 }
@@ -167,7 +167,7 @@ function refreshChart(chartType) {
     if (typeof window.loadFinancialData === 'function') {
         window.loadFinancialData();
         if (typeof toast !== 'undefined') {
-            toast.success('Chart data refreshed!', 'success');
+toast.success('Chart data refreshed!');
         }
     }
 }
@@ -183,7 +183,7 @@ function showChartInfo(chartType) {
 // Mark all notifications as read
 function markAllNotificationsRead() {
     if (typeof toast !== 'undefined') {
-        toast.success('All notifications marked as read', 'success');
+toast.success('All notifications marked as read');
     }
     closeDropdown('notificationsDropdown');
 }
@@ -191,7 +191,7 @@ function markAllNotificationsRead() {
 // View all messages
 function viewAllMessages() {
     if (typeof toast !== 'undefined') {
-        toast.info('Messages feature coming soon', 'info');
+toast.info('Messages feature coming soon');
     }
     closeDropdown('messagesDropdown');
 }
@@ -199,7 +199,7 @@ function viewAllMessages() {
 // Perform search
 function performSearch(query) {
     if (typeof toast !== 'undefined') {
-        toast.info(`Searching for: ${query}`, 'info');
+toast.info(`Searching for: ${query}`);
     }
     // Add search functionality here
 }
@@ -207,7 +207,7 @@ function performSearch(query) {
 // Generate report
 function generateReport(type) {
     if (typeof toast !== 'undefined') {
-        toast.info(`Generating ${type} report...`, 'info');
+toast.info(`Generating ${type} report...`);
     }
     // Add report generation here
 }
@@ -215,7 +215,7 @@ function generateReport(type) {
 // Save settings
 function saveSettings() {
     if (typeof toast !== 'undefined') {
-        toast.success('Settings saved successfully!', 'success');
+toast.success('Settings saved successfully!');
     }
 }
 

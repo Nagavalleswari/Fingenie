@@ -105,7 +105,7 @@ async function calculateEMI() {
     } catch (error) {
         console.error('Error calculating EMI:', error);
         if (typeof toast !== 'undefined') {
-            toast.error('Failed to calculate EMI', 'error');
+toast.error('Failed to calculate EMI');
         }
     }
 }
@@ -190,7 +190,7 @@ async function calculatePrepaymentSavings() {
     
     if (!principal || !annualRate || !tenureMonths || !prepaymentAmount || !prepaymentMonth) {
         if (typeof toast !== 'undefined') {
-            toast.error('Please fill all fields', 'error');
+toast.error('Please fill all fields');
         }
         return;
     }
@@ -210,7 +210,7 @@ async function calculatePrepaymentSavings() {
     } catch (error) {
         console.error('Error calculating prepayment:', error);
         if (typeof toast !== 'undefined') {
-            toast.error('Failed to calculate prepayment savings', 'error');
+toast.error('Failed to calculate prepayment savings');
         }
     }
 }
@@ -235,7 +235,7 @@ async function calculateAffordability() {
     
     if (!monthlyIncome || monthlyExpenses < 0) {
         if (typeof toast !== 'undefined') {
-            toast.error('Please enter valid income and expenses', 'error');
+toast.error('Please enter valid income and expenses');
         }
         return;
     }
@@ -253,7 +253,7 @@ async function calculateAffordability() {
     } catch (error) {
         console.error('Error calculating affordability:', error);
         if (typeof toast !== 'undefined') {
-            toast.error('Failed to calculate affordability', 'error');
+toast.error('Failed to calculate affordability');
         }
     }
 }

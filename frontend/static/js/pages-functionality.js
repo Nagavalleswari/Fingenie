@@ -1132,8 +1132,21 @@ window.loadGoalsPageData = async function() {
         
         const data = await getFinancialData();
         console.log('✅ Goals data loaded:', data);
-        const goals = data.goals || [];
+        let goals = data.goals || [];
         const assets = data.assets || {};
+        
+        // Fallback to demo goals if API returns none
+        if (!Array.isArray(goals) || goals.length === 0) {
+            console.warn('No goals from API. Using demo goals for display.');
+            const y = new Date().getFullYear();
+            goals = [
+                { id: 1, name: 'Emergency Fund', target: 100000, current: 30000, current_amount: 30000, year: y + 1 },
+                { id: 2, name: 'Buy a Car', target: 600000, current: 150000, current_amount: 150000, year: y + 2 },
+                { id: 3, name: 'Vacation', target: 150000, current: 40000, current_amount: 40000, year: y + 1 },
+                { id: 4, name: 'Home Down Payment', target: 1200000, current: 350000, current_amount: 350000, year: y + 3 },
+                { id: 5, name: 'Retirement Fund', target: 2000000, current: 500000, current_amount: 500000, year: y + 10 }
+            ];
+        }
         
         console.log('Goals found:', goals.length);
         console.log('Goals data:', goals);
@@ -1214,10 +1227,10 @@ window.loadGoalsPageData = async function() {
                             </div>
                             <!-- Action Buttons -->
                             <div style="display: flex; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--border-primary);">
-                                <button onclick="editGoal(${goal.id})" class="btn btn-sm" style="flex: 1; background: var(--gradient-primary); color: var(--text-secondary); border: none; padding: 0.5rem 1rem; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.3)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
-                                    <i class="fas fa-edit"></i> Edit
+                                <button onclick="editGoal(${goal.id})" class="btn btn-secondary btn-animated" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                    <i class="fas fa-pen-to-square"></i> Edit
                                 </button>
-                                <button onclick="openDeleteGoalModal(${goal.id}, '${goal.name.replace(/'/g, "\\'")}')" class="btn btn-sm" style="flex: 1; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 0.5rem 1rem; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 4px 12px rgba(239, 68, 68, 0.3)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                                <button onclick="openDeleteGoalModal(${goal.id}, '${goal.name.replace(/'/g, \"\\'\")}')" class="btn btn-danger btn-animated" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
                                     <i class="fas fa-trash"></i> Delete
                                 </button>
                             </div>
@@ -1365,12 +1378,12 @@ function setupReportHandlers() {
                     downloadCSV(reportData, `report-${reportType}-${new Date().toISOString().split('T')[0]}.csv`);
                 }
                 
-                toast.success('Report generated and downloaded!', 'success');
+toast.success('Report generated and downloaded!');
                 
                 // Add to recent reports
                 addToRecentReports(reportType, startDate, endDate);
             } catch (error) {
-                toast.error('Failed to generate report', 'error');
+toast.error('Failed to generate report');
             }
         });
     }
@@ -1442,20 +1455,20 @@ function addToRecentReports(type, startDate, endDate) {
 }
 
 function exportMonthlyReport() {
-    toast.info('Generating monthly report...', 'info');
+toast.info('Generating monthly report...');
     setTimeout(() => {
         const data = { type: 'Monthly Report', date: new Date().toISOString().split('T')[0] };
         downloadJSON(data, `monthly-report-${new Date().toISOString().split('T')[0]}.json`);
-        toast.success('Monthly report downloaded!', 'success');
+toast.success('Monthly report downloaded!');
     }, 1000);
 }
 
 function exportGoalsReport() {
-    toast.info('Generating goals report...', 'info');
+toast.info('Generating goals report...');
     setTimeout(() => {
         const data = { type: 'Goals Report', date: new Date().toISOString().split('T')[0] };
         downloadJSON(data, `goals-report-${new Date().toISOString().split('T')[0]}.json`);
-        toast.success('Goals report downloaded!', 'success');
+toast.success('Goals report downloaded!');
     }, 1000);
 }
 
@@ -1795,10 +1808,10 @@ function markdownToHtml(text) {
 }
 
 function refreshInsights() {
-    toast.info('Refreshing insights...', 'info');
+toast.info('Refreshing insights...');
     setTimeout(() => {
         loadInsightsPageData();
-        toast.success('Insights refreshed!', 'success');
+toast.success('Insights refreshed!');
     }, 1000);
 }
 
@@ -1843,7 +1856,7 @@ function setupProfileHandlers() {
             updateElement('profileDisplayName', name);
             updateElement('profileDisplayEmail', email);
             
-            toast.success('Profile updated successfully!', 'success');
+toast.success('Profile updated successfully!');
         });
     }
 }
@@ -1876,11 +1889,11 @@ function showChangePasswordModal() {
         const confirmPass = document.getElementById('confirmPassword').value;
         
         if (newPass !== confirmPass) {
-            toast.error('Passwords do not match', 'error');
+toast.error('Passwords do not match');
             return;
         }
         
-        toast.success('Password changed successfully!', 'success');
+toast.success('Password changed successfully!');
         closeModal('infoModal');
     });
 }
@@ -1918,7 +1931,7 @@ function setupSettingsHandlers() {
             localStorage.setItem('language', language);
             localStorage.setItem('dateFormat', dateFormat);
             
-            toast.success('General settings saved!', 'success');
+toast.success('General settings saved!');
         });
     }
     
@@ -1928,7 +1941,7 @@ function setupSettingsHandlers() {
         if (checkbox) {
             checkbox.addEventListener('change', function() {
                 localStorage.setItem(id, this.checked);
-                toast.success('Notification settings updated!', 'success');
+toast.success('Notification settings updated!');
             });
         }
     });
@@ -1936,7 +1949,7 @@ function setupSettingsHandlers() {
 
 function showDeleteAccountModal() {
     if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-        toast.error('Account deletion feature coming soon. Please contact support.', 'error');
+toast.error('Account deletion feature coming soon. Please contact support.');
     }
 }
 

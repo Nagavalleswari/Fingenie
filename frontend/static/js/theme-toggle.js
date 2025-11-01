@@ -38,7 +38,7 @@ function toggleTheme() {
     // Optional: Show toast notification
     if (typeof toast !== 'undefined') {
         const message = newTheme === 'light' ? 'Light mode activated ☀️' : 'Dark mode activated 🌙';
-        toast.success(message, 'success', 2000);
+toast.success(message, 2000);
     }
 }
 
