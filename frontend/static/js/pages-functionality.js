@@ -6,64 +6,127 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(initializePages, 500);
 });
 
+// Track which pages have been initialized to prevent duplicate initialization
+const initializedPages = new Set();
+
 // Initialize page-specific functionality
 function initializePages() {
+    // Check which page section is currently active
+    const activePageSection = document.querySelector('.page-section.active');
+    if (!activePageSection) {
+        return; // No active page section, don't initialize
+    }
+    
     // Analytics page
-    if (document.getElementById('monthlyTrendChart')) {
+    if (document.getElementById('monthlyTrendChart') && !initializedPages.has('analytics')) {
         loadAnalyticsData();
+        initializedPages.add('analytics');
     }
     
     // Budget page
-    if (document.getElementById('totalBudget')) {
+    if (document.getElementById('totalBudget') && !initializedPages.has('budget')) {
         loadBudgetData();
         setupBudgetHandlers();
+        initializedPages.add('budget');
     }
     
     // Investments page
-    if (document.getElementById('totalInvestments')) {
+    if (document.getElementById('totalInvestments') && !initializedPages.has('investments')) {
         loadInvestmentsData();
         setupInvestmentHandlers();
+        initializedPages.add('investments');
     }
     
     // Transactions page
-    if (document.getElementById('totalTransactions')) {
+    if (document.getElementById('totalTransactions') && !initializedPages.has('transactions')) {
         loadTransactionsData();
         setupTransactionHandlers();
+        initializedPages.add('transactions');
     }
     
     // Goals page
-    if (document.getElementById('totalGoals')) {
+    if (document.getElementById('totalGoals') && !initializedPages.has('goals')) {
         loadGoalsPageData();
+        initializedPages.add('goals');
     }
     
     // Reports page
-    if (document.getElementById('reportForm')) {
+    if (document.getElementById('reportForm') && !initializedPages.has('reports')) {
         setupReportHandlers();
+        initializedPages.add('reports');
     }
     
     // Insights page
-    if (document.getElementById('detailedInsights')) {
+    if (document.getElementById('detailedInsights') && !initializedPages.has('insights')) {
         loadInsightsPageData();
+        initializedPages.add('insights');
     }
     
     // Profile page
-    if (document.getElementById('profileForm')) {
+    if (document.getElementById('profileForm') && !initializedPages.has('profile')) {
         loadProfileData();
         setupProfileHandlers();
+        initializedPages.add('profile');
     }
     
     // Settings page
-    if (document.getElementById('settingsForm')) {
+    if (document.getElementById('settingsForm') && !initializedPages.has('settings')) {
         loadSettingsData();
         setupSettingsHandlers();
+        initializedPages.add('settings');
+    }
+    
+    // Loan Calculator page
+    if (document.getElementById('loanCalculatorForm') && !initializedPages.has('loan-calculator')) {
+        if (typeof loadLoanPresets === 'function') {
+            loadLoanPresets();
+        }
+        if (typeof setupLoanCalculatorHandlers === 'function') {
+            setupLoanCalculatorHandlers();
+        }
+        initializedPages.add('loan-calculator');
+    }
+}
+
+// Function to clear page initialization tracking (called when switching pages)
+window.clearPageInitialization = function() {
+    initializedPages.clear();
+};
+
+// Global cache for financial data to prevent duplicate API calls
+let financialDataCache = null;
+let financialDataCacheTime = null;
+const FINANCIAL_DATA_CACHE_DURATION = 30000; // 30 seconds cache
+
+// Function to get financial data with caching
+async function getFinancialData(forceRefresh = false) {
+    const now = Date.now();
+    
+    // Return cached data if it exists and is fresh, unless force refresh
+    if (!forceRefresh && financialDataCache && financialDataCacheTime && 
+        (now - financialDataCacheTime) < FINANCIAL_DATA_CACHE_DURATION) {
+        return financialDataCache;
+    }
+    
+    try {
+        const result = await apiRequest('/finance/get_data');
+        financialDataCache = result.data || {};
+        financialDataCacheTime = now;
+        return financialDataCache;
+    } catch (error) {
+        console.error('Error fetching financial data:', error);
+        // Return cached data if available, even if stale
+        if (financialDataCache) {
+            return financialDataCache;
+        }
+        throw error;
     }
 }
 
 // ========== ANALYTICS PAGE ==========
 async function loadAnalyticsData() {
     try {
-        const result = await apiRequest('/finance/get_data');
-        const data = result.data || {};
+        const data = await getFinancialData();
         const assets = data.assets || {};
         const liabilities = data.liabilities || {};
         const goals = data.goals || [];
@@ -298,8 +361,7 @@ function showBudgetCategoryModal() {
 // ========== INVESTMENTS PAGE ==========
 async function loadInvestmentsData() {
     try {
-        const result = await apiRequest('/finance/get_data');
-        const data = result.data || {};
+        const data = await getFinancialData();
         const assets = data.assets || {};
         
         const mutualFunds = assets.mutual_funds || 0;
@@ -558,8 +620,7 @@ function setupTransactionFilters() {
 // ========== GOALS PAGE ==========
 async function loadGoalsPageData() {
     try {
-        const result = await apiRequest('/finance/get_data');
-        const data = result.data || {};
+        const data = await getFinancialData();
         const goals = data.goals || [];
         const assets = data.assets || {};
         const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0);
@@ -667,8 +728,7 @@ function setupReportHandlers() {
             const format = document.getElementById('reportFormat').value;
             
             try {
-                const result = await apiRequest('/finance/get_data');
-                const data = result.data || {};
+                const data = await getFinancialData();
                 
                 // Generate report based on type
                 let reportData = {};
@@ -814,8 +874,7 @@ function exportInvestmentsReport() {
 // ========== INSIGHTS PAGE ==========
 async function loadInsightsPageData() {
     try {
-        const result = await apiRequest('/finance/get_data');
-        const data = result.data || {};
+        const data = await getFinancialData();
         const assets = data.assets || {};
         const liabilities = data.liabilities || {};
         const goals = data.goals || [];
@@ -921,8 +980,8 @@ async function loadProfileData() {
         // Mock account stats
         updateElement('accountDaysActive', '30');
         updateElement('accountDataUpdates', '5');
-        const goalsResult = await apiRequest('/finance/get_data').catch(() => ({ data: { goals: [] } }));
-        updateElement('accountGoalsSet', (goalsResult.data?.goals || []).length);
+        const goalsData = await getFinancialData().catch(() => ({ goals: [] }));
+        updateElement('accountGoalsSet', (goalsData.goals || []).length);
         updateElement('accountReportsGen', '3');
     } catch (error) {
         console.error('Error loading profile:', error);
@@ -1046,20 +1105,36 @@ function updateElement(id, value) {
     }
 }
 
-// Re-initialize pages when navigating
+// Re-initialize pages when navigating - with debouncing to prevent excessive calls
 let pageObserver = null;
+let initializePagesTimeout = null;
 if (typeof MutationObserver !== 'undefined') {
     pageObserver = new MutationObserver(function(mutations) {
+        // Only trigger if actual page sections are added (not just any DOM change)
+        let shouldInitialize = false;
         mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                setTimeout(initializePages, 100);
-            }
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1 && node.classList && node.classList.contains('page-section')) {
+                    shouldInitialize = true;
+                }
+            });
         });
+        
+        if (shouldInitialize) {
+            // Debounce: clear previous timeout and set new one
+            if (initializePagesTimeout) {
+                clearTimeout(initializePagesTimeout);
+            }
+            initializePagesTimeout = setTimeout(function() {
+                initializePages();
+                initializePagesTimeout = null;
+            }, 200); // Wait 200ms after DOM changes
+        }
     });
     
     const pageContent = document.getElementById('pageContent');
     if (pageContent) {
-        pageObserver.observe(pageContent, { childList: true, subtree: true });
+        pageObserver.observe(pageContent, { childList: true, subtree: false }); // Only watch direct children, not subtree
     }
 }
 

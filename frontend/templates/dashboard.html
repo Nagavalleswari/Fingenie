@@ -58,6 +58,10 @@
                     <div class="menu-item-icon"><i class="fas fa-bullseye"></i></div>
                     <span class="menu-item-text">Goals</span>
                 </a>
+                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('loan-calculator', event);">
+                    <div class="menu-item-icon"><i class="fas fa-calculator"></i></div>
+                    <span class="menu-item-text">Loan Calculator</span>
+                </a>
             </div>
 
             <div class="menu-section">
@@ -74,11 +78,11 @@
 
             <div class="menu-section">
                 <div class="menu-section-title">Account</div>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('profile')">
+                <a href="#" class="menu-item" onclick="event.preventDefault(); if(typeof window.showPage === 'function') { window.showPage('profile', event); }">
                     <div class="menu-item-icon"><i class="fas fa-user"></i></div>
                     <span class="menu-item-text">Profile</span>
                 </a>
-                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('settings')">
+                <a href="#" class="menu-item" onclick="event.preventDefault(); if(typeof window.showPage === 'function') { window.showPage('settings', event); }">
                     <div class="menu-item-icon"><i class="fas fa-cog"></i></div>
                     <span class="menu-item-text">Settings</span>
                 </a>
@@ -686,7 +690,63 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dashboard-pages.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pages-functionality.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/loan-calculator.js') }}"></script>
     <script>
+        // Define showPage function IMMEDIATELY before any DOM manipulation
+        window.showPage = function(page, event) {
+            console.log('showPage called with:', page, event ? 'event provided' : 'no event');
+            
+            const pages = {
+                'analytics': { title: 'Analytics & Trends', subtitle: 'Analyze your financial trends and patterns' },
+                'budget': { title: 'Budget Planning', subtitle: 'Create and manage your monthly budgets' },
+                'investments': { title: 'Investment Portfolio', subtitle: 'Track and manage your investments' },
+                'transactions': { title: 'Transaction History', subtitle: 'View all your financial transactions' },
+                'goals': { title: 'Financial Goals', subtitle: 'Set and track your financial objectives' },
+                'loan-calculator': { title: 'Loan Calculator', subtitle: 'Calculate EMI, prepayment savings, and loan affordability' },
+                'reports': { title: 'Financial Reports', subtitle: 'Generate detailed financial reports' },
+                'insights': { title: 'Financial Insights', subtitle: 'AI-powered financial recommendations' },
+                'profile': { title: 'User Profile', subtitle: 'Manage your account information' },
+                'settings': { title: 'Settings', subtitle: 'Customize your FinGenie experience' }
+            };
+
+            // Update active menu item
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Find and activate the clicked menu item
+            if (event && event.target) {
+                const clickedItem = event.target.closest('.menu-item');
+                if (clickedItem) {
+                    clickedItem.classList.add('active');
+                }
+            } else {
+                // Fallback: find menu item by page name
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    const onclick = item.getAttribute('onclick') || '';
+                    if (onclick.includes(`showPage('${page}')`) || onclick.includes(`showPage("${page}")`) || 
+                        onclick.includes(`'${page}'`) || onclick.includes(`"${page}"`)) {
+                        item.classList.add('active');
+                    }
+                });
+            }
+
+            const pageData = pages[page];
+            console.log('Page data for', page, ':', pageData);
+            
+            if (pageData) {
+                document.getElementById('pageTitle').textContent = pageData.title;
+                document.getElementById('pageSubtitle').textContent = pageData.subtitle;
+                loadPageContent(page);
+            } else {
+                console.error('Page not found in pages dictionary:', page);
+                // Show default dashboard
+                document.getElementById('pageTitle').textContent = 'Financial Overview';
+                document.getElementById('pageSubtitle').textContent = 'Track your financial health and progress';
+                loadPageContent('dashboard');
+            }
+        };
+        
         // Sidebar toggle for mobile
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
@@ -719,50 +779,19 @@
             }
         });
 
-        // Make showPage function available globally
-        window.showPage = function(page) {
-            const pages = {
-                'analytics': { title: 'Analytics & Trends', subtitle: 'Analyze your financial trends and patterns' },
-                'budget': { title: 'Budget Planning', subtitle: 'Create and manage your monthly budgets' },
-                'investments': { title: 'Investment Portfolio', subtitle: 'Track and manage your investments' },
-                'transactions': { title: 'Transaction History', subtitle: 'View all your financial transactions' },
-                'goals': { title: 'Financial Goals', subtitle: 'Set and track your financial objectives' },
-                'reports': { title: 'Financial Reports', subtitle: 'Generate detailed financial reports' },
-                'insights': { title: 'Financial Insights', subtitle: 'AI-powered financial recommendations' },
-                'profile': { title: 'User Profile', subtitle: 'Manage your account information' },
-                'settings': { title: 'Settings', subtitle: 'Customize your FinGenie experience' }
-            };
-
-            // Update active menu item
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Find and activate the clicked menu item
-            const clickedItem = event?.target?.closest('.menu-item');
-            if (clickedItem) {
-                clickedItem.classList.add('active');
-            }
-
-            const pageData = pages[page];
-            if (pageData) {
-                document.getElementById('pageTitle').textContent = pageData.title;
-                document.getElementById('pageSubtitle').textContent = pageData.subtitle;
-                loadPageContent(page);
-            } else {
-                // Show default dashboard
-                document.getElementById('pageTitle').textContent = 'Financial Overview';
-                document.getElementById('pageSubtitle').textContent = 'Track your financial health and progress';
-                loadPageContent('dashboard');
-            }
-        };
-
         // Load page content
         function loadPageContent(page) {
+            console.log('loadPageContent called with page:', page);
             const pageContent = document.getElementById('pageContent');
             const dashboardContent = document.querySelector('.dashboard-content');
             
+            if (!pageContent) {
+                console.error('pageContent element not found!');
+                return;
+            }
+            
             if (page === 'dashboard') {
+                console.log('Loading dashboard page');
                 if (dashboardContent) {
                     dashboardContent.style.display = 'block';
                 }
@@ -771,6 +800,8 @@
                 return;
             }
 
+            console.log('Loading page:', page);
+            
             // Hide dashboard, show page-specific content
             if (dashboardContent) {
                 dashboardContent.style.display = 'none';
@@ -779,24 +810,43 @@
             // Remove existing page sections
             document.querySelectorAll('.page-section').forEach(section => section.remove());
             
+            // Clear page initialization tracking when switching pages
+            if (typeof window.clearPageInitialization === 'function') {
+                window.clearPageInitialization();
+            }
+            
             const content = getPageContent(page);
+            console.log('Content retrieved for', page, ':', content ? 'Found' : 'Not found');
+            
             if (content) {
                 const pageDiv = document.createElement('div');
                 pageDiv.className = 'page-section active';
                 pageDiv.innerHTML = content;
                 pageContent.appendChild(pageDiv);
+                console.log('Page content added to DOM for:', page);
                 
                 // Initialize page functionality after content is added
                 setTimeout(() => {
                     if (typeof initializePages === 'function') {
+                        console.log('Calling initializePages for:', page);
                         initializePages();
+                    } else {
+                        console.warn('initializePages function not available');
                     }
                 }, 100);
+            } else {
+                console.error('Page content not found for:', page);
+                // If content not found, show error message instead of dashboard
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'page-section active';
+                errorDiv.innerHTML = `<div class="card"><div class="card-body"><p>Page "${page}" not found.</p></div></div>`;
+                pageContent.appendChild(errorDiv);
             }
         }
 
         // Get page content HTML
         function getPageContent(page) {
+            console.log('getPageContent called for:', page);
             const contents = {
                 'analytics': `
                     <!-- Stats Summary -->
@@ -1273,6 +1323,234 @@
                         </div>
                     </div>
                 `,
+                'loan-calculator': `
+                    <!-- Loan Calculator Tabs -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-calculator"></i> Loan Calculators</h3>
+                            <div class="card-actions">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-primary loan-tab-btn active" onclick="switchLoanTab('emi')">
+                                        <i class="fas fa-calculator"></i> EMI Calculator
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary loan-tab-btn" onclick="switchLoanTab('prepayment')">
+                                        <i class="fas fa-money-bill-wave"></i> Prepayment
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary loan-tab-btn" onclick="switchLoanTab('affordability')">
+                                        <i class="fas fa-wallet"></i> Affordability
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- EMI Calculator Tab -->
+                            <div id="emiCalculatorTab" class="loan-tab-content active">
+                                <form id="loanCalculatorForm" onsubmit="event.preventDefault(); calculateEMI(); return false;">
+                                    <div class="grid grid-cols-2 gap-4 mb-4">
+                                        <div class="form-group">
+                                            <label class="form-label">Loan Type</label>
+                                            <select id="loanPresetSelect" class="form-control">
+                                                <option value="">Select Loan Type</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Loan Amount (₹)</label>
+                                            <input type="number" id="loanPrincipal" class="form-control currency-input" 
+                                                   placeholder="Enter loan amount" step="1000" min="0" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Interest Rate (% per annum)</label>
+                                            <input type="number" id="loanRate" class="form-control" 
+                                                   placeholder="Enter interest rate" step="0.1" min="0" max="30" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Loan Tenure</label>
+                                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                                <input type="range" id="loanTenureSlider" class="form-control" 
+                                                       min="1" max="360" value="60" style="flex: 1;">
+                                                <input type="number" id="loanTenure" class="form-control" 
+                                                       placeholder="Months" min="1" max="360" value="60" 
+                                                       style="width: 100px;" required>
+                                            </div>
+                                            <div id="tenureDisplay" style="margin-top: 0.5rem; color: var(--text-tertiary); font-size: 0.875rem;">5 years</div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-calculator"></i> Calculate EMI
+                                    </button>
+                                </form>
+                                
+                                <!-- EMI Results -->
+                                <div id="emiResultsSection" style="display: none; margin-top: 2rem;">
+                                    <div class="grid grid-cols-4 gap-4 mb-4">
+                                        <div class="stat-card">
+                                            <div class="stat-card-header">
+                                                <div class="stat-card-icon">
+                                                    <i class="fas fa-money-bill-wave"></i>
+                                                </div>
+                                            </div>
+                                            <div class="stat-card-value" id="emiAmount">₹0</div>
+                                            <div class="stat-card-label">Monthly EMI</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-card-header">
+                                                <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                                    <i class="fas fa-rupee-sign"></i>
+                                                </div>
+                                            </div>
+                                            <div class="stat-card-value" id="totalAmount">₹0</div>
+                                            <div class="stat-card-label">Total Amount</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-card-header">
+                                                <div class="stat-card-icon" style="background: var(--gradient-danger);">
+                                                    <i class="fas fa-percentage"></i>
+                                                </div>
+                                            </div>
+                                            <div class="stat-card-value" id="totalInterest">₹0</div>
+                                            <div class="stat-card-label">Total Interest</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-card-header">
+                                                <div class="stat-card-icon" style="background: var(--gradient-warm);">
+                                                    <i class="fas fa-chart-pie"></i>
+                                                </div>
+                                            </div>
+                                            <div class="stat-card-value" id="interestPercentage">0%</div>
+                                            <div class="stat-card-label">Interest %</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Amortization Schedule -->
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h4 class="card-title"><i class="fas fa-table"></i> Amortization Schedule (First 12 Months)</h4>
+                                        </div>
+                                        <div class="card-body" id="amortizationSchedule">
+                                            <!-- Schedule will be populated here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Prepayment Calculator Tab -->
+                            <div id="prepaymentCalculatorTab" class="loan-tab-content" style="display: none;">
+                                <form id="prepaymentCalculatorForm" onsubmit="calculatePrepaymentSavings(); return false;">
+                                    <div class="grid grid-cols-2 gap-4 mb-4">
+                                        <div class="form-group">
+                                            <label class="form-label">Loan Principal (₹)</label>
+                                            <input type="number" id="prepayPrincipal" class="form-control" 
+                                                   placeholder="Enter loan amount" step="1000" min="0" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Interest Rate (% per annum)</label>
+                                            <input type="number" id="prepayRate" class="form-control" 
+                                                   placeholder="Enter interest rate" step="0.1" min="0" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Loan Tenure (Months)</label>
+                                            <input type="number" id="prepayTenure" class="form-control" 
+                                                   placeholder="Enter tenure" min="1" max="360" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Prepayment Amount (₹)</label>
+                                            <input type="number" id="prepaymentAmount" class="form-control" 
+                                                   placeholder="Enter prepayment amount" step="1000" min="0" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Prepayment Month</label>
+                                            <input type="number" id="prepaymentMonth" class="form-control" 
+                                                   placeholder="Month number" min="1" required>
+                                            <small style="color: var(--text-tertiary);">Enter the month in which you plan to make the prepayment</small>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-calculator"></i> Calculate Savings
+                                    </button>
+                                </form>
+                                
+                                <!-- Prepayment Results -->
+                                <div id="prepaymentResultsSection" style="display: none; margin-top: 2rem;">
+                                    <div class="grid grid-cols-3 gap-4">
+                                        <div class="stat-card">
+                                            <div class="stat-card-header">
+                                                <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                                    <i class="fas fa-rupee-sign"></i>
+                                                </div>
+                                            </div>
+                                            <div class="stat-card-value" id="prepayInterestSaved">₹0</div>
+                                            <div class="stat-card-label">Interest Saved</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-card-header">
+                                                <div class="stat-card-icon" style="background: var(--gradient-primary);">
+                                                    <i class="fas fa-percentage"></i>
+                                                </div>
+                                            </div>
+                                            <div class="stat-card-value" id="prepaySavingsPercentage">0%</div>
+                                            <div class="stat-card-label">Savings %</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-card-header">
+                                                <div class="stat-card-icon" style="background: var(--gradient-warm);">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                </div>
+                                            </div>
+                                            <div class="stat-card-value" id="prepayMonthsReduced">0</div>
+                                            <div class="stat-card-label">Months Reduced</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Affordability Calculator Tab -->
+                            <div id="affordabilityCalculatorTab" class="loan-tab-content" style="display: none;">
+                                <form id="affordabilityCalculatorForm" onsubmit="calculateAffordability(); return false;">
+                                    <div class="grid grid-cols-2 gap-4 mb-4">
+                                        <div class="form-group">
+                                            <label class="form-label">Monthly Income (₹)</label>
+                                            <input type="number" id="affordabilityIncome" class="form-control" 
+                                                   placeholder="Enter monthly income" step="1000" min="0" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Monthly Expenses (₹)</label>
+                                            <input type="number" id="affordabilityExpenses" class="form-control" 
+                                                   placeholder="Enter monthly expenses" step="1000" min="0" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">EMI to Income Ratio</label>
+                                            <input type="number" id="affordabilityRatio" class="form-control" 
+                                                   placeholder="0.4" step="0.1" min="0.1" max="0.6" value="0.4" required>
+                                            <small style="color: var(--text-tertiary);">Recommended: 40% (0.4). Maximum EMI should not exceed this percentage of income.</small>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-calculator"></i> Calculate Affordability
+                                    </button>
+                                </form>
+                                
+                                <!-- Affordability Results -->
+                                <div id="affordabilityResultsSection" style="display: none; margin-top: 2rem;">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h4 style="margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Affordability Analysis</h4>
+                                            <div class="stat-card" style="margin-bottom: 1rem;">
+                                                <div class="stat-card-header">
+                                                    <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                                        <i class="fas fa-rupee-sign"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="stat-card-value" id="affordabilityEMI">₹0</div>
+                                                <div class="stat-card-label">Maximum Affordable EMI</div>
+                                            </div>
+                                            <p id="affordabilityRecommendation" style="color: var(--text-secondary); padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md);"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
                 'reports': `
                     <!-- Report Options -->
                     <div class="grid grid-cols-2 mb-4">
@@ -1676,8 +1954,20 @@
                     </div>
                 `
             };
-            return contents[page] || null;
+            const content = contents[page];
+            console.log('Available pages:', Object.keys(contents));
+            console.log('Requested page:', page);
+            console.log('Content found:', content ? 'Yes' : 'No');
+            if (!content) {
+                console.error('Page content missing for:', page);
+                console.log('All available page keys:', Object.keys(contents).join(', '));
+            }
+            return content || null;
         }
+        
+        // Make loadPageContent and getPageContent available globally for debugging
+        window.loadPageContent = loadPageContent;
+        window.getPageContent = getPageContent;
 
         let goalInputCount = 1;
         window.addGoalInput = function() {
@@ -1831,6 +2121,63 @@
                 console.error('Error:', error);
                 localStorage.removeItem('token');
                 window.location.href = '/login';
+            }
+        });
+        
+        // Loan Calculator Tab Switching
+        window.switchLoanTab = function(tab, evt) {
+            const event = evt || window.event;
+            // Hide all tabs
+            document.querySelectorAll('.loan-tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.querySelectorAll('.loan-tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'btn-primary');
+                btn.classList.add('btn-secondary');
+            });
+            
+            // Show selected tab
+            const tabContent = document.getElementById(tab + 'CalculatorTab');
+            const tabBtn = (event && event.target && event.target.closest('.loan-tab-btn')) || 
+                          document.querySelector(`.loan-tab-btn[onclick*="${tab}"]`);
+            
+            if (tabContent) {
+                tabContent.style.display = 'block';
+                tabContent.classList.add('active');
+            }
+            
+            if (tabBtn) {
+                tabBtn.classList.remove('btn-secondary');
+                tabBtn.classList.add('active', 'btn-primary');
+            }
+        };
+        
+        // Ensure showPage is available immediately when DOM loads
+        // Set up event listeners for menu items as a backup to inline onclick
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up loan calculator menu item click handler
+            const loanCalcMenuItem = Array.from(document.querySelectorAll('.menu-item')).find(item => {
+                return item.textContent.includes('Loan Calculator');
+            });
+            
+            if (loanCalcMenuItem) {
+                loanCalcMenuItem.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Loan calculator menu item clicked (via event listener)');
+                    if (typeof window.showPage === 'function') {
+                        window.showPage('loan-calculator', e);
+                    } else {
+                        console.error('showPage not available yet, retrying...');
+                        setTimeout(() => {
+                            if (typeof window.showPage === 'function') {
+                                window.showPage('loan-calculator', e);
+                            } else {
+                                console.error('showPage still not available');
+                            }
+                        }, 100);
+                    }
+                });
             }
         });
     </script>

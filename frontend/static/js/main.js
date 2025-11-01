@@ -326,12 +326,21 @@ window.loadFinancialData = async function() {
 };
 
 // Dashboard initialization - load data when dashboard page loads
-if (window.location.pathname === '/dashboard' || document.getElementById('totalAssets')) {
+// Only initialize if we're actually on the dashboard page (not just any page with dashboard elements)
+let dashboardInitialized = false;
+if ((window.location.pathname === '/dashboard' || window.location.pathname === '/') && !dashboardInitialized) {
     // Load financial data on page load - ensure Chart.js is loaded first
     const initializeDashboard = async () => {
+        if (dashboardInitialized) {
+            return; // Prevent multiple initializations
+        }
+        
         console.log('🚀 Initializing dashboard...');
+        dashboardInitialized = true;
+        
         // Wait for Chart.js to be available
         let retries = 0;
+        const maxRetries = 10; // Reduced from 20 to prevent excessive retries
         const checkChartJS = () => {
             if (typeof Chart !== 'undefined') {
                 console.log('✅ Chart.js loaded, loading financial data...');
@@ -340,9 +349,9 @@ if (window.location.pathname === '/dashboard' || document.getElementById('totalA
                 } else {
                     console.error('❌ loadFinancialData function not available');
                 }
-            } else if (retries < 20) {
+            } else if (retries < maxRetries) {
                 retries++;
-                setTimeout(checkChartJS, 100);
+                setTimeout(checkChartJS, 200); // Increased interval from 100ms to 200ms
             } else {
                 console.warn('⚠️ Chart.js failed to load, loading data anyway...');
                 if (typeof window.loadFinancialData === 'function') {
@@ -353,8 +362,9 @@ if (window.location.pathname === '/dashboard' || document.getElementById('totalA
         checkChartJS();
     };
     
+    // Only initialize once
     if (document.readyState === 'loading') {
-        window.addEventListener('DOMContentLoaded', initializeDashboard);
+        window.addEventListener('DOMContentLoaded', initializeDashboard, { once: true });
     } else {
         // DOM already loaded
         initializeDashboard();
