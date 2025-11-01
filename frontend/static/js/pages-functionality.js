@@ -1890,11 +1890,11 @@ window.loadGoalsPageData = async function() {
                                 </div>
                             </div>
                             <!-- Action Buttons -->
-                            <div style="display: flex; gap: 0.5rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-primary);">
-                                <button onclick="editGoal(${goal.id})" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                            <div style="display: flex; justify-content: end; gap: 0.5rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-primary);">
+                                <button onclick="editGoal(${goal.id})" class="btn btn-secondary btn-sm"; font-size: 0.8rem; padding: 0.4rem;">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button onclick="openDeleteGoalModal(${goal.id}, '${escapedGoalName}')" class="btn btn-danger btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                                <button onclick="openDeleteGoalModal(${goal.id}, '${escapedGoalName}')" class="btn btn-danger btn-sm"; font-size: 0.8rem; padding: 0.4rem;">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
