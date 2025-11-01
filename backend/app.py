@@ -136,43 +136,8 @@ def create_app():
     def signup_page():
         return render_template('signup.html')
     
-    @app.route('/signup', methods=['POST'])
-    def signup_post():
-        """Proxy signup request to auth API"""
-        from flask import request as req, jsonify, make_response
-        from models.user_model import UserModel
-        from utils.jwt_handler import encode_token
-        
-        try:
-            data = req.get_json()
-            user_model = UserModel(db)
-            
-            if not data or not data.get('email') or not data.get('password') or not data.get('name'):
-                return jsonify({'success': False, 'message': 'Name, email, and password are required'}), 400
-            
-            name = data['name'].strip()
-            email = data['email'].strip().lower()
-            password = data['password']
-            
-            if len(password) < 6:
-                return jsonify({'success': False, 'message': 'Password must be at least 6 characters'}), 400
-            
-            user, error = user_model.create_user(name, email, password)
-            
-            if error:
-                return jsonify({'success': False, 'message': error}), 400
-            
-            token = encode_token(user['_id'], user['email'])
-            response = make_response(jsonify({
-                'success': True,
-                'message': 'User created successfully',
-                'user': user,
-                'token': token
-            }))
-            response.set_cookie('token', token, httponly=True, samesite='Lax', max_age=86400)
-            return response, 201
-        except Exception as e:
-            return jsonify({'success': False, 'message': f'Server error: {str(e)}'}), 500
+    # REMOVED: Duplicate signup route - using /api/auth/signup from blueprint instead
+    # This was causing duplicate account creation
     
     @app.route('/dashboard')
     def dashboard_page():
