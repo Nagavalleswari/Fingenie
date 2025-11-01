@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 import sys
 import os
 import json
+import flask_cors
 
 # Add parent directory to path for imports
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
