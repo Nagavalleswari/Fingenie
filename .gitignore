@@ -145,7 +145,6 @@ Desktop.ini
 # Project specific
 *.db
 *.sqlite
-config.py
 .env.local
 .env.*.local
 
