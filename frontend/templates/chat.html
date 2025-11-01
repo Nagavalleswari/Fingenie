@@ -233,6 +233,9 @@
                                     <button type="submit" class="chat-send-btn" id="sendBtn">
                                         <i class="fas fa-arrow-up"></i>
                                     </button>
+                                    <button type="button" class="chat-stop-btn" id="stopBtn" title="Stop generating" style="display: none;">
+                                        <i class="fas fa-stop"></i>
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -995,30 +998,7 @@ toast.success('Export ready');
                 <div class="typing-dot"></div>
             `;
             
-            const stopBtn = document.createElement('button');
-            stopBtn.className = 'typing-stop-btn';
-            stopBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
-            stopBtn.onclick = () => {
-                // Abort the fetch request if possible
-                if (window.currentFetchController) {
-                    window.currentFetchController.abort();
-                    window.currentFetchController = null;
-                }
-                const typingEl = document.getElementById('typingIndicator');
-                if (typingEl) typingEl.remove();
-                // Deactivate loading bar on stop
-                const lb = document.getElementById('chatLoadingBar');
-                if (lb) lb.classList.remove('active');
-                messageInput.disabled = false;
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
-                if (typeof toast !== 'undefined') {
-toast.info('Response stopped');
-                }
-            };
-            
             typingBubble.appendChild(typingContent);
-            typingBubble.appendChild(stopBtn);
             typingInner.appendChild(typingAvatar);
             typingInner.appendChild(typingBubble);
             typingGroup.appendChild(typingInner);
@@ -1037,6 +1017,28 @@ toast.info('Response stopped');
             // Send message to backend with abort controller for stop functionality
             let currentFetchController = new AbortController();
             window.currentFetchController = currentFetchController;
+
+            // Show inline Stop button while generating
+            const inlineStopBtn = document.getElementById('stopBtn');
+            if (inlineStopBtn) {
+                inlineStopBtn.style.display = 'inline-flex';
+                inlineStopBtn.disabled = false;
+                inlineStopBtn.onclick = () => {
+                    if (window.currentFetchController) {
+                        window.currentFetchController.abort();
+                        window.currentFetchController = null;
+                    }
+                    const typingEl = document.getElementById('typingIndicator');
+                    if (typingEl) typingEl.remove();
+                    const lb = document.getElementById('chatLoadingBar');
+                    if (lb) lb.classList.remove('active');
+                    messageInput.disabled = false;
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                    inlineStopBtn.style.display = 'none';
+                    if (typeof toast !== 'undefined') { toast.info('Response stopped'); }
+                };
+            }
             
             const token = localStorage.getItem('token');
             fetch('/api/chat/chat', {
@@ -1068,6 +1070,8 @@ toast.info('Response stopped');
                 messageInput.disabled = false;
                 sendBtn.disabled = false;
                 sendBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                const inlineStopBtn2 = document.getElementById('stopBtn');
+                if (inlineStopBtn2) inlineStopBtn2.style.display = 'none';
                 messageInput.focus();
                 
                 window.currentFetchController = null;
@@ -1089,6 +1093,8 @@ toast.info('Response stopped');
                 
                 // Deactivate loading bar
                 if (chatLoadingBar) chatLoadingBar.classList.remove('active');
+                const inlineStopBtn3 = document.getElementById('stopBtn');
+                if (inlineStopBtn3) inlineStopBtn3.style.display = 'none';
                 
                 // Don't show error if request was aborted
                 if (error.name !== 'AbortError') {
