@@ -656,11 +656,19 @@
 
         /* Page Sections */
         .page-section {
-            display: none;
+            display: none !important;
         }
         .page-section.active {
-            display: block;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             animation: fadeIn 0.3s ease;
+        }
+        
+        /* Ensure pageContent container is visible when sections are active */
+        #pageContent:has(.page-section.active) {
+            display: block !important;
+            visibility: visible !important;
         }
 
         @keyframes slideUp {
@@ -824,16 +832,66 @@
                 pageDiv.innerHTML = content;
                 pageContent.appendChild(pageDiv);
                 console.log('Page content added to DOM for:', page);
+                console.log('Page div created with classes:', pageDiv.className);
+                console.log('Page div display style:', window.getComputedStyle(pageDiv).display);
+                
+                // Ensure pageContent container is visible
+                pageContent.style.setProperty('display', 'block', 'important');
+                pageContent.style.setProperty('visibility', 'visible', 'important');
+                
+                // Force display on the page div with !important equivalent
+                pageDiv.style.setProperty('display', 'block', 'important');
+                pageDiv.style.setProperty('visibility', 'visible', 'important');
+                pageDiv.style.setProperty('opacity', '1', 'important');
+                
+                // Verify the element is in DOM and visible
+                setTimeout(() => {
+                    const addedSection = document.querySelector('.page-section.active');
+                    console.log('Page section in DOM:', addedSection !== null);
+                    console.log('Page section count:', document.querySelectorAll('.page-section').length);
+                    if (addedSection) {
+                        const computedStyle = window.getComputedStyle(addedSection);
+                        console.log('Page section computed display:', computedStyle.display);
+                        console.log('Page section computed visibility:', computedStyle.visibility);
+                        console.log('Page section computed opacity:', computedStyle.opacity);
+                        console.log('Page section offsetHeight:', addedSection.offsetHeight);
+                        console.log('Page section innerHTML length:', addedSection.innerHTML.length);
+                        console.log('Page section classes:', addedSection.className);
+                        console.log('Page section parent:', addedSection.parentElement);
+                    }
+                }, 50);
                 
                 // Initialize page functionality after content is added
+                // Use multiple timeouts to ensure DOM is fully ready
                 setTimeout(() => {
                     if (typeof initializePages === 'function') {
-                        console.log('Calling initializePages for:', page);
+                        console.log('🔄 Calling initializePages for:', page);
                         initializePages();
                     } else {
-                        console.warn('initializePages function not available');
+                        console.warn('⚠️ initializePages function not available');
                     }
                 }, 100);
+                
+                // Also try again after a longer delay to ensure all elements are rendered
+                setTimeout(() => {
+                    if (typeof initializePages === 'function') {
+                        console.log('🔄 Retrying initializePages for:', page);
+                        initializePages();
+                    }
+                }, 300);
+                
+                // Final retry for stubborn pages
+                setTimeout(() => {
+                    if (typeof initializePages === 'function') {
+                        console.log('🔄 Final retry initializePages for:', page);
+                        initializePages();
+                    }
+                    // Also manually trigger load if it's a specific page
+                    if (page === 'goals' && typeof loadGoalsPageData === 'function') {
+                        console.log('🔄 Manually calling loadGoalsPageData for goals page');
+                        loadGoalsPageData();
+                    }
+                }, 500);
             } else {
                 console.error('Page content not found for:', page);
                 // If content not found, show error message instead of dashboard

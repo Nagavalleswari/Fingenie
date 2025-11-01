@@ -305,19 +305,12 @@ window.loadFinancialData = async function() {
                 toast.info('Showing demo data. Add your financial information to replace it.', 'info', 4000);
             }
         } else {
-            // Truly empty - try to explicitly load mock data
-            console.log('⚠️ Truly no data, explicitly loading mock data...');
-            try {
-                await apiRequest('/finance/load_mock_data', 'POST');
-                const result2 = await apiRequest('/finance/get_data');
-                const mockData = result2.data || {};
-                console.log('✅ Mock data explicitly loaded:', mockData);
-                await updateDashboardWithData(mockData, true);
-                toast.info('Mock data loaded for demonstration', 'info');
-            } catch (error) {
-                console.error('❌ Error loading mock data:', error);
-                toast.error('Could not load demo data. Please add your financial information.', 'error');
-            }
+            // Truly empty - backend should return mock data, but if not, show empty state
+            console.log('⚠️ No data received from backend. Checking if backend is configured to return mock data...');
+            toast.warning('No financial data available. The backend should return mock data from mock_data.json if no user data exists.', 'warning');
+            // Don't try to load mock data explicitly - backend should handle it
+            // Just show empty state
+            await updateDashboardWithData({}, false);
         }
     } catch (error) {
         console.error('❌ Error loading financial data:', error);
@@ -478,31 +471,63 @@ window.updateDashboardWithData = async function(data, isMockData) {
     const assets = data.assets || {};
     const liabilities = data.liabilities || {};
     
-    const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0);
-    const totalLiabilities = (liabilities.loan || 0) + (liabilities.credit_card_due || 0);
+    console.log('Assets object:', assets);
+    console.log('Liabilities object:', liabilities);
+    
+    // Calculate total assets including all asset types from mock_data.json
+    const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0) +
+                       (assets.real_estate || 0) + (assets.fixed_deposits || 0) + (assets.gold || 0);
+    
+    // Calculate total liabilities including all loan types from mock_data.json
+    const totalLiabilities = (liabilities.loan || 0) + (liabilities.home_loan || 0) +
+                            (liabilities.car_loan || 0) + (liabilities.personal_loan || 0) +
+                            (liabilities.credit_card_due || 0);
     const netWorth = totalAssets - totalLiabilities;
     
     console.log('Calculated totals - Assets:', totalAssets, 'Liabilities:', totalLiabilities, 'Net:', netWorth);
+    console.log('Individual asset values:', {
+        savings: assets.savings,
+        mutual_funds: assets.mutual_funds,
+        stocks: assets.stocks,
+        real_estate: assets.real_estate,
+        fixed_deposits: assets.fixed_deposits,
+        gold: assets.gold
+    });
     
     // Animate number counting - check if elements exist first
     const totalAssetsEl = document.getElementById('totalAssets');
     const totalLiabilitiesEl = document.getElementById('totalLiabilities');
     const netWorthEl = document.getElementById('netWorth');
     
+    console.log('DOM Elements found:', {
+        totalAssets: totalAssetsEl !== null,
+        totalLiabilities: totalLiabilitiesEl !== null,
+        netWorth: netWorthEl !== null
+    });
+    
     if (totalAssetsEl) {
+        console.log('Updating totalAssets with value:', totalAssets);
+        // Set value immediately first, then animate
+        totalAssetsEl.textContent = `₹${totalAssets.toLocaleString()}`;
         animateNumber('totalAssets', totalAssets);
     } else {
-        console.warn('totalAssets element not found');
+        console.warn('❌ totalAssets element not found in DOM');
     }
     if (totalLiabilitiesEl) {
+        console.log('Updating totalLiabilities with value:', totalLiabilities);
+        // Set value immediately first, then animate
+        totalLiabilitiesEl.textContent = `₹${totalLiabilities.toLocaleString()}`;
         animateNumber('totalLiabilities', totalLiabilities);
     } else {
-        console.warn('totalLiabilities element not found');
+        console.warn('❌ totalLiabilities element not found in DOM');
     }
     if (netWorthEl) {
+        console.log('Updating netWorth with value:', netWorth);
+        // Set value immediately first, then animate
+        netWorthEl.textContent = `₹${netWorth.toLocaleString()}`;
         animateNumber('netWorth', netWorth);
     } else {
-        console.warn('netWorth element not found');
+        console.warn('❌ netWorth element not found in DOM');
     }
     
     // Update charts
@@ -917,6 +942,9 @@ function updateCharts(data) {
         const savings = assets.savings || 0;
         const mutualFunds = assets.mutual_funds || 0;
         const stocks = assets.stocks || 0;
+        const realEstate = assets.real_estate || 0;
+        const fixedDeposits = assets.fixed_deposits || 0;
+        const gold = assets.gold || 0;
         
         // Only create chart if we have Chart.js available
         if (typeof Chart === 'undefined') {
@@ -935,23 +963,49 @@ function updateCharts(data) {
             canvasContainer.style.position = 'relative';
         }
         
-        // If all values are zero, show a message or use minimum display value
-        const totalAssets = savings + mutualFunds + stocks;
-        const chartData = totalAssets > 0 
-            ? [savings, mutualFunds, stocks]
-            : [1, 0, 0]; // Show placeholder if no data
+        // Build labels and data arrays dynamically including all asset types
+        const assetLabels = [];
+        const assetData = [];
+        const assetColors = ['#059669', '#10b981', '#34d399', '#3b82f6', '#a855f7', '#ec4899'];
+        
+        if (savings > 0) {
+            assetLabels.push('Savings');
+            assetData.push(savings);
+        }
+        if (mutualFunds > 0) {
+            assetLabels.push('Mutual Funds');
+            assetData.push(mutualFunds);
+        }
+        if (stocks > 0) {
+            assetLabels.push('Stocks');
+            assetData.push(stocks);
+        }
+        if (realEstate > 0) {
+            assetLabels.push('Real Estate');
+            assetData.push(realEstate);
+        }
+        if (fixedDeposits > 0) {
+            assetLabels.push('Fixed Deposits');
+            assetData.push(fixedDeposits);
+        }
+        if (gold > 0) {
+            assetLabels.push('Gold');
+            assetData.push(gold);
+        }
+        
+        // If no assets, show placeholder
+        if (assetData.length === 0) {
+            assetLabels.push('No Assets');
+            assetData.push(1);
+        }
         
         assetsChart = new Chart(assetsCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Savings', 'Mutual Funds', 'Stocks'],
+                labels: assetLabels,
                 datasets: [{
-                    data: chartData,
-                    backgroundColor: [
-                        '#059669',
-                        '#10b981',
-                        '#34d399'
-                    ],
+                    data: assetData,
+                    backgroundColor: assetColors.slice(0, assetLabels.length),
                     borderWidth: 0
                 }]
             },
@@ -989,8 +1043,12 @@ function updateCharts(data) {
     // Financial Overview Bar Chart
     const overviewCtx = document.getElementById('overviewChart');
     if (overviewCtx) {
-        const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0);
-        const totalLiabilities = (liabilities.loan || 0) + (liabilities.credit_card_due || 0);
+        // Calculate totals including all asset and liability types from mock_data.json
+        const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0) +
+                           (assets.real_estate || 0) + (assets.fixed_deposits || 0) + (assets.gold || 0);
+        const totalLiabilities = (liabilities.loan || 0) + (liabilities.home_loan || 0) +
+                                (liabilities.car_loan || 0) + (liabilities.personal_loan || 0) +
+                                (liabilities.credit_card_due || 0);
         const netWorth = totalAssets - totalLiabilities;
         
         // Only create chart if we have Chart.js available
@@ -1099,11 +1157,11 @@ function updateGoalsProgress(goals) {
         return;
     }
     
-    // Calculate overall progress for stat card
-    const totalAssets = parseFloat(document.getElementById('totalAssets')?.textContent.replace(/[₹,]/g, '') || 0);
+    // Calculate overall progress for stat card using goal.current or goal.current_amount
+    const totalGoalCurrent = goals.reduce((sum, g) => sum + (g.current || g.current_amount || 0), 0);
     const totalGoalTarget = goals.reduce((sum, g) => sum + (g.target || 0), 0);
-    const overallProgress = totalGoalTarget > 0 && totalAssets > 0 
-        ? Math.min(100, Math.round((totalAssets / totalGoalTarget) * 100))
+    const overallProgress = totalGoalTarget > 0 
+        ? Math.min(100, Math.round((totalGoalCurrent / totalGoalTarget) * 100))
         : 0;
     
     // Update stat card with simple metric
@@ -1120,9 +1178,10 @@ function updateGoalsProgress(goals) {
             const monthsRemaining = yearsRemaining * 12;
             const monthlyTarget = monthsRemaining > 0 ? Math.round(goal.target / monthsRemaining) : goal.target;
             
-            // Calculate individual goal progress
-            const goalProgress = totalAssets > 0 && goal.target > 0 
-                ? Math.min(100, Math.round((totalAssets / goal.target) * 100))
+            // Calculate individual goal progress using goal.current or goal.current_amount
+            const goalCurrent = goal.current || goal.current_amount || 0;
+            const goalProgress = goal.target > 0 
+                ? Math.min(100, Math.round((goalCurrent / goal.target) * 100))
                 : 0;
             
             html += `
@@ -1152,7 +1211,7 @@ function updateGoalsProgress(goals) {
                     <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-tertiary); font-size: 0.875rem; padding-top: 0.5rem; border-top: 1px solid var(--border-primary);">
                         <span><i class="fas fa-calculator"></i> ~₹${monthlyTarget.toLocaleString()}/month needed</span>
                         <span style="color: var(--accent-cyan); font-weight: 600;">
-                            ₹${Math.max(0, goal.target - totalAssets).toLocaleString()} remaining
+                            ₹${Math.max(0, goal.target - goalCurrent).toLocaleString()} remaining
                         </span>
                     </div>
                 </div>

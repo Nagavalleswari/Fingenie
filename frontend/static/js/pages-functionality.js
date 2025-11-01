@@ -1,83 +1,121 @@
 // Complete functionality for all dashboard pages
 
-// Initialize page when it loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Wait for page to be loaded dynamically
-    setTimeout(initializePages, 500);
-});
-
 // Track which pages have been initialized to prevent duplicate initialization
 const initializedPages = new Set();
 
-// Initialize page-specific functionality
-function initializePages() {
+// Initialize page-specific functionality - MAKE IT GLOBALLY AVAILABLE
+window.initializePages = function() {
+    console.log('initializePages called');
+    
     // Check which page section is currently active
     const activePageSection = document.querySelector('.page-section.active');
     if (!activePageSection) {
+        console.log('No active page section found');
         return; // No active page section, don't initialize
     }
     
-    // Analytics page
-    if (document.getElementById('monthlyTrendChart') && !initializedPages.has('analytics')) {
+    console.log('Active page section found, checking for page elements...');
+    
+    // Analytics page - check for analytics-specific elements
+    const analyticsChart = document.getElementById('monthlyTrendChart');
+    const analyticsGrowth = document.getElementById('analyticsGrowth');
+    if ((analyticsChart || analyticsGrowth) && !initializedPages.has('analytics')) {
+        console.log('Initializing Analytics page...');
         loadAnalyticsData();
         initializedPages.add('analytics');
     }
     
-    // Budget page
-    if (document.getElementById('totalBudget') && !initializedPages.has('budget')) {
+    // Budget page - check for budget-specific elements
+    const totalBudget = document.getElementById('totalBudget');
+    const budgetChart = document.getElementById('budgetChart');
+    if ((totalBudget || budgetChart) && !initializedPages.has('budget')) {
+        console.log('Initializing Budget page...');
         loadBudgetData();
         setupBudgetHandlers();
         initializedPages.add('budget');
     }
     
-    // Investments page
-    if (document.getElementById('totalInvestments') && !initializedPages.has('investments')) {
+    // Investments page - check for investments-specific elements
+    const totalInvestments = document.getElementById('totalInvestments');
+    const investmentChart = document.getElementById('investmentDistributionChart');
+    if ((totalInvestments || investmentChart) && !initializedPages.has('investments')) {
+        console.log('Initializing Investments page...');
         loadInvestmentsData();
         setupInvestmentHandlers();
         initializedPages.add('investments');
     }
     
-    // Transactions page
-    if (document.getElementById('totalTransactions') && !initializedPages.has('transactions')) {
+    // Transactions page - check for transactions-specific elements
+    const totalTransactions = document.getElementById('totalTransactions');
+    const transactionsList = document.getElementById('transactionsList');
+    if ((totalTransactions || transactionsList) && !initializedPages.has('transactions')) {
+        console.log('Initializing Transactions page...');
         loadTransactionsData();
         setupTransactionHandlers();
         initializedPages.add('transactions');
     }
     
-    // Goals page
-    if (document.getElementById('totalGoals') && !initializedPages.has('goals')) {
+    // Goals page - check for goals-specific elements
+    const totalGoals = document.getElementById('totalGoals');
+    const goalsPageList = document.getElementById('goalsPageList');
+    const completedGoals = document.getElementById('completedGoals');
+    const activeGoals = document.getElementById('activeGoals');
+    
+    console.log('Goals page element check:', {
+        totalGoals: totalGoals !== null,
+        goalsPageList: goalsPageList !== null,
+        completedGoals: completedGoals !== null,
+        activeGoals: activeGoals !== null,
+        alreadyInitialized: initializedPages.has('goals')
+    });
+    
+    if ((totalGoals || goalsPageList || completedGoals || activeGoals) && !initializedPages.has('goals')) {
+        console.log('✅ Initializing Goals page...');
         loadGoalsPageData();
         initializedPages.add('goals');
+    } else if (!initializedPages.has('goals')) {
+        console.log('⚠️ Goals page elements not found yet, will retry...');
     }
     
-    // Reports page
-    if (document.getElementById('reportForm') && !initializedPages.has('reports')) {
+    // Reports page - check for reports-specific elements
+    const reportForm = document.getElementById('reportForm');
+    if (reportForm && !initializedPages.has('reports')) {
+        console.log('Initializing Reports page...');
         setupReportHandlers();
         initializedPages.add('reports');
     }
     
-    // Insights page
-    if (document.getElementById('detailedInsights') && !initializedPages.has('insights')) {
+    // Insights page - check for insights-specific elements
+    const detailedInsights = document.getElementById('detailedInsights');
+    const totalInsights = document.getElementById('totalInsights');
+    if ((detailedInsights || totalInsights) && !initializedPages.has('insights')) {
+        console.log('Initializing Insights page...');
         loadInsightsPageData();
         initializedPages.add('insights');
     }
     
-    // Profile page
-    if (document.getElementById('profileForm') && !initializedPages.has('profile')) {
+    // Profile page - check for profile-specific elements
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm && !initializedPages.has('profile')) {
+        console.log('Initializing Profile page...');
         loadProfileData();
         setupProfileHandlers();
         initializedPages.add('profile');
     }
     
-    // Settings page
-    if (document.getElementById('settingsForm') && !initializedPages.has('settings')) {
+    // Settings page - check for settings-specific elements
+    const settingsForm = document.getElementById('settingsForm');
+    if (settingsForm && !initializedPages.has('settings')) {
+        console.log('Initializing Settings page...');
         loadSettingsData();
         setupSettingsHandlers();
         initializedPages.add('settings');
     }
     
-    // Loan Calculator page
-    if (document.getElementById('loanCalculatorForm') && !initializedPages.has('loan-calculator')) {
+    // Loan Calculator page - check for loan calculator-specific elements
+    const loanCalculatorForm = document.getElementById('loanCalculatorForm');
+    if (loanCalculatorForm && !initializedPages.has('loan-calculator')) {
+        console.log('Initializing Loan Calculator page...');
         if (typeof loadLoanPresets === 'function') {
             loadLoanPresets();
         }
@@ -86,6 +124,8 @@ function initializePages() {
         }
         initializedPages.add('loan-calculator');
     }
+    
+    console.log('Page initialization complete. Initialized pages:', Array.from(initializedPages));
 }
 
 // Function to clear page initialization tracking (called when switching pages)
@@ -126,14 +166,28 @@ async function getFinancialData(forceRefresh = false) {
 // ========== ANALYTICS PAGE ==========
 async function loadAnalyticsData() {
     try {
+        console.log('🔄 Loading Analytics data from mock_data.json...');
         const data = await getFinancialData();
+        console.log('✅ Analytics data loaded:', data);
+        
         const assets = data.assets || {};
         const liabilities = data.liabilities || {};
         const goals = data.goals || [];
+        const financialHealth = data.financial_health_metrics || {};
         
-        const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0);
-        const totalLiabilities = (liabilities.loan || 0) + (liabilities.credit_card_due || 0);
+        // Calculate total assets including all asset types
+        const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0) + 
+                          (assets.real_estate || 0) + (assets.fixed_deposits || 0) + (assets.gold || 0);
+        
+        // Calculate total liabilities including all loan types
+        const totalLiabilities = (liabilities.loan || 0) + (liabilities.home_loan || 0) + 
+                                (liabilities.car_loan || 0) + (liabilities.personal_loan || 0) + 
+                                (liabilities.credit_card_due || 0);
         const netWorth = totalAssets - totalLiabilities;
+        
+        // Use monthly trends from financial health if available
+        const monthlyTrends = financialHealth.monthly_trends || [];
+        const latestTrend = monthlyTrends.length > 0 ? monthlyTrends[monthlyTrends.length - 1] : null;
         
         // Calculate metrics
         const growthRate = totalAssets > 0 ? Math.round((netWorth / totalAssets) * 100) : 0;
@@ -150,19 +204,29 @@ async function loadAnalyticsData() {
         // Update performance metrics
         updateElement('assetGrowthVal', '+₹' + totalAssets.toLocaleString());
         updateElement('investmentPerfVal', '+₹' + ((assets.mutual_funds || 0) + (assets.stocks || 0)).toLocaleString());
+        
+        // Calculate goal progress properly
         const avgGoalProgress = goals.length > 0 
             ? Math.round(goals.reduce((sum, g) => {
-                const progress = totalAssets > 0 && g.target > 0 ? Math.min(100, (totalAssets / g.target) * 100) : 0;
+                const current = g.current || g.current_amount || 0;
+                const target = g.target || 0;
+                const progress = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
                 return sum + progress;
             }, 0) / goals.length)
             : 0;
         updateElement('goalProgressVal', avgGoalProgress + '%');
         
-        // Create charts
-        createMonthlyTrendChart(totalAssets, totalLiabilities, netWorth);
+        // Create charts - use monthly trends if available
+        if (monthlyTrends.length > 0) {
+            createMonthlyTrendChartFromData(monthlyTrends);
+        } else {
+            createMonthlyTrendChart(totalAssets, totalLiabilities, netWorth);
+        }
         createCategoryBreakdownChart(assets);
+        
+        console.log('✅ Analytics page data rendered successfully');
     } catch (error) {
-        console.error('Error loading analytics:', error);
+        console.error('❌ Error loading analytics:', error);
     }
 }
 
@@ -170,13 +234,39 @@ function createMonthlyTrendChart(assets, liabilities, netWorth) {
     const ctx = document.getElementById('monthlyTrendChart');
     if (!ctx || typeof Chart === 'undefined') return;
     
-    // Mock monthly data for demonstration
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    const assetData = months.map(() => assets + Math.random() * assets * 0.1);
-    const liabilityData = months.map(() => liabilities + Math.random() * liabilities * 0.1);
-    const netWorthData = assetData.map((a, i) => a - liabilityData[i]);
+    // Don't generate fake data - show message that monthly trends data is needed
+    // This function should only be called as fallback if monthly_trends data is not available
+    // Destroy existing chart if it exists
+    if (ctx.chart) {
+        ctx.chart.destroy();
+    }
     
-    new Chart(ctx, {
+    // Show empty state message instead of random data
+    ctx.parentElement.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-tertiary);">
+            <div style="text-align: center;">
+                <i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                <p>Monthly trend data not available. This chart requires monthly_trends data from mock_data.json.</p>
+            </div>
+        </div>
+    `;
+}
+
+function createMonthlyTrendChartFromData(monthlyTrends) {
+    const ctx = document.getElementById('monthlyTrendChart');
+    if (!ctx || typeof Chart === 'undefined') return;
+    
+    // Destroy existing chart if it exists
+    if (ctx.chart) {
+        ctx.chart.destroy();
+    }
+    
+    const months = monthlyTrends.map(t => t.month || 'Month');
+    const assetData = monthlyTrends.map(t => t.assets || 0);
+    const liabilityData = monthlyTrends.map(t => t.liabilities || 0);
+    const netWorthData = monthlyTrends.map(t => t.net_worth || 0);
+    
+    ctx.chart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: months,
@@ -185,6 +275,12 @@ function createMonthlyTrendChart(assets, liabilities, netWorth) {
                 data: assetData,
                 borderColor: '#10b981',
                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Liabilities',
+                data: liabilityData,
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
                 tension: 0.4
             }, {
                 label: 'Net Worth',
@@ -218,17 +314,48 @@ function createCategoryBreakdownChart(assets) {
     const ctx = document.getElementById('categoryBreakdownChart');
     if (!ctx || typeof Chart === 'undefined') return;
     
-    new Chart(ctx, {
+    // Destroy existing chart if it exists
+    if (ctx.chart) {
+        ctx.chart.destroy();
+    }
+    
+    // Include all asset types
+    const labels = [];
+    const data = [];
+    const colors = ['#10b981', '#3b82f6', '#f59e0b', '#a855f7', '#ec4899', '#14b8a6'];
+    
+    if (assets.savings > 0) {
+        labels.push('Savings');
+        data.push(assets.savings);
+    }
+    if (assets.mutual_funds > 0) {
+        labels.push('Mutual Funds');
+        data.push(assets.mutual_funds);
+    }
+    if (assets.stocks > 0) {
+        labels.push('Stocks');
+        data.push(assets.stocks);
+    }
+    if (assets.real_estate > 0) {
+        labels.push('Real Estate');
+        data.push(assets.real_estate);
+    }
+    if (assets.fixed_deposits > 0) {
+        labels.push('Fixed Deposits');
+        data.push(assets.fixed_deposits);
+    }
+    if (assets.gold > 0) {
+        labels.push('Gold');
+        data.push(assets.gold);
+    }
+    
+    ctx.chart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Savings', 'Mutual Funds', 'Stocks'],
+            labels: labels,
             datasets: [{
-                data: [
-                    assets.savings || 0,
-                    assets.mutual_funds || 0,
-                    assets.stocks || 0
-                ],
-                backgroundColor: ['#10b981', '#3b82f6', '#f59e0b']
+                data: data,
+                backgroundColor: colors.slice(0, labels.length)
             }]
         },
         options: {
@@ -259,50 +386,109 @@ function loadAnalyticsPeriod(period) {
 
 // ========== BUDGET PAGE ==========
 async function loadBudgetData() {
-    // Mock budget data
-    const totalBudget = 50000;
-    const budgetSpent = 32000;
-    const budgetRemaining = ((totalBudget - budgetSpent) / totalBudget * 100).toFixed(0);
-    
-    updateElement('totalBudget', '₹' + totalBudget.toLocaleString());
-    updateElement('budgetSpent', '₹' + budgetSpent.toLocaleString());
-    updateElement('budgetRemaining', budgetRemaining + '%');
-    
-    // Create budget chart
-    const ctx = document.getElementById('budgetChart');
-    if (ctx && typeof Chart !== 'undefined') {
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Food', 'Transport', 'Shopping', 'Bills', 'Entertainment'],
-                datasets: [{
-                    label: 'Budget',
-                    data: [10000, 8000, 12000, 15000, 5000],
-                    backgroundColor: '#10b981'
-                }, {
-                    label: 'Spent',
-                    data: [6500, 7200, 9000, 15000, 3300],
-                    backgroundColor: '#f59e0b'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
+    try {
+        console.log('🔄 Loading Budget data from mock_data.json...');
+        const data = await getFinancialData();
+        console.log('✅ Budget data loaded:', data);
+        const budget = data.budget || {};
+        
+        // Get monthly income/budget
+        const monthlyIncome = budget.monthly_income || budget.monthly_budget || 0;
+        const budgetCategories = budget.categories || [];
+        
+        // Calculate totals from categories
+        const totalBudget = budgetCategories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
+        const budgetSpent = budgetCategories.reduce((sum, cat) => sum + (cat.spent || 0), 0);
+        const budgetRemaining = totalBudget > 0 ? ((totalBudget - budgetSpent) / totalBudget * 100).toFixed(0) : 0;
+        
+        updateElement('totalBudget', '₹' + totalBudget.toLocaleString());
+        updateElement('budgetSpent', '₹' + budgetSpent.toLocaleString());
+        updateElement('budgetRemaining', budgetRemaining + '%');
+        
+        // Update monthly income if element exists
+        const monthlyIncomeEl = document.getElementById('monthlyIncome');
+        if (monthlyIncomeEl) {
+            monthlyIncomeEl.textContent = '₹' + monthlyIncome.toLocaleString();
+        }
+        
+        // Create budget chart with actual data
+        const ctx = document.getElementById('budgetChart');
+        if (ctx && typeof Chart !== 'undefined') {
+            // Destroy existing chart if it exists
+            if (ctx.chart) {
+                ctx.chart.destroy();
+            }
+            
+            const labels = budgetCategories.map(cat => cat.name || 'Category');
+            const budgetData = budgetCategories.map(cat => cat.budget || 0);
+            const spentData = budgetCategories.map(cat => cat.spent || 0);
+            
+            ctx.chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Budget',
+                        data: budgetData,
+                        backgroundColor: '#10b981'
+                    }, {
+                        label: 'Spent',
+                        data: spentData,
+                        backgroundColor: '#f59e0b'
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '₹' + value.toLocaleString();
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString();
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
+        
+        // Update budget categories list if element exists
+        const categoriesList = document.getElementById('budgetCategoriesList');
+        if (categoriesList && budgetCategories.length > 0) {
+            let html = '';
+            budgetCategories.forEach(cat => {
+                const spent = cat.spent || 0;
+                const budgetAmt = cat.budget || 0;
+                const percent = budgetAmt > 0 ? ((spent / budgetAmt) * 100).toFixed(0) : 0;
+                const isOver = spent > budgetAmt;
+                const statusColor = isOver ? '#ef4444' : '#10b981';
+                
+                html += `
+                    <div style="padding: 1rem; border-bottom: 1px solid var(--border-primary);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <strong>${cat.name || 'Category'}</strong>
+                            <span style="color: ${statusColor};">${percent}%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-tertiary);">
+                            <span>Spent: ₹${spent.toLocaleString()}</span>
+                            <span>Budget: ₹${budgetAmt.toLocaleString()}</span>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: var(--bg-tertiary); border-radius: 4px; margin-top: 0.5rem; overflow: hidden;">
+                            <div style="width: ${Math.min(100, percent)}%; height: 100%; background: ${statusColor}; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            categoriesList.innerHTML = html;
+        }
+        console.log('✅ Budget page data rendered successfully');
+    } catch (error) {
+        console.error('❌ Error loading budget data:', error);
     }
 }
 
@@ -361,16 +547,40 @@ function showBudgetCategoryModal() {
 // ========== INVESTMENTS PAGE ==========
 async function loadInvestmentsData() {
     try {
+        console.log('🔄 Loading Investments data from mock_data.json...');
         const data = await getFinancialData();
+        console.log('✅ Investments data loaded:', data);
         const assets = data.assets || {};
+        const investments = data.investments || {};
+        
+        // Handle investments data structure (could be dict with holdings or just assets)
+        let portfolioValue = 0;
+        let holdings = [];
+        
+        if (investments.portfolio_value) {
+            portfolioValue = investments.portfolio_value;
+            holdings = investments.holdings || [];
+        } else if (Array.isArray(investments)) {
+            holdings = investments;
+            portfolioValue = investments.reduce((sum, inv) => sum + (inv.current_value || inv.amount || 0), 0);
+        } else {
+            // Fallback to assets
+            portfolioValue = (assets.mutual_funds || 0) + (assets.stocks || 0) + (assets.savings || 0);
+        }
         
         const mutualFunds = assets.mutual_funds || 0;
         const stocks = assets.stocks || 0;
         const savings = assets.savings || 0;
-        const totalInvestments = mutualFunds + stocks;
-        const estimatedReturns = Math.round(totalInvestments * 0.08); // 8% estimated return
-        const roi = totalInvestments > 0 ? 8 : 0;
-        const investmentCount = (mutualFunds > 0 ? 1 : 0) + (stocks > 0 ? 1 : 0) + (savings > 0 ? 1 : 0);
+        const totalInvestments = portfolioValue || (mutualFunds + stocks);
+        
+        // Calculate returns from holdings if available
+        let totalGains = 0;
+        if (holdings.length > 0) {
+            totalGains = holdings.reduce((sum, h) => sum + (h.gain_loss || 0), 0);
+        }
+        const estimatedReturns = totalGains || Math.round(totalInvestments * 0.08);
+        const roi = totalInvestments > 0 ? Math.round((estimatedReturns / totalInvestments) * 100) : 0;
+        const investmentCount = holdings.length || ((mutualFunds > 0 ? 1 : 0) + (stocks > 0 ? 1 : 0) + (savings > 0 ? 1 : 0));
         
         updateElement('totalInvestments', '₹' + totalInvestments.toLocaleString());
         updateElement('investmentReturns', '₹' + estimatedReturns.toLocaleString());
@@ -383,6 +593,41 @@ async function loadInvestmentsData() {
         updateElement('stocksReturn', '+' + roi + '%');
         updateElement('savingsInvestment', '₹' + savings.toLocaleString());
         updateElement('savingsReturn', '+4%');
+        
+        // Display holdings if available
+        const holdingsContainer = document.getElementById('investmentsHoldingsList');
+        if (holdingsContainer && holdings.length > 0) {
+            let html = '';
+            holdings.forEach(holding => {
+                const value = holding.value || holding.current_value || 0;
+                const gainLoss = holding.gain_loss || 0;
+                const gainPct = value > 0 ? ((gainLoss / (value - gainLoss)) * 100).toFixed(2) : 0;
+                const sign = gainLoss >= 0 ? '+' : '';
+                const color = gainLoss >= 0 ? '#10b981' : '#ef4444';
+                
+                html += `
+                    <div style="padding: 1rem; border-bottom: 1px solid var(--border-primary);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${holding.name || 'Investment'}</strong>
+                                <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.25rem;">
+                                    ${holding.type || 'investment'} • Value: ₹${value.toLocaleString()}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.1rem; font-weight: 700; color: ${color};">
+                                    ${sign}₹${Math.abs(gainLoss).toLocaleString()}
+                                </div>
+                                <div style="font-size: 0.875rem; color: ${color};">
+                                    ${sign}${gainPct}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            holdingsContainer.innerHTML = html;
+        }
         
         // Create investment distribution chart
         const ctx = document.getElementById('investmentDistributionChart');
@@ -406,44 +651,74 @@ async function loadInvestmentsData() {
             });
         }
         
-        // Create performance chart
+        // Create performance chart - use investment data from mock_data.json if available
         const perfCtx = document.getElementById('investmentPerformanceChart');
         if (perfCtx && typeof Chart !== 'undefined') {
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-            new Chart(perfCtx, {
-                type: 'line',
-                data: {
-                    labels: months,
-                    datasets: [{
-                        label: 'Portfolio Value',
-                        data: months.map(() => totalInvestments + Math.random() * totalInvestments * 0.15),
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
+            // Check if we have historical investment data from financial_health_metrics
+            const financialHealth = data.financial_health_metrics || {};
+            const monthlyTrends = financialHealth.monthly_trends || [];
+            
+            if (monthlyTrends.length > 0 && typeof Chart !== 'undefined') {
+                // Use actual monthly trends data
+                const months = monthlyTrends.map(t => t.month || 'Month');
+                const investmentData = monthlyTrends.map(t => {
+                    // Try to calculate from portfolio value or estimate from assets
+                    const portfolioValue = investments.portfolio_value || 
+                                         ((assets.mutual_funds || 0) + (assets.stocks || 0));
+                    return portfolioValue || 0;
+                });
+                
+                // Destroy existing chart if it exists
+                if (perfCtx.chart) {
+                    perfCtx.chart.destroy();
+                }
+                
+                perfCtx.chart = new Chart(perfCtx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Portfolio Value',
+                            data: investmentData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            ticks: {
-                                callback: function(value) {
-                                    return '₹' + value.toLocaleString();
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₹' + value.toLocaleString();
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            });
+                });
+            } else {
+                // No historical data available - show empty state
+                perfCtx.parentElement.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-tertiary);">
+                        <div style="text-align: center;">
+                            <i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                            <p>Investment performance data not available. This requires monthly_trends from mock_data.json.</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
+        console.log('✅ Investments page data rendered successfully');
     } catch (error) {
-        console.error('Error loading investments:', error);
+        console.error('❌ Error loading investments:', error);
     }
 }
 
@@ -458,20 +733,35 @@ function setupInvestmentHandlers() {
 
 // ========== TRANSACTIONS PAGE ==========
 async function loadTransactionsData() {
-    // Load transactions from localStorage or use mock data
-    let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    
-    // If no transactions, use mock data for demo
-    if (transactions.length === 0) {
-        transactions = [
-            { type: 'income', category: 'salary', amount: 50000, date: '2024-01-15', description: 'Monthly Salary', id: 1 },
-            { type: 'expense', category: 'food', amount: 2500, date: '2024-01-16', description: 'Grocery Shopping', id: 2 },
-            { type: 'expense', category: 'transport', amount: 1500, date: '2024-01-17', description: 'Fuel & Transport', id: 3 },
-            { type: 'expense', category: 'bills', amount: 5000, date: '2024-01-18', description: 'Electricity Bill', id: 4 },
-            { type: 'income', category: 'investment', amount: 3200, date: '2024-01-19', description: 'Investment Returns', id: 5 }
-        ];
-        localStorage.setItem('transactions', JSON.stringify(transactions));
-    }
+    try {
+        console.log('🔄 Loading Transactions data from mock_data.json...');
+        // Try to load from backend first (includes mock data)
+        const data = await getFinancialData();
+        console.log('✅ Transactions data loaded:', data);
+        let transactions = data.transactions || [];
+        
+        // If no transactions from backend, check localStorage
+        if (transactions.length === 0) {
+            transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+        } else {
+            // Sync backend transactions to localStorage for compatibility
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+        }
+        
+        // If still no transactions from backend or localStorage, show empty state
+        // Don't use hardcoded fallback - all data should come from mock_data.json via backend
+        if (transactions.length === 0) {
+            // Show empty state message instead of hardcoded data
+            const container = document.getElementById('transactionsList');
+            if (container) {
+                container.innerHTML = '<p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">No transactions found. Add transactions or wait for data to load.</p>';
+            }
+            updateElement('totalIncome', '₹0');
+            updateElement('totalExpenses', '₹0');
+            updateElement('totalTransactions', 0);
+            updateElement('netTransaction', '₹0');
+            return; // Exit early if no data
+        }
     
     // Apply filters
     const typeFilter = document.getElementById('transactionTypeFilter')?.value || 'all';
@@ -519,6 +809,10 @@ async function loadTransactionsData() {
     
     // Setup filter handlers
     setupTransactionFilters();
+    
+    } catch (error) {
+        console.error('❌ Error loading transactions:', error);
+    }
 }
 
 function displayTransactions(transactions) {
@@ -618,35 +912,90 @@ function setupTransactionFilters() {
 }
 
 // ========== GOALS PAGE ==========
-async function loadGoalsPageData() {
+window.loadGoalsPageData = async function() {
     try {
+        console.log('🔄 Loading Goals data from mock_data.json...');
+        
+        // Verify elements exist
+        const totalGoalsEl = document.getElementById('totalGoals');
+        const goalsPageListEl = document.getElementById('goalsPageList');
+        const completedGoalsEl = document.getElementById('completedGoals');
+        const activeGoalsEl = document.getElementById('activeGoals');
+        const goalsProgressAvgEl = document.getElementById('goalsProgressAvg');
+        
+        console.log('Goals page elements found:', {
+            totalGoals: totalGoalsEl !== null,
+            goalsPageList: goalsPageListEl !== null,
+            completedGoals: completedGoalsEl !== null,
+            activeGoals: activeGoalsEl !== null,
+            goalsProgressAvg: goalsProgressAvgEl !== null
+        });
+        
+        if (!totalGoalsEl && !goalsPageListEl) {
+            console.warn('⚠️ Goals page elements not found, waiting for DOM...');
+            // Retry after a short delay
+            setTimeout(() => loadGoalsPageData(), 200);
+            return;
+        }
+        
         const data = await getFinancialData();
+        console.log('✅ Goals data loaded:', data);
         const goals = data.goals || [];
         const assets = data.assets || {};
-        const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0);
         
-        updateElement('totalGoals', goals.length);
-        const completedGoals = goals.filter(g => totalAssets >= g.target).length;
-        updateElement('completedGoals', completedGoals);
-        updateElement('activeGoals', goals.length - completedGoals);
+        console.log('Goals found:', goals.length);
+        console.log('Goals data:', goals);
+        
+        // Update stat cards
+        if (totalGoalsEl) {
+            totalGoalsEl.textContent = goals.length;
+            console.log('✅ Updated totalGoals:', goals.length);
+        }
+        
+        // Use goal.current or goal.current_amount instead of totalAssets
+        const completedGoalsCount = goals.filter(g => {
+            const current = g.current || g.current_amount || 0;
+            const target = g.target || 0;
+            return current >= target && target > 0;
+        }).length;
+        
+        if (completedGoalsEl) {
+            completedGoalsEl.textContent = completedGoalsCount;
+            console.log('✅ Updated completedGoals:', completedGoalsCount);
+        }
+        
+        if (activeGoalsEl) {
+            activeGoalsEl.textContent = goals.length - completedGoalsCount;
+            console.log('✅ Updated activeGoals:', goals.length - completedGoalsCount);
+        }
         
         const avgProgress = goals.length > 0
             ? Math.round(goals.reduce((sum, g) => {
-                const progress = totalAssets > 0 && g.target > 0 ? Math.min(100, (totalAssets / g.target) * 100) : 0;
+                const current = g.current || g.current_amount || 0;
+                const target = g.target || 0;
+                const progress = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
                 return sum + progress;
             }, 0) / goals.length)
             : 0;
-        updateElement('goalsProgressAvg', avgProgress + '%');
+        
+        if (goalsProgressAvgEl) {
+            goalsProgressAvgEl.textContent = avgProgress + '%';
+            console.log('✅ Updated goalsProgressAvg:', avgProgress + '%');
+        }
         
         // Display goals
         const container = document.getElementById('goalsPageList');
         if (container) {
             if (goals.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">No goals set yet.</p>';
+                console.log('✅ Updated goalsPageList with empty message');
             } else {
                 let html = '';
                 goals.forEach((goal, index) => {
-                    const progress = totalAssets > 0 && goal.target > 0 ? Math.min(100, (totalAssets / goal.target) * 100) : 0;
+                    // Use current_amount or current field from goal
+                    const current = goal.current || goal.current_amount || 0;
+                    const target = goal.target || 0;
+                    const progress = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
                     const yearsRemaining = Math.max(0, goal.year - new Date().getFullYear());
                     
                     html += `
@@ -666,27 +1015,37 @@ async function loadGoalsPageData() {
                                 <div style="background: var(--gradient-primary); height: 100%; width: ${progress}%; transition: width 0.5s ease;"></div>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-tertiary);">
-                                <span>Progress: ₹${Math.min(totalAssets, goal.target).toLocaleString()} / ₹${goal.target.toLocaleString()}</span>
-                                <span>Remaining: ₹${Math.max(0, goal.target - totalAssets).toLocaleString()}</span>
+                                <span>Progress: ₹${current.toLocaleString()} / ₹${target.toLocaleString()}</span>
+                                <span>Remaining: ₹${Math.max(0, target - current).toLocaleString()}</span>
                             </div>
                         </div>
                     `;
                 });
                 container.innerHTML = html;
+                console.log('✅ Updated goalsPageList with', goals.length, 'goals');
             }
+        } else {
+            console.warn('⚠️ goalsPageList container not found');
         }
         
         // Create goals progress chart
         const ctx = document.getElementById('goalsProgressChart');
         if (ctx && typeof Chart !== 'undefined' && goals.length > 0) {
-            new Chart(ctx, {
+            // Destroy existing chart if it exists
+            if (ctx.chart) {
+                ctx.chart.destroy();
+            }
+            
+            ctx.chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: goals.map(g => g.name),
                     datasets: [{
                         label: 'Progress %',
                         data: goals.map(g => {
-                            return totalAssets > 0 && g.target > 0 ? Math.min(100, (totalAssets / g.target) * 100) : 0;
+                            const current = g.current || g.current_amount || 0;
+                            const target = g.target || 0;
+                            return target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
                         }),
                         backgroundColor: '#10b981'
                     }]
@@ -710,9 +1069,17 @@ async function loadGoalsPageData() {
                     }
                 }
             });
+            console.log('✅ Goals progress chart created');
+        } else if (!ctx) {
+            console.warn('⚠️ goalsProgressChart canvas not found');
+        } else if (goals.length === 0) {
+            console.log('ℹ️ No goals to display in chart');
         }
+        
+        console.log('✅ Goals page data rendered successfully');
     } catch (error) {
-        console.error('Error loading goals page:', error);
+        console.error('❌ Error loading goals page:', error);
+        console.error('Error stack:', error.stack);
     }
 }
 
@@ -734,27 +1101,54 @@ function setupReportHandlers() {
                 let reportData = {};
                 switch(reportType) {
                     case 'summary':
+                        const totalAssets = (data.assets?.savings || 0) + (data.assets?.mutual_funds || 0) + (data.assets?.stocks || 0) +
+                                          (data.assets?.real_estate || 0) + (data.assets?.fixed_deposits || 0) + (data.assets?.gold || 0);
+                        const totalLiabilities = (data.liabilities?.loan || 0) + (data.liabilities?.home_loan || 0) +
+                                                (data.liabilities?.car_loan || 0) + (data.liabilities?.personal_loan || 0) +
+                                                (data.liabilities?.credit_card_due || 0);
                         reportData = {
                             type: 'Financial Summary',
                             period: `${startDate} to ${endDate}`,
                             assets: data.assets || {},
                             liabilities: data.liabilities || {},
-                            netWorth: ((data.assets?.savings || 0) + (data.assets?.mutual_funds || 0) + (data.assets?.stocks || 0)) - 
-                                     ((data.liabilities?.loan || 0) + (data.liabilities?.credit_card_due || 0))
+                            budget: data.budget || {},
+                            transactions: data.transactions || [],
+                            investments: data.investments || {},
+                            netWorth: totalAssets - totalLiabilities,
+                            totalAssets: totalAssets,
+                            totalLiabilities: totalLiabilities
                         };
                         break;
                     case 'goals':
                         reportData = {
                             type: 'Goals Progress Report',
                             period: `${startDate} to ${endDate}`,
-                            goals: data.goals || []
+                            goals: data.goals || [],
+                            summary: {
+                                total: data.goals?.length || 0,
+                                completed: data.goals?.filter(g => {
+                                    const current = g.current || g.current_amount || 0;
+                                    return current >= (g.target || 0) && g.target > 0;
+                                }).length || 0
+                            }
                         };
                         break;
                     case 'investments':
                         reportData = {
                             type: 'Investment Report',
                             period: `${startDate} to ${endDate}`,
-                            investments: data.assets || {}
+                            investments: data.investments || {},
+                            assets: data.assets || {},
+                            portfolioValue: data.investments?.portfolio_value || 
+                                          ((data.assets?.mutual_funds || 0) + (data.assets?.stocks || 0))
+                        };
+                        break;
+                    case 'budget':
+                        reportData = {
+                            type: 'Budget Report',
+                            period: `${startDate} to ${endDate}`,
+                            budget: data.budget || {},
+                            transactions: data.transactions || []
                         };
                         break;
                     default:
@@ -874,18 +1268,46 @@ function exportInvestmentsReport() {
 // ========== INSIGHTS PAGE ==========
 async function loadInsightsPageData() {
     try {
+        console.log('🔄 Loading Insights data from mock_data.json...');
         const data = await getFinancialData();
+        console.log('✅ Insights data loaded:', data);
         const assets = data.assets || {};
         const liabilities = data.liabilities || {};
         const goals = data.goals || [];
+        const budget = data.budget || {};
+        const transactions = data.transactions || [];
+        const investments = data.investments || {};
+        const financialHealth = data.financial_health_metrics || {};
         
-        const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0);
-        const totalLiabilities = (liabilities.loan || 0) + (liabilities.credit_card_due || 0);
+        // Calculate total assets including all types
+        const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0) +
+                          (assets.real_estate || 0) + (assets.fixed_deposits || 0) + (assets.gold || 0);
+        
+        // Calculate total liabilities including all loan types
+        const totalLiabilities = (liabilities.loan || 0) + (liabilities.home_loan || 0) +
+                                (liabilities.car_loan || 0) + (liabilities.personal_loan || 0) +
+                                (liabilities.credit_card_due || 0);
+        const netWorth = totalAssets - totalLiabilities;
         
         // Generate insights
         const insights = [];
         let warningCount = 0;
         let positiveCount = 0;
+        
+        // Use notifications from financial health if available
+        const notifications = financialHealth.notifications || [];
+        notifications.forEach(notif => {
+            const priority = notif.priority || 'medium';
+            const type = notif.type === 'alert' || notif.type === 'warning' ? 'warning' : 
+                        notif.type === 'tip' ? 'info' : 'success';
+            insights.push({ 
+                type: type, 
+                text: `${notif.title}: ${notif.message}`,
+                priority: priority
+            });
+            if (type === 'warning' || type === 'error') warningCount++;
+            else positiveCount++;
+        });
         
         // Asset allocation insights
         if (totalAssets > 0) {
@@ -911,43 +1333,99 @@ async function loadInsightsPageData() {
             }
         }
         
+        // Budget insights
+        const budgetCategories = budget.categories || [];
+        if (budgetCategories.length > 0) {
+            const totalBudget = budgetCategories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
+            const totalSpent = budgetCategories.reduce((sum, cat) => sum + (cat.spent || 0), 0);
+            const overBudget = budgetCategories.filter(cat => (cat.spent || 0) > (cat.budget || 0));
+            
+            if (overBudget.length > 0) {
+                insights.push({ type: 'warning', text: `You're over budget in ${overBudget.length} category/categories. Review your spending.` });
+                warningCount++;
+            } else if (totalSpent < totalBudget * 0.8) {
+                insights.push({ type: 'success', text: `Great budget management! You've spent only ${((totalSpent/totalBudget)*100).toFixed(0)}% of your budget.` });
+                positiveCount++;
+            }
+        }
+        
         // Goals insights
         if (goals.length > 0) {
-            insights.push({ type: 'info', text: `You have ${goals.length} active financial goals. Keep up the good work!` });
+            const completedGoals = goals.filter(g => {
+                const current = g.current || g.current_amount || 0;
+                return current >= (g.target || 0) && g.target > 0;
+            }).length;
+            const avgProgress = goals.reduce((sum, g) => {
+                const current = g.current || g.current_amount || 0;
+                const target = g.target || 0;
+                return sum + (target > 0 ? Math.min(100, (current / target) * 100) : 0);
+            }, 0) / goals.length;
+            
+            insights.push({ type: 'info', text: `You have ${goals.length} financial goals with ${completedGoals} completed. Average progress: ${avgProgress.toFixed(0)}%` });
             positiveCount++;
+        }
+        
+        // Transaction insights
+        if (transactions.length > 0) {
+            const incomeTotal = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0);
+            const expenseTotal = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0);
+            const savingsRate = incomeTotal > 0 ? ((incomeTotal - expenseTotal) / incomeTotal * 100).toFixed(1) : 0;
+            
+            if (savingsRate > 20) {
+                insights.push({ type: 'success', text: `Excellent savings rate of ${savingsRate}%! Keep up the good work.` });
+                positiveCount++;
+            } else if (savingsRate < 0) {
+                insights.push({ type: 'warning', text: `You're spending more than you earn. Review your expenses.` });
+                warningCount++;
+            }
+        }
+        
+        // Investment insights
+        if (investments.portfolio_value || investments.holdings?.length > 0) {
+            const portfolioValue = investments.portfolio_value || 0;
+            const holdings = investments.holdings || [];
+            if (holdings.length > 0) {
+                const totalGains = holdings.reduce((sum, h) => sum + (h.gain_loss || 0), 0);
+                if (totalGains > 0) {
+                    insights.push({ type: 'success', text: `Your portfolio is performing well with gains of ₹${totalGains.toLocaleString()}.` });
+                    positiveCount++;
+                }
+            }
         }
         
         updateElement('totalInsights', insights.length);
         updateElement('warningInsights', warningCount);
         updateElement('positiveInsights', positiveCount);
         
-        // Display insights
-        const container = document.getElementById('detailedInsights');
-        if (container) {
-            if (insights.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-tertiary);">No insights available. Add financial data to get insights.</p>';
-            } else {
-                let html = '<div class="analysis-insights">';
-                insights.forEach(insight => {
-                    const iconMap = {
-                        success: 'fa-check-circle',
-                        warning: 'fa-exclamation-triangle',
-                        error: 'fa-times-circle',
-                        info: 'fa-info-circle'
-                    };
-                    html += `
-                        <div class="insight-item insight-${insight.type}">
-                            <i class="fas ${iconMap[insight.type]}"></i>
-                            <span>${insight.text}</span>
+        // Display insights in the container
+        const insightsContainer = document.getElementById('detailedInsights');
+        if (insightsContainer && insights.length > 0) {
+            let html = '';
+            insights.forEach((insight, index) => {
+                const icon = insight.type === 'success' ? 'fa-check-circle' : 
+                            insight.type === 'warning' ? 'fa-exclamation-triangle' : 
+                            insight.type === 'error' ? 'fa-times-circle' : 'fa-info-circle';
+                const color = insight.type === 'success' ? '#10b981' : 
+                             insight.type === 'warning' ? '#f59e0b' : 
+                             insight.type === 'error' ? '#ef4444' : '#3b82f6';
+                
+                html += `
+                    <div style="padding: 1rem; border-left: 4px solid ${color}; background: var(--bg-tertiary); margin-bottom: 1rem; border-radius: var(--radius-md);">
+                        <div style="display: flex; align-items: start; gap: 1rem;">
+                            <i class="fas ${icon}" style="color: ${color}; font-size: 1.5rem; margin-top: 0.25rem;"></i>
+                            <div style="flex: 1;">
+                                <p style="margin: 0; color: var(--text-primary);">${insight.text}</p>
+                            </div>
                         </div>
-                    `;
-                });
-                html += '</div>';
-                container.innerHTML = html;
-            }
+                    </div>
+                `;
+            });
+            insightsContainer.innerHTML = html;
         }
+        
+        console.log('✅ Insights page data rendered successfully');
     } catch (error) {
-        console.error('Error loading insights:', error);
+        console.error('❌ Error loading insights:', error);
     }
 }
 
@@ -1153,3 +1631,13 @@ window.saveSettings = function() {
     }
 };
 
+// Initialize pages when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 pages-functionality.js loaded, initializePages is available:', typeof window.initializePages);
+    // Wait for page to be loaded dynamically
+    setTimeout(() => {
+        if (typeof window.initializePages === 'function') {
+            window.initializePages();
+        }
+    }, 500);
+});
