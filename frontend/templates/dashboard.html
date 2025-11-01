@@ -58,6 +58,10 @@
                     <div class="menu-item-icon"><i class="fas fa-bullseye"></i></div>
                     <span class="menu-item-text">Goals</span>
                 </a>
+                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('loans')">
+                    <div class="menu-item-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                    <span class="menu-item-text">Loans & Debt</span>
+                </a>
                 <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('loan-calculator', event);">
                     <div class="menu-item-icon"><i class="fas fa-calculator"></i></div>
                     <span class="menu-item-text">Loan Calculator</span>
@@ -710,6 +714,7 @@
                 'investments': { title: 'Investment Portfolio', subtitle: 'Track and manage your investments' },
                 'transactions': { title: 'Transaction History', subtitle: 'View all your financial transactions' },
                 'goals': { title: 'Financial Goals', subtitle: 'Set and track your financial objectives' },
+                'loans': { title: 'Loans & Debt', subtitle: 'View and manage all your loans and debts' },
                 'loan-calculator': { title: 'Loan Calculator', subtitle: 'Calculate EMI, prepayment savings, and loan affordability' },
                 'reports': { title: 'Financial Reports', subtitle: 'Generate detailed financial reports' },
                 'insights': { title: 'Financial Insights', subtitle: 'AI-powered financial recommendations' },
@@ -1377,6 +1382,92 @@
                         <div class="card-body">
                             <div style="position: relative; height: 300px;">
                                 <canvas id="goalsProgressChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'loans': `
+                    <!-- Loans Summary -->
+                    <div class="grid grid-cols-4 mb-4">
+                        <div class="stat-card fade-in">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-danger);">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="totalLoans">₹0</div>
+                            <div class="stat-card-label">Total Loans</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-warning);">
+                                    <i class="fas fa-home"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="homeLoanAmount">₹0</div>
+                            <div class="stat-card-label">Home Loan</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-primary);">
+                                    <i class="fas fa-car"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="carLoanAmount">₹0</div>
+                            <div class="stat-card-label">Car Loan</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.3s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-info);">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="personalLoanAmount">₹0</div>
+                            <div class="stat-card-label">Personal Loan</div>
+                        </div>
+                    </div>
+
+                    <!-- All Loans List -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-list"></i> All Loans & Debts</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="loansList">
+                                <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading loans...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Debt Summary -->
+                    <div class="grid grid-cols-3 mb-4">
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-credit-card"></i> Credit Card</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="stat-card-value" id="creditCardDue">₹0</div>
+                                <div class="stat-card-label">Outstanding Balance</div>
+                            </div>
+                        </div>
+                        <div class="card fade-in" style="animation-delay: 0.1s;">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-file-invoice"></i> Other Loans</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="stat-card-value" id="otherLoans">₹0</div>
+                                <div class="stat-card-label">Other Loan Amount</div>
+                            </div>
+                        </div>
+                        <div class="card fade-in" style="animation-delay: 0.2s;">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-percentage"></i> Debt Ratio</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="stat-card-value" id="debtRatioDisplay">0%</div>
+                                <div class="stat-card-label">Of Total Assets</div>
                             </div>
                         </div>
                     </div>

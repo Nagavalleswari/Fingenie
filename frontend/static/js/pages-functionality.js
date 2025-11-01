@@ -112,6 +112,15 @@ window.initializePages = function() {
         initializedPages.add('settings');
     }
     
+    // Loans page - check for loans-specific elements
+    const loansList = document.getElementById('loansList');
+    const totalLoans = document.getElementById('totalLoans');
+    if ((loansList || totalLoans) && !initializedPages.has('loans')) {
+        console.log('✅ Initializing Loans page...');
+        loadLoansPageData();
+        initializedPages.add('loans');
+    }
+    
     // Loan Calculator page - check for loan calculator-specific elements
     const loanCalculatorForm = document.getElementById('loanCalculatorForm');
     if (loanCalculatorForm && !initializedPages.has('loan-calculator')) {
@@ -911,6 +920,179 @@ function setupTransactionFilters() {
     });
 }
 
+// ========== LOANS PAGE ==========
+window.loadLoansPageData = async function() {
+    try {
+        console.log('🔄 Loading Loans data from mock_data.json...');
+        const data = await getFinancialData();
+        console.log('✅ Loans data loaded:', data);
+        
+        const liabilities = data.liabilities || {};
+        const assets = data.assets || {};
+        const loans = data.loans || [];
+        
+        // Calculate total assets for debt ratio
+        const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0) +
+                           (assets.real_estate || 0) + (assets.fixed_deposits || 0) + (assets.gold || 0);
+        
+        // Calculate individual loan amounts
+        const homeLoan = liabilities.home_loan || 0;
+        const carLoan = liabilities.car_loan || 0;
+        const personalLoan = liabilities.personal_loan || 0;
+        const creditCardDue = liabilities.credit_card_due || 0;
+        const otherLoans = liabilities.loan || 0;
+        
+        // Calculate total loans
+        const totalLoans = homeLoan + carLoan + personalLoan + creditCardDue + otherLoans;
+        
+        // Calculate debt ratio
+        const debtRatio = totalAssets > 0 ? Math.round((totalLoans / totalAssets) * 100) : 0;
+        
+        // Update summary cards
+        updateElement('totalLoans', '₹' + totalLoans.toLocaleString());
+        updateElement('homeLoanAmount', '₹' + homeLoan.toLocaleString());
+        updateElement('carLoanAmount', '₹' + carLoan.toLocaleString());
+        updateElement('personalLoanAmount', '₹' + personalLoan.toLocaleString());
+        updateElement('creditCardDue', '₹' + creditCardDue.toLocaleString());
+        updateElement('otherLoans', '₹' + otherLoans.toLocaleString());
+        updateElement('debtRatioDisplay', debtRatio + '%');
+        
+        // Display loans list
+        const loansListContainer = document.getElementById('loansList');
+        if (loansListContainer) {
+            if (loans.length > 0) {
+                let html = '';
+                loans.forEach(loan => {
+                    // Handle both 'outstanding' and 'remaining_principal' field names
+                    const outstanding = loan.outstanding || loan.remaining_principal || 0;
+                    const principal = loan.principal || 0;
+                    const progress = principal > 0 ? Math.round(((principal - outstanding) / principal) * 100) : 0;
+                    const monthlyEMI = loan.emi || 0;
+                    
+                    // Calculate remaining months from tenure and dates if not provided
+                    let remainingMonths = loan.remaining_months || 0;
+                    if (!remainingMonths && loan.start_date && loan.end_date) {
+                        const start = new Date(loan.start_date);
+                        const end = new Date(loan.end_date);
+                        const now = new Date();
+                        const totalMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+                        const elapsedMonths = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+                        remainingMonths = Math.max(0, totalMonths - elapsedMonths);
+                    }
+                    
+                    // Determine icon based on loan type
+                    const loanType = loan.type || '';
+                    let icon = 'file-invoice-dollar';
+                    if (loanType.includes('home')) icon = 'home';
+                    else if (loanType.includes('car')) icon = 'car';
+                    else if (loanType.includes('personal')) icon = 'wallet';
+                    
+                    html += `
+                        <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-primary); background: var(--bg-elevated); margin-bottom: 1rem; border-radius: var(--radius-md);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                <div style="flex: 1;">
+                                    <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1.1rem;">
+                                        <i class="fas fa-${icon}"></i>
+                                        ${loan.name || (loan.type ? loan.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Loan')}
+                                    </h4>
+                                    <div style="color: var(--text-tertiary); font-size: 0.9rem;">
+                                        ${loan.bank || 'Financial Institution'} • ${loan.interest_rate || 0}% Interest
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-danger);">₹${outstanding.toLocaleString()}</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-tertiary);">Outstanding</div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                                <div>
+                                    <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Principal</div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">₹${principal.toLocaleString()}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Monthly EMI</div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">₹${monthlyEMI.toLocaleString()}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Remaining</div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">${remainingMonths} months</div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 1rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">
+                                    <span>Repayment Progress</span>
+                                    <span>${progress}%</span>
+                                </div>
+                                <div style="width: 100%; height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden;">
+                                    <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, var(--accent-success), var(--accent-primary)); transition: width 0.3s;"></div>
+                                </div>
+                            </div>
+                            
+                            ${loan.next_payment_date ? `
+                                <div style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm); display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fas fa-calendar-alt" style="color: var(--accent-warning);"></i>
+                                    <span style="color: var(--text-secondary); font-size: 0.9rem;">Next payment due: <strong>${loan.next_payment_date}</strong></span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                loansListContainer.innerHTML = html;
+            } else {
+                // Show loans from liabilities if no detailed loan data
+                let html = '';
+                const loanTypes = [
+                    { name: 'Home Loan', amount: homeLoan, icon: 'home', type: 'home' },
+                    { name: 'Car Loan', amount: carLoan, icon: 'car', type: 'car' },
+                    { name: 'Personal Loan', amount: personalLoan, icon: 'wallet', type: 'personal' },
+                    { name: 'Credit Card', amount: creditCardDue, icon: 'credit-card', type: 'credit' },
+                    { name: 'Other Loans', amount: otherLoans, icon: 'file-invoice-dollar', type: 'other' }
+                ];
+                
+                loanTypes.forEach(loan => {
+                    if (loan.amount > 0) {
+                        html += `
+                            <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-primary); background: var(--bg-elevated); margin-bottom: 1rem; border-radius: var(--radius-md);">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--gradient-danger); display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-${loan.icon}" style="color: white; font-size: 1.25rem;"></i>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin: 0; color: var(--text-primary);">${loan.name}</h4>
+                                            <div style="color: var(--text-tertiary); font-size: 0.9rem; margin-top: 0.25rem;">Outstanding Balance</div>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-danger);">₹${loan.amount.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                if (html) {
+                    loansListContainer.innerHTML = html;
+                } else {
+                    loansListContainer.innerHTML = `
+                        <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">
+                            <i class="fas fa-check-circle" style="color: var(--accent-success); font-size: 2rem; margin-bottom: 0.5rem;"></i><br>
+                            No loans or debts found. Great job managing your finances!
+                        </p>
+                    `;
+                }
+            }
+        }
+        
+        console.log('✅ Loans page data rendered successfully');
+    } catch (error) {
+        console.error('❌ Error loading loans:', error);
+    }
+};
+
 // ========== GOALS PAGE ==========
 window.loadGoalsPageData = async function() {
     try {
@@ -1268,165 +1450,327 @@ function exportInvestmentsReport() {
 // ========== INSIGHTS PAGE ==========
 async function loadInsightsPageData() {
     try {
-        console.log('🔄 Loading Insights data from mock_data.json...');
+        console.log('🔄 Loading AI-powered Insights...');
+        
+        // Show loading state
+        const insightsContainer = document.getElementById('detailedInsights');
+        if (insightsContainer) {
+            insightsContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--accent-primary); margin-bottom: 1rem;"></i>
+                    <p style="color: var(--text-tertiary);">Analyzing your financial data with AI...</p>
+                </div>
+            `;
+        }
+        
+        // Get financial data for context
         const data = await getFinancialData();
-        console.log('✅ Insights data loaded:', data);
-        const assets = data.assets || {};
-        const liabilities = data.liabilities || {};
-        const goals = data.goals || [];
-        const budget = data.budget || {};
-        const transactions = data.transactions || [];
-        const investments = data.investments || {};
-        const financialHealth = data.financial_health_metrics || {};
+        console.log('✅ Financial data loaded for AI insights:', data);
         
-        // Calculate total assets including all types
-        const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0) +
-                          (assets.real_estate || 0) + (assets.fixed_deposits || 0) + (assets.gold || 0);
+        // Build a comprehensive prompt for AI to analyze financial data
+        const financialSummary = buildFinancialSummaryForAI(data);
         
-        // Calculate total liabilities including all loan types
-        const totalLiabilities = (liabilities.loan || 0) + (liabilities.home_loan || 0) +
-                                (liabilities.car_loan || 0) + (liabilities.personal_loan || 0) +
-                                (liabilities.credit_card_due || 0);
-        const netWorth = totalAssets - totalLiabilities;
+        const aiPrompt = `As FinGenie, analyze the following financial data and provide comprehensive, actionable insights. 
+
+${financialSummary}
+
+Please provide:
+1. Overall financial health assessment
+2. Key strengths and areas for improvement
+3. Specific recommendations for:
+   - Budget optimization
+   - Debt management
+   - Investment strategy
+   - Goal achievement
+   - Savings opportunities
+4. Any warnings or alerts that need immediate attention
+5. Positive trends and achievements to celebrate
+
+Format your response with clear sections, use bullet points, and prioritize actionable advice. All amounts are in Indian Rupees (₹).`;
         
-        // Generate insights
-        const insights = [];
+        console.log('🤖 Calling AI for insights...');
+        
+        // Call AI chat API to generate insights
+        // apiRequest should be available from main.js
+        const aiResponse = await apiRequest('/chat/chat', 'POST', { message: aiPrompt });
+        
+        console.log('✅ AI insights received:', aiResponse);
+        
+        const aiInsightsText = aiResponse.message || 'Unable to generate insights at this time.';
+        
+        // Parse AI response into structured insights (try to extract key points)
+        const insights = parseAIInsights(aiInsightsText);
+        
         let warningCount = 0;
         let positiveCount = 0;
+        let infoCount = 0;
         
-        // Use notifications from financial health if available
-        const notifications = financialHealth.notifications || [];
-        notifications.forEach(notif => {
-            const priority = notif.priority || 'medium';
-            const type = notif.type === 'alert' || notif.type === 'warning' ? 'warning' : 
-                        notif.type === 'tip' ? 'info' : 'success';
-            insights.push({ 
-                type: type, 
-                text: `${notif.title}: ${notif.message}`,
-                priority: priority
-            });
-            if (type === 'warning' || type === 'error') warningCount++;
-            else positiveCount++;
+        // Count insight types
+        insights.forEach(insight => {
+            if (insight.type === 'warning' || insight.type === 'error') {
+                warningCount++;
+            } else if (insight.type === 'success') {
+                positiveCount++;
+            } else {
+                infoCount++;
+            }
         });
         
-        // Asset allocation insights
-        if (totalAssets > 0) {
-            const savingsRatio = ((assets.savings || 0) / totalAssets * 100).toFixed(1);
-            if (savingsRatio > 50) {
-                insights.push({ type: 'warning', text: `High savings ratio (${savingsRatio}%). Consider investing more.` });
-                warningCount++;
-            } else {
-                insights.push({ type: 'success', text: `Well-balanced asset allocation. Savings: ${savingsRatio}%` });
-                positiveCount++;
-            }
-        }
-        
-        // Debt insights
-        if (totalAssets > 0) {
-            const debtRatio = (totalLiabilities / totalAssets * 100).toFixed(1);
-            if (debtRatio > 40) {
-                insights.push({ type: 'error', text: `High debt ratio (${debtRatio}%). Focus on debt reduction.` });
-                warningCount++;
-            } else if (debtRatio < 20) {
-                insights.push({ type: 'success', text: `Excellent debt management. Debt ratio: ${debtRatio}%` });
-                positiveCount++;
-            }
-        }
-        
-        // Budget insights
-        const budgetCategories = budget.categories || [];
-        if (budgetCategories.length > 0) {
-            const totalBudget = budgetCategories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
-            const totalSpent = budgetCategories.reduce((sum, cat) => sum + (cat.spent || 0), 0);
-            const overBudget = budgetCategories.filter(cat => (cat.spent || 0) > (cat.budget || 0));
-            
-            if (overBudget.length > 0) {
-                insights.push({ type: 'warning', text: `You're over budget in ${overBudget.length} category/categories. Review your spending.` });
-                warningCount++;
-            } else if (totalSpent < totalBudget * 0.8) {
-                insights.push({ type: 'success', text: `Great budget management! You've spent only ${((totalSpent/totalBudget)*100).toFixed(0)}% of your budget.` });
-                positiveCount++;
-            }
-        }
-        
-        // Goals insights
-        if (goals.length > 0) {
-            const completedGoals = goals.filter(g => {
-                const current = g.current || g.current_amount || 0;
-                return current >= (g.target || 0) && g.target > 0;
-            }).length;
-            const avgProgress = goals.reduce((sum, g) => {
-                const current = g.current || g.current_amount || 0;
-                const target = g.target || 0;
-                return sum + (target > 0 ? Math.min(100, (current / target) * 100) : 0);
-            }, 0) / goals.length;
-            
-            insights.push({ type: 'info', text: `You have ${goals.length} financial goals with ${completedGoals} completed. Average progress: ${avgProgress.toFixed(0)}%` });
-            positiveCount++;
-        }
-        
-        // Transaction insights
-        if (transactions.length > 0) {
-            const incomeTotal = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0);
-            const expenseTotal = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0);
-            const savingsRate = incomeTotal > 0 ? ((incomeTotal - expenseTotal) / incomeTotal * 100).toFixed(1) : 0;
-            
-            if (savingsRate > 20) {
-                insights.push({ type: 'success', text: `Excellent savings rate of ${savingsRate}%! Keep up the good work.` });
-                positiveCount++;
-            } else if (savingsRate < 0) {
-                insights.push({ type: 'warning', text: `You're spending more than you earn. Review your expenses.` });
-                warningCount++;
-            }
-        }
-        
-        // Investment insights
-        if (investments.portfolio_value || investments.holdings?.length > 0) {
-            const portfolioValue = investments.portfolio_value || 0;
-            const holdings = investments.holdings || [];
-            if (holdings.length > 0) {
-                const totalGains = holdings.reduce((sum, h) => sum + (h.gain_loss || 0), 0);
-                if (totalGains > 0) {
-                    insights.push({ type: 'success', text: `Your portfolio is performing well with gains of ₹${totalGains.toLocaleString()}.` });
-                    positiveCount++;
-                }
-            }
-        }
-        
+        // Update stat cards
         updateElement('totalInsights', insights.length);
         updateElement('warningInsights', warningCount);
         updateElement('positiveInsights', positiveCount);
         
-        // Display insights in the container
-        const insightsContainer = document.getElementById('detailedInsights');
-        if (insightsContainer && insights.length > 0) {
-            let html = '';
-            insights.forEach((insight, index) => {
-                const icon = insight.type === 'success' ? 'fa-check-circle' : 
-                            insight.type === 'warning' ? 'fa-exclamation-triangle' : 
-                            insight.type === 'error' ? 'fa-times-circle' : 'fa-info-circle';
-                const color = insight.type === 'success' ? '#10b981' : 
-                             insight.type === 'warning' ? '#f59e0b' : 
-                             insight.type === 'error' ? '#ef4444' : '#3b82f6';
-                
+        // Display AI-generated insights
+        if (insightsContainer) {
+            if (insights.length > 0) {
+                let html = '';
                 html += `
-                    <div style="padding: 1rem; border-left: 4px solid ${color}; background: var(--bg-tertiary); margin-bottom: 1rem; border-radius: var(--radius-md);">
-                        <div style="display: flex; align-items: start; gap: 1rem;">
-                            <i class="fas ${icon}" style="color: ${color}; font-size: 1.5rem; margin-top: 0.25rem;"></i>
-                            <div style="flex: 1;">
-                                <p style="margin: 0; color: var(--text-primary);">${insight.text}</p>
+                    <div style="padding: 1rem; background: var(--bg-elevated); border-radius: var(--radius-md); margin-bottom: 1.5rem; border-left: 4px solid var(--accent-primary);">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <i class="fas fa-brain" style="color: var(--accent-primary);"></i>
+                            <strong style="color: var(--text-primary);">AI-Powered Analysis</strong>
+                        </div>
+                        <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem;">Comprehensive financial insights generated by FinGenie AI</p>
+                    </div>
+                `;
+                
+                insights.forEach((insight, index) => {
+                    const icon = insight.type === 'success' ? 'fa-check-circle' : 
+                                insight.type === 'warning' ? 'fa-exclamation-triangle' : 
+                                insight.type === 'error' ? 'fa-times-circle' : 'fa-info-circle';
+                    const color = insight.type === 'success' ? '#10b981' : 
+                                 insight.type === 'warning' ? '#f59e0b' : 
+                                 insight.type === 'error' ? '#ef4444' : '#3b82f6';
+                    
+                    html += `
+                        <div style="padding: 1.25rem; border-left: 4px solid ${color}; background: var(--bg-tertiary); margin-bottom: 1rem; border-radius: var(--radius-md);">
+                            <div style="display: flex; align-items: start; gap: 1rem;">
+                                <i class="fas ${icon}" style="color: ${color}; font-size: 1.5rem; margin-top: 0.25rem;"></i>
+                                <div style="flex: 1;">
+                                    ${insight.title ? `<h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1.1rem;">${insight.title}</h4>` : ''}
+                                    <div style="color: var(--text-primary); line-height: 1.6; white-space: pre-wrap;">${insight.text}</div>
+                                </div>
                             </div>
+                        </div>
+                    `;
+                });
+                
+                // Also show full AI response in a collapsible section
+                html += `
+                    <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-elevated); border-radius: var(--radius-md);">
+                        <details style="cursor: pointer;">
+                            <summary style="font-weight: 600; color: var(--text-primary); padding: 0.5rem; user-select: none;">
+                                <i class="fas fa-chevron-down"></i> View Full AI Analysis
+                            </summary>
+                            <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-primary); border-radius: var(--radius-sm); color: var(--text-primary); line-height: 1.8; white-space: pre-wrap;">${markdownToHtml(aiInsightsText)}</div>
+                        </details>
+                    </div>
+                `;
+                
+                insightsContainer.innerHTML = html;
+            } else {
+                // Fallback: show raw AI response if parsing fails
+                insightsContainer.innerHTML = `
+                    <div style="padding: 1.5rem; background: var(--bg-tertiary); border-radius: var(--radius-md); border-left: 4px solid var(--accent-primary);">
+                        <div style="display: flex; align-items: start; gap: 1rem;">
+                            <i class="fas fa-brain" style="color: var(--accent-primary); font-size: 1.5rem; margin-top: 0.25rem;"></i>
+                            <div style="flex: 1; color: var(--text-primary); line-height: 1.8; white-space: pre-wrap;">${markdownToHtml(aiInsightsText)}</div>
                         </div>
                     </div>
                 `;
-            });
-            insightsContainer.innerHTML = html;
+            }
         }
         
-        console.log('✅ Insights page data rendered successfully');
+        console.log('✅ AI Insights page rendered successfully');
     } catch (error) {
-        console.error('❌ Error loading insights:', error);
+        console.error('❌ Error loading AI insights:', error);
+        const insightsContainer = document.getElementById('detailedInsights');
+        if (insightsContainer) {
+            insightsContainer.innerHTML = `
+                <div style="padding: 1rem; border-left: 4px solid #ef4444; background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                    <div style="display: flex; align-items: start; gap: 1rem;">
+                        <i class="fas fa-exclamation-circle" style="color: #ef4444; font-size: 1.5rem;"></i>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">Error Loading Insights</h4>
+                            <p style="margin: 0; color: var(--text-secondary);">Unable to generate AI insights at this time: ${error.message}</p>
+                            <button class="btn btn-primary" onclick="refreshInsights()" style="margin-top: 1rem;">Retry</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
     }
+}
+
+// Helper function to build financial summary for AI
+function buildFinancialSummaryForAI(data) {
+    const assets = data.assets || {};
+    const liabilities = data.liabilities || {};
+    const goals = data.goals || [];
+    const budget = data.budget || {};
+    const transactions = data.transactions || [];
+    const investments = data.investments || {};
+    
+    const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0) +
+                       (assets.real_estate || 0) + (assets.fixed_deposits || 0) + (assets.gold || 0);
+    
+    const totalLiabilities = (liabilities.loan || 0) + (liabilities.home_loan || 0) +
+                            (liabilities.car_loan || 0) + (liabilities.personal_loan || 0) +
+                            (liabilities.credit_card_due || 0);
+    
+    let summary = `FINANCIAL SUMMARY (All amounts in ₹):
+    
+ASSETS:
+- Savings: ₹${(assets.savings || 0).toLocaleString()}
+- Mutual Funds: ₹${(assets.mutual_funds || 0).toLocaleString()}
+- Stocks: ₹${(assets.stocks || 0).toLocaleString()}
+- Real Estate: ₹${(assets.real_estate || 0).toLocaleString()}
+- Fixed Deposits: ₹${(assets.fixed_deposits || 0).toLocaleString()}
+- Gold: ₹${(assets.gold || 0).toLocaleString()}
+- Total Assets: ₹${totalAssets.toLocaleString()}
+
+LIABILITIES:
+- Home Loan: ₹${(liabilities.home_loan || 0).toLocaleString()}
+- Car Loan: ₹${(liabilities.car_loan || 0).toLocaleString()}
+- Personal Loan: ₹${(liabilities.personal_loan || 0).toLocaleString()}
+- Credit Card Due: ₹${(liabilities.credit_card_due || 0).toLocaleString()}
+- Other Loans: ₹${(liabilities.loan || 0).toLocaleString()}
+- Total Liabilities: ₹${totalLiabilities.toLocaleString()}
+
+NET WORTH: ₹${(totalAssets - totalLiabilities).toLocaleString()}
+
+GOALS:`;
+    
+    if (goals.length > 0) {
+        goals.forEach(goal => {
+            const current = goal.current || goal.current_amount || 0;
+            const progress = goal.target > 0 ? Math.round((current / goal.target) * 100) : 0;
+            summary += `\n- ${goal.name}: ₹${current.toLocaleString()} / ₹${goal.target.toLocaleString()} (${progress}%) by ${goal.year}`;
+        });
+    } else {
+        summary += '\n- No goals set';
+    }
+    
+    summary += '\n\nBUDGET:';
+    const budgetCategories = budget.categories || [];
+    if (budgetCategories.length > 0) {
+        const totalBudget = budgetCategories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
+        const totalSpent = budgetCategories.reduce((sum, cat) => sum + (cat.spent || 0), 0);
+        summary += `\n- Monthly Budget: ₹${totalBudget.toLocaleString()}`;
+        summary += `\n- Spent This Month: ₹${totalSpent.toLocaleString()}`;
+        budgetCategories.forEach(cat => {
+            const percent = cat.budget > 0 ? Math.round((cat.spent / cat.budget) * 100) : 0;
+            summary += `\n  * ${cat.name}: ₹${cat.spent.toLocaleString()} / ₹${cat.budget.toLocaleString()} (${percent}%)`;
+        });
+    } else {
+        summary += '\n- No budget data';
+    }
+    
+    summary += '\n\nRECENT TRANSACTIONS:';
+    if (transactions.length > 0) {
+        const recentTransactions = transactions.slice(-10);
+        recentTransactions.forEach(txn => {
+            const type = txn.type === 'income' ? '+' : '-';
+            summary += `\n${type} ₹${txn.amount.toLocaleString()} - ${txn.description || txn.category} (${txn.date || 'Unknown date'})`;
+        });
+    } else {
+        summary += '\n- No recent transactions';
+    }
+    
+    summary += '\n\nINVESTMENTS:';
+    if (investments.portfolio_value) {
+        summary += `\n- Portfolio Value: ₹${investments.portfolio_value.toLocaleString()}`;
+        if (investments.holdings && investments.holdings.length > 0) {
+            investments.holdings.forEach(holding => {
+                const gainLoss = holding.gain_loss || 0;
+                summary += `\n  * ${holding.name}: ₹${(holding.value || 0).toLocaleString()} (${gainLoss >= 0 ? '+' : ''}₹${gainLoss.toLocaleString()})`;
+            });
+        }
+    } else {
+        summary += '\n- No investment data';
+    }
+    
+    return summary;
+}
+
+// Helper function to parse AI response into structured insights
+function parseAIInsights(aiText) {
+    const insights = [];
+    
+    // Try to extract structured insights from AI response
+    // Look for patterns like numbered lists, bullet points, or section headers
+    const lines = aiText.split('\n');
+    let currentInsight = null;
+    let currentSection = null;
+    
+    lines.forEach(line => {
+        line = line.trim();
+        if (!line) return;
+        
+        // Detect insight type from keywords
+        let type = 'info';
+        if (line.toLowerCase().includes('warning') || line.toLowerCase().includes('alert') || 
+            line.toLowerCase().includes('concern') || line.toLowerCase().includes('risk')) {
+            type = 'warning';
+        } else if (line.toLowerCase().includes('excellent') || line.toLowerCase().includes('great') ||
+                   line.toLowerCase().includes('good job') || line.toLowerCase().includes('achievement') ||
+                   line.toLowerCase().includes('strength')) {
+            type = 'success';
+        } else if (line.toLowerCase().includes('error') || line.toLowerCase().includes('critical') ||
+                   line.toLowerCase().includes('urgent') || line.toLowerCase().includes('immediate')) {
+            type = 'error';
+        }
+        
+        // Check if it's a header/section
+        if (line.match(/^#{1,3}\s+.+/) || line.match(/^\d+\.\s+.+/) || 
+            (line.length < 100 && !line.includes('₹') && !line.match(/^\d/))) {
+            if (currentInsight) {
+                insights.push(currentInsight);
+            }
+            currentInsight = {
+                type: type,
+                title: line.replace(/^#{1,3}\s+/, '').replace(/^\d+\.\s+/, ''),
+                text: ''
+            };
+        } else {
+            // Continue current insight or create new one
+            if (!currentInsight) {
+                currentInsight = { type: type, text: line };
+            } else {
+                currentInsight.text += (currentInsight.text ? '\n' : '') + line;
+            }
+        }
+    });
+    
+    // Add last insight
+    if (currentInsight) {
+        insights.push(currentInsight);
+    }
+    
+    // If no structured insights found, create one from the whole text
+    if (insights.length === 0) {
+        insights.push({
+            type: 'info',
+            title: 'AI Financial Analysis',
+            text: aiText
+        });
+    }
+    
+    return insights;
+}
+
+// Helper function for markdown to HTML (basic version)
+function markdownToHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/# (.*$)/gim, '<h1>$1</h1>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
 }
 
 function refreshInsights() {
