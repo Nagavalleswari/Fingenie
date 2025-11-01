@@ -991,5 +991,100 @@ Return ONLY the JSON configuration. Do not include any explanation, markdown cod
         except Exception as e:
             return jsonify({'error': f'Server error: {str(e)}'}), 500
     
+    @finance_bp.route('/generate_insights', methods=['POST'])
+    @require_auth
+    def generate_insights():
+        """Generate AI-powered financial insights"""
+        try:
+            user_id = request.user_id
+            
+            # Get user's financial data
+            financial_data, error = finance_model.get_data(user_id)
+            
+            if error:
+                return jsonify({'error': error}), 400
+            
+            # If no data exists, use mock data for demo purposes
+            if not financial_data:
+                mock_data_file = load_mock_data_from_file()
+                if mock_data_file and 'financial_data' in mock_data_file:
+                    financial_data = mock_data_file['financial_data']
+                    financial_data['is_mock'] = True
+                else:
+                    financial_data = {}
+            
+            # Map analytics to financial_health_metrics if needed
+            if 'analytics' in financial_data and 'financial_health_metrics' not in financial_data:
+                financial_data['financial_health_metrics'] = financial_data['analytics']
+            
+            # Initialize Gemini client
+            gemini_client = GeminiClient()
+            
+            # Build comprehensive financial context
+            financial_context = gemini_client._build_financial_context(financial_data)
+            
+            # Create a focused prompt for insights ONLY
+            insights_prompt = f"""{financial_context}
+
+You are FinGenie, a professional AI financial advisor analyzing the user's complete financial data.
+
+CRITICAL INSTRUCTIONS:
+- Provide ONLY actionable financial insights and recommendations
+- Do NOT include greetings, explanations about what insights are, or conversational text
+- Return ONLY insights in a structured format
+- Focus on the MOST IMPORTANT and ACTIONABLE insights based on the financial data
+- All amounts are in Indian Rupees (₹)
+
+ANALYZE the financial data above and provide:
+
+1. Financial Health Assessment (one brief sentence)
+2. Critical Warnings (if any urgent issues exist)
+3. Key Strengths (what they're doing well)
+4. Actionable Recommendations (prioritized, specific actions)
+5. Opportunities (ways to improve financial position)
+6. Goal Progress Insights (how they're tracking towards goals)
+7. Debt Management Insights (if applicable)
+8. Investment Performance Insights (if applicable)
+9. Budget Optimization Insights (if applicable)
+
+FORMAT REQUIREMENTS:
+- Use clear section headers (## for main sections)
+- Use bullet points for each insight
+- Be specific with numbers and amounts in ₹
+- Prioritize insights by importance
+- Return ONLY the insights, no preamble or conclusion
+
+Return your response starting immediately with the first insight. NO greetings or explanations."""
+
+            # Generate insights using Gemini
+            insights_text = gemini_client.generate_response(insights_prompt, user_financial_data=financial_data)
+            
+            # Clean the response to ensure it's just insights
+            # Remove any potential greetings or explanations
+            cleaned_insights = insights_text.strip()
+            if cleaned_insights.lower().startswith('hello') or cleaned_insights.lower().startswith('hi'):
+                # Find first actual insight (usually after first paragraph)
+                lines = cleaned_insights.split('\n')
+                start_idx = 0
+                for i, line in enumerate(lines):
+                    if line.strip() and (line.startswith('##') or line.startswith('*') or line.startswith('-') or line[0].isdigit()):
+                        start_idx = i
+                        break
+                cleaned_insights = '\n'.join(lines[start_idx:])
+            
+            return jsonify({
+                'message': 'Insights generated successfully',
+                'data': {
+                    'insights': cleaned_insights,
+                    'generated_at': datetime.now().isoformat()
+                }
+            }), 200
+            
+        except Exception as e:
+            print(f"Error generating insights: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
     return finance_bp
 

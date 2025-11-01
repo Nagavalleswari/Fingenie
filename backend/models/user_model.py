@@ -90,4 +90,136 @@ class UserModel:
             return user
         except Exception:
             return None
+    
+    def update_profile(self, user_id, name=None, email=None, phone=None, date_of_birth=None):
+        """Update user profile information"""
+        try:
+            user_obj_id = ObjectId(user_id)
+            update_doc = {}
+            
+            if name is not None:
+                update_doc['name'] = name.strip()
+            if email is not None:
+                # Check if email already exists for another user
+                existing_user = self.collection.find_one({"email": email.lower().strip(), "_id": {"$ne": user_obj_id}})
+                if existing_user:
+                    return None, "Email already in use by another account"
+                update_doc['email'] = email.lower().strip()
+            if phone is not None:
+                update_doc['phone'] = phone.strip()
+            if date_of_birth is not None:
+                update_doc['date_of_birth'] = date_of_birth
+            
+            if not update_doc:
+                return None, "No fields to update"
+            
+            update_doc['updated_at'] = datetime.now().isoformat()
+            
+            result = self.collection.update_one(
+                {"_id": user_obj_id},
+                {"$set": update_doc}
+            )
+            
+            if result.matched_count == 0:
+                return None, "User not found"
+            
+            # Return updated user
+            user = self.find_by_id(user_id)
+            return user, None
+            
+        except Exception as e:
+            return None, f"Error updating profile: {str(e)}"
+    
+    def change_password(self, user_id, current_password, new_password):
+        """Change user password"""
+        try:
+            if len(new_password) < 6:
+                return False, "Password must be at least 6 characters"
+            
+            user = self.collection.find_one({"_id": ObjectId(user_id)})
+            if not user:
+                return False, "User not found"
+            
+            # Verify current password
+            password_hash = user.get('password_hash')
+            if not password_hash:
+                return False, "Password verification failed"
+            
+            if isinstance(password_hash, str):
+                password_hash = password_hash.encode('utf-8')
+            
+            if not bcrypt.checkpw(current_password.encode('utf-8'), password_hash):
+                return False, "Current password is incorrect"
+            
+            # Hash new password
+            new_password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            
+            # Update password
+            result = self.collection.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {
+                    "password_hash": new_password_hash,
+                    "updated_at": datetime.now().isoformat()
+                }}
+            )
+            
+            if result.matched_count == 0:
+                return False, "User not found"
+            
+            return True, None
+            
+        except Exception as e:
+            return False, f"Error changing password: {str(e)}"
+    
+    def update_2fa(self, user_id, enabled):
+        """Update two-factor authentication setting"""
+        try:
+            user_obj_id = ObjectId(user_id)
+            
+            result = self.collection.update_one(
+                {"_id": user_obj_id},
+                {"$set": {
+                    "two_factor_enabled": enabled,
+                    "updated_at": datetime.now().isoformat()
+                }}
+            )
+            
+            if result.matched_count == 0:
+                return False, "User not found"
+            
+            return True, None
+            
+        except Exception as e:
+            return False, f"Error updating 2FA: {str(e)}"
+    
+    def get_user_stats(self, user_id):
+        """Get user account statistics"""
+        try:
+            user = self.find_by_id(user_id)
+            if not user:
+                return None
+            
+            # Calculate days active
+            created_at = user.get('created_at')
+            days_active = 0
+            if created_at:
+                try:
+                    from datetime import datetime
+                    created = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                    now = datetime.now(created.tzinfo if created.tzinfo else None)
+                    days_active = (now - created).days
+                except:
+                    days_active = 0
+            
+            # Get financial data updates (from finance collection)
+            # This will be calculated in the route handler
+            
+            return {
+                'days_active': max(1, days_active),
+                'created_at': created_at,
+                'last_updated': user.get('updated_at', created_at)
+            }
+        except Exception as e:
+            print(f"Error getting user stats: {e}")
+            return None
 

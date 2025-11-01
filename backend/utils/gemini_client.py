@@ -197,6 +197,26 @@ class GeminiClient:
                     returns = inv.get('returns', 0)
                     context_parts.append(f"  - {name}: ₹{value:,.0f} (Returns: {returns:.2f}%)")
         
+        # Loans Array (detailed loan information)
+        loans_array = user_financial_data.get('loans', [])
+        if loans_array and isinstance(loans_array, list) and len(loans_array) > 0:
+            context_parts.append("")
+            context_parts.append("DETAILED LOANS:")
+            for loan in loans_array[:10]:  # Top 10 loans
+                loan_name = loan.get('name', loan.get('type', 'Unknown Loan'))
+                outstanding = loan.get('outstanding') or loan.get('remaining_principal', 0)
+                principal = loan.get('principal', 0)
+                emi = loan.get('emi', 0)
+                interest_rate = loan.get('interest_rate', 0)
+                bank = loan.get('bank', 'N/A')
+                next_payment = loan.get('next_payment_date', 'N/A')
+                progress = ((principal - outstanding) / principal * 100) if principal > 0 else 0
+                context_parts.append(f"  - {loan_name} ({bank}):")
+                context_parts.append(f"    * Outstanding: ₹{outstanding:,.0f} / ₹{principal:,.0f} ({progress:.1f}% repaid)")
+                context_parts.append(f"    * EMI: ₹{emi:,.0f}, Interest Rate: {interest_rate}%")
+                if next_payment != 'N/A':
+                    context_parts.append(f"    * Next Payment: {next_payment}")
+        
         # Financial Health Metrics
         if financial_health:
             context_parts.append("")

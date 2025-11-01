@@ -8,4 +8,6 @@ google-generativeai>=0.8.0
 google-cloud-aiplatform==1.38.1
 certifi==2024.2.2
 reportlab==4.0.7
+pyotp==2.9.0
+qrcode[pil]==7.4.2
 

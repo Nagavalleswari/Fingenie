@@ -2395,45 +2395,19 @@ async function loadInsightsPageData() {
             insightsContainer.innerHTML = `
                 <div style="text-align: center; padding: 2rem;">
                     <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--accent-primary); margin-bottom: 1rem;"></i>
-                    <p style="color: var(--text-tertiary);">Analyzing your financial data with AI...</p>
+                    <p style="color: var(--text-tertiary);">Analyzing your complete financial data with AI...</p>
                 </div>
             `;
         }
         
-        // Get financial data for context
-        const data = await getFinancialData();
-        console.log('✅ Financial data loaded for AI insights:', data);
+        console.log('🤖 Calling AI insights endpoint...');
         
-        // Build a comprehensive prompt for AI to analyze financial data
-        const financialSummary = buildFinancialSummaryForAI(data);
+        // Call dedicated insights API endpoint
+        const insightsResponse = await apiRequest('/finance/generate_insights', 'POST');
         
-        const aiPrompt = `As FinGenie, analyze the following financial data and provide comprehensive, actionable insights. 
-
-${financialSummary}
-
-Please provide:
-1. Overall financial health assessment
-2. Key strengths and areas for improvement
-3. Specific recommendations for:
-   - Budget optimization
-   - Debt management
-   - Investment strategy
-   - Goal achievement
-   - Savings opportunities
-4. Any warnings or alerts that need immediate attention
-5. Positive trends and achievements to celebrate
-
-Format your response with clear sections, use bullet points, and prioritize actionable advice. All amounts are in Indian Rupees (₹).`;
+        console.log('✅ AI insights received:', insightsResponse);
         
-        console.log('🤖 Calling AI for insights...');
-        
-        // Call AI chat API to generate insights
-        // apiRequest should be available from main.js
-        const aiResponse = await apiRequest('/chat/chat', 'POST', { message: aiPrompt });
-        
-        console.log('✅ AI insights received:', aiResponse);
-        
-        const aiInsightsText = aiResponse.message || 'Unable to generate insights at this time.';
+        const aiInsightsText = insightsResponse.data?.insights || insightsResponse.message || 'Unable to generate insights at this time.';
         
         // Parse AI response into structured insights (try to extract key points)
         const insights = parseAIInsights(aiInsightsText);
@@ -2480,14 +2454,25 @@ Format your response with clear sections, use bullet points, and prioritize acti
                                  insight.type === 'warning' ? '#f59e0b' : 
                                  insight.type === 'error' ? '#ef4444' : '#3b82f6';
                     
+                    // Extract one-line summary (first line or first sentence)
+                    const fullText = cleanMarkdown(insight.text);
+                    const summary = getInsightSummary(fullText);
+                    const details = formatInsightDetails(fullText);
+                    const cardId = `insight-card-${index}`;
+                    
+                    // Escape any quotes in title for onclick
+                    const safeTitle = (insight.title || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    
                     html += `
-                        <div style="padding: 1.25rem; border-left: 4px solid ${color}; background: var(--bg-tertiary); margin-bottom: 1rem; border-radius: var(--radius-md);">
-                            <div style="display: flex; align-items: start; gap: 1rem;">
-                                <i class="fas ${icon}" style="color: ${color}; font-size: 1.5rem; margin-top: 0.25rem;"></i>
-                                <div style="flex: 1;">
-                                    ${insight.title ? `<h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1.1rem;">${insight.title}</h4>` : ''}
-                                    <div style="color: var(--text-primary); line-height: 1.6; white-space: pre-wrap;">${insight.text}</div>
+                        <div id="${cardId}" class="insight-card" style="padding: 1rem; border-left: 4px solid ${color}; background: var(--bg-elevated); margin-bottom: 0.75rem; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" onclick="toggleInsightCard('${cardId}')" onmouseover="this.style.boxShadow='0 2px 6px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)'">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <i class="fas ${icon}" style="color: ${color}; font-size: 1.25rem; flex-shrink: 0;"></i>
+                                <div style="flex: 1; min-width: 0;">
+                                    ${insight.title ? `<div style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem; margin-bottom: 0.25rem;">${safeTitle}</div>` : ''}
+                                    <div class="insight-summary" style="color: var(--text-primary); line-height: 1.5; font-size: 0.9rem;">${summary}</div>
+                                    <div class="insight-details" style="display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-primary); color: var(--text-primary); line-height: 1.6; font-size: 0.9rem;">${details}</div>
                                 </div>
+                                <i class="fas fa-chevron-down insight-chevron" style="color: var(--text-tertiary); font-size: 0.875rem; transition: transform 0.2s ease; flex-shrink: 0;"></i>
                             </div>
                         </div>
                     `;
@@ -2540,14 +2525,16 @@ Format your response with clear sections, use bullet points, and prioritize acti
     }
 }
 
-// Helper function to build financial summary for AI
+// Helper function to build financial summary for AI (kept for backward compatibility, but insights now use backend)
 function buildFinancialSummaryForAI(data) {
+    // This function is now primarily used for reference
+    // Actual insights generation uses backend endpoint with comprehensive data
     const assets = data.assets || {};
     const liabilities = data.liabilities || {};
     const goals = data.goals || [];
     const budget = data.budget || {};
     const transactions = data.transactions || [];
-    const investments = data.investments || {};
+    const investments = data.investments || [];
     
     const totalAssets = (assets.savings || 0) + (assets.mutual_funds || 0) + (assets.stocks || 0) +
                        (assets.real_estate || 0) + (assets.fixed_deposits || 0) + (assets.gold || 0);
@@ -2616,7 +2603,15 @@ GOALS:`;
     }
     
     summary += '\n\nINVESTMENTS:';
-    if (investments.portfolio_value) {
+    // Handle investments as array
+    if (Array.isArray(investments) && investments.length > 0) {
+        investments.forEach(inv => {
+            const currentValue = inv.current_value || inv.value || 0;
+            const invested = inv.amount_invested || inv.principal || 0;
+            const returns = inv.returns || ((currentValue - invested) / invested * 100) || 0;
+            summary += `\n  * ${inv.name || 'Investment'}: ₹${currentValue.toLocaleString()} (Returns: ${returns.toFixed(2)}%)`;
+        });
+    } else if (investments.portfolio_value) {
         summary += `\n- Portfolio Value: ₹${investments.portfolio_value.toLocaleString()}`;
         if (investments.holdings && investments.holdings.length > 0) {
             investments.holdings.forEach(holding => {
@@ -2635,62 +2630,96 @@ GOALS:`;
 function parseAIInsights(aiText) {
     const insights = [];
     
-    // Try to extract structured insights from AI response
-    // Look for patterns like numbered lists, bullet points, or section headers
-    const lines = aiText.split('\n');
-    let currentInsight = null;
-    let currentSection = null;
+    // Clean the text - remove any greetings or explanations
+    let cleanedText = aiText.trim();
+    
+    // Remove common greeting patterns at the start
+    const greetingPatterns = [
+        /^hello[^\n]*\n/i,
+        /^hi[^\n]*\n/i,
+        /^here[^\n]*insights[^\n]*\n/i,
+        /^based[^\n]*data[^\n]*\n/i,
+        /^let[^\n]*analyze[^\n]*\n/i
+    ];
+    
+    greetingPatterns.forEach(pattern => {
+        cleanedText = cleanedText.replace(pattern, '');
+    });
+    
+    // Split into sections by headers (## or all-caps section names)
+    const sections = [];
+    const lines = cleanedText.split('\n');
+    let currentSection = { title: null, content: [] };
     
     lines.forEach(line => {
-        line = line.trim();
-        if (!line) return;
+        const trimmed = line.trim();
         
-        // Detect insight type from keywords
-        let type = 'info';
-        if (line.toLowerCase().includes('warning') || line.toLowerCase().includes('alert') || 
-            line.toLowerCase().includes('concern') || line.toLowerCase().includes('risk')) {
-            type = 'warning';
-        } else if (line.toLowerCase().includes('excellent') || line.toLowerCase().includes('great') ||
-                   line.toLowerCase().includes('good job') || line.toLowerCase().includes('achievement') ||
-                   line.toLowerCase().includes('strength')) {
-            type = 'success';
-        } else if (line.toLowerCase().includes('error') || line.toLowerCase().includes('critical') ||
-                   line.toLowerCase().includes('urgent') || line.toLowerCase().includes('immediate')) {
-            type = 'error';
-        }
+        // Check if it's a section header
+        const isMarkdownHeader = trimmed.match(/^##+\s+(.+)$/);
+        const isAllCapsHeader = trimmed.match(/^[A-Z][A-Z\s]+$/); // All caps, no special chars except spaces
+        const isEmptyAfterBullets = trimmed === '' || trimmed === '•' || trimmed === '-';
         
-        // Check if it's a header/section
-        if (line.match(/^#{1,3}\s+.+/) || line.match(/^\d+\.\s+.+/) || 
-            (line.length < 100 && !line.includes('₹') && !line.match(/^\d/))) {
-            if (currentInsight) {
-                insights.push(currentInsight);
+        if (isMarkdownHeader) {
+            // Save previous section if it has content
+            if (currentSection.title || currentSection.content.length > 0) {
+                sections.push(currentSection);
             }
-            currentInsight = {
-                type: type,
-                title: line.replace(/^#{1,3}\s+/, '').replace(/^\d+\.\s+/, ''),
-                text: ''
+            currentSection = {
+                title: isMarkdownHeader[1].trim(),
+                content: []
             };
-        } else {
-            // Continue current insight or create new one
-            if (!currentInsight) {
-                currentInsight = { type: type, text: line };
-            } else {
-                currentInsight.text += (currentInsight.text ? '\n' : '') + line;
+        } else if (isAllCapsHeader && trimmed.length > 3 && trimmed.length < 50 && !trimmed.includes('₹')) {
+            // Save previous section
+            if (currentSection.title || currentSection.content.length > 0) {
+                sections.push(currentSection);
             }
+            currentSection = {
+                title: trimmed,
+                content: []
+            };
+        } else if (!isEmptyAfterBullets) {
+            // Add to current section
+            currentSection.content.push(trimmed);
         }
     });
     
-    // Add last insight
-    if (currentInsight) {
-        insights.push(currentInsight);
+    // Add last section
+    if (currentSection.title || currentSection.content.length > 0) {
+        sections.push(currentSection);
     }
     
-    // If no structured insights found, create one from the whole text
-    if (insights.length === 0) {
+    // Convert sections to insights
+    sections.forEach(section => {
+        if (!section.title && section.content.length === 0) return;
+        
+        // Determine type from title/content
+        let type = 'info';
+        const titleLower = (section.title || '').toLowerCase();
+        const contentText = section.content.join(' ').toLowerCase();
+        
+        if (titleLower.includes('warning') || titleLower.includes('alert') || titleLower.includes('concern') ||
+            contentText.includes('critical') || contentText.includes('urgent') || contentText.includes('deficit')) {
+            type = 'warning';
+        } else if (titleLower.includes('strength') || titleLower.includes('positive') || titleLower.includes('achievement') ||
+                   contentText.includes('excellent') || contentText.includes('great') || contentText.includes('robust')) {
+            type = 'success';
+        } else if (titleLower.includes('critical') || titleLower.includes('error') || contentText.includes('immediate action')) {
+            type = 'error';
+        }
+        
+        insights.push({
+            type: type,
+            title: section.title || 'Financial Insight',
+            text: section.content.join('\n')
+        });
+    });
+    
+    // If no structured insights found, create one from the whole cleaned text
+    if (insights.length === 0 && cleanedText) {
         insights.push({
             type: 'info',
-            title: 'AI Financial Analysis',
-            text: aiText
+            title: 'Financial Insights',
+            text: cleanedText
         });
     }
     
@@ -2710,61 +2739,352 @@ function markdownToHtml(text) {
         .replace(/\n/g, '<br>');
 }
 
-function refreshInsights() {
-    toast.info('Refreshing insights...');
-    setTimeout(() => {
-        loadInsightsPageData();
+window.refreshInsights = async function() {
+    try {
+        toast.info('Refreshing insights...');
+        await loadInsightsPageData();
         toast.success('Insights refreshed!');
-    }, 1000);
+    } catch (error) {
+        console.error('Error refreshing insights:', error);
+        toast.error('Failed to refresh insights');
+    }
+};
+
+// Helper function to toggle insight card expansion
+window.toggleInsightCard = function(cardId) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    
+    const summary = card.querySelector('.insight-summary');
+    const details = card.querySelector('.insight-details');
+    const chevron = card.querySelector('.insight-chevron');
+    
+    if (!details || !summary || !chevron) return;
+    
+    const isExpanded = details.style.display !== 'none';
+    
+    if (isExpanded) {
+        details.style.display = 'none';
+        chevron.style.transform = 'rotate(0deg)';
+    } else {
+        details.style.display = 'block';
+        chevron.style.transform = 'rotate(180deg)';
+    }
+};
+
+// Helper function to clean markdown formatting
+function cleanMarkdown(text) {
+    if (!text) return '';
+    
+    // Remove markdown headers
+    text = text.replace(/^#{1,6}\s+/gm, '');
+    
+    // Remove markdown bold/italic but keep text
+    text = text.replace(/\*\*([^\*]+)\*\*/g, '$1');  // Bold
+    text = text.replace(/\*([^\*]+)\*/g, '$1');      // Italic
+    text = text.replace(/__([^_]+)__/g, '$1');        // Bold
+    text = text.replace(/_([^_]+)_/g, '$1');           // Italic
+    
+    // Remove markdown list markers but keep content
+    text = text.replace(/^[-*•]\s+/gm, '');
+    text = text.replace(/^\d+[.)]\s+/gm, '');
+    
+    // Clean up extra whitespace
+    text = text.replace(/\n{3,}/g, '\n\n');
+    text = text.trim();
+    
+    return text;
+}
+
+// Helper function to extract one-line summary from insight text
+function getInsightSummary(text) {
+    if (!text) return '';
+    
+    // First, clean markdown
+    const cleaned = cleanMarkdown(text);
+    
+    // Get first line or first sentence
+    const firstLine = cleaned.split('\n')[0].trim();
+    const firstSentence = cleaned.split(/[.!?]\s+/)[0].trim();
+    
+    // Use shorter of first line or first sentence, max 120 chars
+    let summary = firstLine.length <= firstSentence.length ? firstLine : firstSentence;
+    
+    if (summary.length > 120) {
+        const truncated = summary.substring(0, 117).trim();
+        const lastSpace = truncated.lastIndexOf(' ');
+        summary = (lastSpace > 80 ? truncated.substring(0, lastSpace) : truncated) + '...';
+    }
+    
+    return summary || cleaned.substring(0, 120) + '...';
+}
+
+// Helper function to format insight details with proper line breaks and HTML escaping
+function formatInsightDetails(text) {
+    if (!text) return '';
+    
+    // Clean markdown first
+    const cleaned = cleanMarkdown(text);
+    
+    // Escape HTML to prevent XSS and then format
+    const escapeHtml = (str) => {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    };
+    
+    // Split by lines and format properly
+    const lines = cleaned.split('\n');
+    const formatted = lines.map(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return '';
+        
+        // Escape HTML
+        const escaped = escapeHtml(trimmed);
+        
+        // If it looks like a bullet point (starts with specific chars after cleaning)
+        if (trimmed.match(/^[•\-]/) || trimmed.startsWith('**')) {
+            return '<div style="margin: 0.5rem 0; padding-left: 1rem; position: relative;">' +
+                   '<span style="position: absolute; left: 0;">•</span> ' +
+                   escaped.replace(/^\*\*/, '').replace(/\*\*$/, '') +
+                   '</div>';
+        }
+        
+        // Regular paragraph
+        return '<div style="margin: 0.75rem 0; line-height: 1.6;">' + escaped + '</div>';
+    }).filter(line => line).join('');
+    
+    return formatted || escapeHtml(cleaned);
 }
 
 // ========== PROFILE PAGE ==========
 async function loadProfileData() {
     try {
-        // Try to get user data from token
-        const token = localStorage.getItem('token');
-        if (token) {
-            // Decode JWT to get user info (client-side, basic)
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                updateElement('profileDisplayName', payload.name || 'User');
-                updateElement('profileDisplayEmail', payload.email || 'user@example.com');
-                document.getElementById('profileName').value = payload.name || '';
-                document.getElementById('profileEmail').value = payload.email || '';
-            } catch (e) {
-                console.warn('Could not decode token');
+        console.log('🔄 Loading profile data...');
+        
+        // Fetch user profile from backend
+        try {
+            const profileResponse = await apiRequest('/auth/profile', 'GET');
+            
+            if (profileResponse.success && profileResponse.user) {
+                const user = profileResponse.user;
+                
+                // Update display header
+                updateElement('profileDisplayName', user.name || 'User');
+                updateElement('profileDisplayEmail', user.email || 'user@example.com');
+                
+                // Populate form fields
+                const nameInput = document.getElementById('profileName');
+                const emailInput = document.getElementById('profileEmail');
+                const phoneInput = document.getElementById('profilePhone');
+                const dobInput = document.getElementById('profileDOB');
+                
+                if (nameInput) nameInput.value = user.name || '';
+                if (emailInput) emailInput.value = user.email || '';
+                if (phoneInput) phoneInput.value = user.phone || '';
+                if (dobInput) dobInput.value = user.date_of_birth || '';
+            } else {
+                // Fallback to token if API fails
+                const token = localStorage.getItem('token');
+                if (token) {
+                    try {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        updateElement('profileDisplayName', payload.name || 'User');
+                        updateElement('profileDisplayEmail', payload.email || 'user@example.com');
+                        if (document.getElementById('profileName')) document.getElementById('profileName').value = payload.name || '';
+                        if (document.getElementById('profileEmail')) document.getElementById('profileEmail').value = payload.email || '';
+                    } catch (e) {
+                        console.warn('Could not decode token');
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn('Could not fetch profile from backend, using token:', error);
+            // Fallback to token
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    updateElement('profileDisplayName', payload.name || 'User');
+                    updateElement('profileDisplayEmail', payload.email || 'user@example.com');
+                    if (document.getElementById('profileName')) document.getElementById('profileName').value = payload.name || '';
+                    if (document.getElementById('profileEmail')) document.getElementById('profileEmail').value = payload.email || '';
+                } catch (e) {
+                    console.warn('Could not decode token');
+                }
             }
         }
         
-        // Mock account stats
-        updateElement('accountDaysActive', '30');
-        updateElement('accountDataUpdates', '5');
-        const goalsData = await getFinancialData().catch(() => ({ goals: [] }));
-        updateElement('accountGoalsSet', (goalsData.goals || []).length);
-        updateElement('accountReportsGen', '3');
+        // Load account statistics
+        try {
+            const statsResponse = await apiRequest('/auth/profile/stats', 'GET');
+            
+            if (statsResponse.success && statsResponse.stats) {
+                const stats = statsResponse.stats;
+                updateElement('accountDaysActive', stats.days_active || '0');
+                updateElement('accountDataUpdates', stats.data_updates || '0');
+                updateElement('accountGoalsSet', stats.goals_set || '0');
+                updateElement('accountReportsGen', stats.reports_generated || '0');
+            } else {
+                // Fallback to basic stats
+                const goalsData = await getFinancialData().catch(() => ({ goals: [] }));
+                updateElement('accountDaysActive', '1');
+                updateElement('accountDataUpdates', '0');
+                updateElement('accountGoalsSet', (goalsData.goals || []).length);
+                updateElement('accountReportsGen', '0');
+            }
+        } catch (error) {
+            console.warn('Could not fetch stats, using fallback:', error);
+            // Fallback to basic stats
+            const goalsData = await getFinancialData().catch(() => ({ goals: [] }));
+            updateElement('accountDaysActive', '1');
+            updateElement('accountDataUpdates', '0');
+            updateElement('accountGoalsSet', (goalsData.goals || []).length);
+            updateElement('accountReportsGen', '0');
+        }
+        
+        // Load 2FA setting
+        try {
+            const profileData = await apiRequest('/auth/profile', 'GET');
+            if (profileData.success && profileData.user) {
+                const twoFactorEnabled = profileData.user.two_factor_enabled || false;
+                update2FAToggle(twoFactorEnabled);
+            }
+        } catch (error) {
+            console.warn('Could not load 2FA setting:', error);
+        }
+        
+        console.log('✅ Profile data loaded');
     } catch (error) {
-        console.error('Error loading profile:', error);
+        console.error('❌ Error loading profile:', error);
+        toast.error('Failed to load profile data');
+    }
+}
+
+// Helper function to update 2FA toggle visual state
+function update2FAToggle(enabled) {
+    const checkbox = document.getElementById('enable2FA');
+    const toggleSlider = document.querySelector('#enable2FA').closest('label').querySelector('.toggle-slider');
+    const toggleKnob = toggleSlider ? toggleSlider.querySelector('.toggle-knob') : null;
+    const statusText = document.getElementById('twoFactorStatus');
+    
+    if (checkbox) {
+        checkbox.checked = enabled;
+    }
+    
+    if (toggleSlider && toggleKnob) {
+        if (enabled) {
+            toggleSlider.style.backgroundColor = 'var(--accent-primary)';
+            toggleKnob.style.transform = 'translateX(24px)';
+        } else {
+            toggleSlider.style.backgroundColor = 'var(--bg-tertiary)';
+            toggleKnob.style.transform = 'translateX(0)';
+        }
+    }
+    
+    if (statusText) {
+        statusText.textContent = enabled 
+            ? 'Two-factor authentication is enabled' 
+            : 'Add an extra layer of security';
     }
 }
 
 function setupProfileHandlers() {
     const form = document.getElementById('profileForm');
     if (form) {
-        form.addEventListener('submit', async function(e) {
+        // Remove any existing listeners
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const name = document.getElementById('profileName').value;
-            const email = document.getElementById('profileEmail').value;
             
-            // Update display
-            updateElement('profileDisplayName', name);
-            updateElement('profileDisplayEmail', email);
+            const nameInput = document.getElementById('profileName');
+            const emailInput = document.getElementById('profileEmail');
+            const phoneInput = document.getElementById('profilePhone');
+            const dobInput = document.getElementById('profileDOB');
             
-            toast.success('Profile updated successfully!');
+            const name = nameInput ? nameInput.value.trim() : '';
+            const email = emailInput ? emailInput.value.trim() : '';
+            const phone = phoneInput ? phoneInput.value.trim() : '';
+            const dateOfBirth = dobInput ? dobInput.value : '';
+            
+            if (!name || !email) {
+                toast.error('Name and email are required');
+                return;
+            }
+            
+            try {
+                toast.info('Updating profile...');
+                
+                const updateData = { name, email };
+                if (phone) updateData.phone = phone;
+                if (dateOfBirth) updateData.date_of_birth = dateOfBirth;
+                
+                const response = await apiRequest('/auth/update_profile', 'POST', updateData);
+                
+                if (response.success) {
+                    // Update display
+                    updateElement('profileDisplayName', name);
+                    updateElement('profileDisplayEmail', email);
+                    
+                    // Update token if email changed (new token returned)
+                    if (response.token) {
+                        localStorage.setItem('token', response.token);
+                        toast.success('Profile updated successfully! Please refresh the page.');
+                    } else {
+                        toast.success('Profile updated successfully!');
+                    }
+                } else {
+                    toast.error(response.error || 'Failed to update profile');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                toast.error(error.message || 'Failed to update profile');
+            }
+        });
+    }
+    
+    // Setup 2FA toggle handler
+    const twoFactorCheckbox = document.getElementById('enable2FA');
+    if (twoFactorCheckbox) {
+        // Remove existing listeners
+        const newCheckbox = twoFactorCheckbox.cloneNode(true);
+        twoFactorCheckbox.parentNode.replaceChild(newCheckbox, twoFactorCheckbox);
+        
+        document.getElementById('enable2FA').addEventListener('change', async function(e) {
+            const enabled = this.checked;
+            
+            try {
+                toast.info(enabled ? 'Enabling two-factor authentication...' : 'Disabling two-factor authentication...');
+                
+                const response = await apiRequest('/auth/update_2fa', 'POST', {
+                    enabled: enabled
+                });
+                
+                if (response.success) {
+                    update2FAToggle(enabled);
+                    toast.success(enabled 
+                        ? 'Two-factor authentication enabled successfully!' 
+                        : 'Two-factor authentication disabled successfully!');
+                } else {
+                    // Revert checkbox state on error
+                    this.checked = !enabled;
+                    update2FAToggle(!enabled);
+                    toast.error(response.error || 'Failed to update two-factor authentication');
+                }
+            } catch (error) {
+                console.error('Error updating 2FA:', error);
+                // Revert checkbox state on error
+                this.checked = !enabled;
+                update2FAToggle(!enabled);
+                toast.error(error.message || 'Failed to update two-factor authentication');
+            }
         });
     }
 }
 
-function showChangePasswordModal() {
+window.showChangePasswordModal = function() {
     showInfoModal(
         'Change Password',
         `
@@ -2775,31 +3095,78 @@ function showChangePasswordModal() {
             </div>
             <div class="form-group">
                 <label class="form-label">New Password</label>
-                <input type="password" class="form-control" id="newPassword" required>
+                <input type="password" class="form-control" id="newPassword" required minlength="6">
+                <small style="color: var(--text-tertiary); font-size: 0.875rem;">Password must be at least 6 characters</small>
             </div>
             <div class="form-group">
                 <label class="form-label">Confirm New Password</label>
-                <input type="password" class="form-control" id="confirmPassword" required>
+                <input type="password" class="form-control" id="confirmPassword" required minlength="6">
             </div>
-            <button type="submit" class="btn btn-primary w-100">Change Password</button>
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-key"></i> Change Password
+            </button>
         </form>
         `
     );
     
-    document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const newPass = document.getElementById('newPassword').value;
-        const confirmPass = document.getElementById('confirmPassword').value;
-        
-        if (newPass !== confirmPass) {
-            toast.error('Passwords do not match');
-            return;
+    // Remove any existing listeners and add new one
+    setTimeout(() => {
+        const passwordForm = document.getElementById('changePasswordForm');
+        if (passwordForm) {
+            // Clone to remove existing listeners
+            const newForm = passwordForm.cloneNode(true);
+            passwordForm.parentNode.replaceChild(newForm, passwordForm);
+            
+            document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const currentPass = document.getElementById('currentPassword').value;
+                const newPass = document.getElementById('newPassword').value;
+                const confirmPass = document.getElementById('confirmPassword').value;
+                
+                if (!currentPass || !newPass || !confirmPass) {
+                    toast.error('All fields are required');
+                    return;
+                }
+                
+                if (newPass !== confirmPass) {
+                    toast.error('New passwords do not match');
+                    return;
+                }
+                
+                if (newPass.length < 6) {
+                    toast.error('Password must be at least 6 characters');
+                    return;
+                }
+                
+                try {
+                    toast.info('Changing password...');
+                    
+                    const response = await apiRequest('/auth/change_password', 'POST', {
+                        current_password: currentPass,
+                        new_password: newPass,
+                        confirm_password: confirmPass
+                    });
+                    
+                    if (response.success) {
+                        toast.success('Password changed successfully!');
+                        closeModal('infoModal');
+                        
+                        // Clear form
+                        document.getElementById('currentPassword').value = '';
+                        document.getElementById('newPassword').value = '';
+                        document.getElementById('confirmPassword').value = '';
+                    } else {
+                        toast.error(response.error || 'Failed to change password');
+                    }
+                } catch (error) {
+                    console.error('Error changing password:', error);
+                    toast.error(error.message || 'Failed to change password');
+                }
+            });
         }
-        
-        toast.success('Password changed successfully!');
-        closeModal('infoModal');
-    });
-}
+    }, 100);
+};
 
 // ========== SETTINGS PAGE ==========
 function loadSettingsData() {

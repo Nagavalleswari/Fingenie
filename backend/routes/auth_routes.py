@@ -179,5 +179,266 @@ def init_auth_routes(db):
         response.set_cookie('token', '', expires=0)
         return response, 200
     
+    @auth_bp.route('/profile', methods=['GET'])
+    def get_profile():
+        """Get user profile"""
+        try:
+            from utils.jwt_handler import decode_token
+            
+            # Get token from cookie or Authorization header
+            token = request.cookies.get('token') or (request.headers.get('Authorization') and request.headers.get('Authorization').replace('Bearer ', ''))
+            
+            if not token:
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            # Decode token
+            payload, error = decode_token(token)
+            if error or not payload:
+                return jsonify({'error': error or 'Invalid token'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            # Get user
+            user = user_model.find_by_id(user_id)
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            
+            return jsonify({
+                'success': True,
+                'user': user
+            }), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @auth_bp.route('/update_profile', methods=['POST'])
+    def update_profile():
+        """Update user profile"""
+        try:
+            from utils.jwt_handler import decode_token
+            
+            # Get token from cookie or Authorization header
+            token = request.cookies.get('token') or (request.headers.get('Authorization') and request.headers.get('Authorization').replace('Bearer ', ''))
+            
+            if not token:
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            # Decode token
+            payload, token_error = decode_token(token)
+            if token_error or not payload:
+                return jsonify({'error': token_error or 'Invalid token'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'No data provided'}), 400
+            
+            # Update profile
+            updated_user, error = user_model.update_profile(
+                user_id,
+                name=data.get('name'),
+                email=data.get('email'),
+                phone=data.get('phone'),
+                date_of_birth=data.get('date_of_birth')
+            )
+            
+            if error:
+                return jsonify({'error': error}), 400
+            
+            # Generate new token with updated email if email changed
+            new_token = None
+            if data.get('email') and updated_user and updated_user.get('email') != payload.get('email'):
+                new_token = encode_token(updated_user['_id'], updated_user['email'])
+            
+            response_data = {
+                'success': True,
+                'message': 'Profile updated successfully',
+                'user': updated_user
+            }
+            
+            if new_token:
+                response_data['token'] = new_token
+                response = make_response(jsonify(response_data))
+                response.set_cookie('token', new_token, httponly=True, samesite='Lax', max_age=86400)
+                return response, 200
+            
+            return jsonify(response_data), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @auth_bp.route('/change_password', methods=['POST'])
+    def change_password():
+        """Change user password"""
+        try:
+            from utils.jwt_handler import decode_token
+            
+            # Get token from cookie or Authorization header
+            token = request.cookies.get('token') or (request.headers.get('Authorization') and request.headers.get('Authorization').replace('Bearer ', ''))
+            
+            if not token:
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            # Decode token
+            payload, error = decode_token(token)
+            if error or not payload:
+                return jsonify({'error': error or 'Invalid token'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'No data provided'}), 400
+            
+            current_password = data.get('current_password')
+            new_password = data.get('new_password')
+            confirm_password = data.get('confirm_password')
+            
+            if not current_password or not new_password or not confirm_password:
+                return jsonify({'error': 'All password fields are required'}), 400
+            
+            if new_password != confirm_password:
+                return jsonify({'error': 'New passwords do not match'}), 400
+            
+            if len(new_password) < 6:
+                return jsonify({'error': 'Password must be at least 6 characters'}), 400
+            
+            # Change password
+            success, error = user_model.change_password(user_id, current_password, new_password)
+            
+            if not success:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'success': True,
+                'message': 'Password changed successfully'
+            }), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @auth_bp.route('/update_2fa', methods=['POST'])
+    def update_2fa():
+        """Update two-factor authentication setting"""
+        try:
+            from utils.jwt_handler import decode_token
+            
+            # Get token from cookie or Authorization header
+            token = request.cookies.get('token') or (request.headers.get('Authorization') and request.headers.get('Authorization').replace('Bearer ', ''))
+            
+            if not token:
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            # Decode token
+            payload, error = decode_token(token)
+            if error or not payload:
+                return jsonify({'error': error or 'Invalid token'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'No data provided'}), 400
+            
+            enabled = data.get('enabled', False)
+            
+            # Update 2FA setting
+            success, error = user_model.update_2fa(user_id, enabled)
+            
+            if not success:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'success': True,
+                'message': 'Two-factor authentication updated successfully',
+                'two_factor_enabled': enabled
+            }), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @auth_bp.route('/profile/stats', methods=['GET'])
+    def get_profile_stats():
+        """Get user profile statistics"""
+        try:
+            from utils.jwt_handler import decode_token
+            
+            # Get token from cookie or Authorization header
+            token = request.cookies.get('token') or (request.headers.get('Authorization') and request.headers.get('Authorization').replace('Bearer ', ''))
+            
+            if not token:
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            # Decode token
+            payload, error = decode_token(token)
+            if error or not payload:
+                return jsonify({'error': error or 'Invalid token'}), 401
+            
+            user_id = payload.get('user_id')
+            if not user_id:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            # Get user stats
+            user_stats = user_model.get_user_stats(user_id)
+            if not user_stats:
+                return jsonify({'error': 'Could not retrieve user stats'}), 400
+            
+            # Get financial data stats
+            user_obj_id = ObjectId(user_id)
+            financial_data = finance_model.collection.find_one({"user_id": user_obj_id})
+            
+            # Count data updates (times financial data was updated)
+            data_updates = 0
+            if financial_data and financial_data.get('last_updated'):
+                # This is a simple count - could be enhanced
+                data_updates = 1  # Placeholder - could track update history
+            
+            # Get goals count
+            goals_count = 0
+            if financial_data and financial_data.get('goals'):
+                goals_count = len(financial_data.get('goals', []))
+            
+            # Get reports count from financial_data collection
+            reports_count = 0
+            if financial_data:
+                reports = financial_data.get('reports', [])
+                if isinstance(reports, list):
+                    reports_count = len(reports)
+                elif reports:
+                    # Handle case where reports might be stored differently
+                    reports_count = 1
+            
+            return jsonify({
+                'success': True,
+                'stats': {
+                    'days_active': user_stats['days_active'],
+                    'data_updates': data_updates,
+                    'goals_set': goals_count,
+                    'reports_generated': reports_count
+                }
+            }), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
     return auth_bp
 

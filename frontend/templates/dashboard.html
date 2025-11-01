@@ -1295,33 +1295,33 @@
                 // Wait for initializePages to be available, then call it with retries
                 waitForInitializePages(() => {
                     // First attempt after 100ms
-                    setTimeout(() => {
+                setTimeout(() => {
                         if (typeof window.initializePages === 'function') {
-                            console.log('🔄 Calling initializePages for:', page);
+                        console.log('🔄 Calling initializePages for:', page);
                             window.initializePages();
-                        }
-                    }, 100);
-                    
+                    }
+                }, 100);
+                
                     // Retry after 300ms to ensure all elements are rendered
-                    setTimeout(() => {
+                setTimeout(() => {
                         if (typeof window.initializePages === 'function') {
-                            console.log('🔄 Retrying initializePages for:', page);
+                        console.log('🔄 Retrying initializePages for:', page);
                             window.initializePages();
-                        }
-                    }, 300);
-                    
+                    }
+                }, 300);
+                
                     // Final retry after 500ms
-                    setTimeout(() => {
+                setTimeout(() => {
                         if (typeof window.initializePages === 'function') {
-                            console.log('🔄 Final retry initializePages for:', page);
+                        console.log('🔄 Final retry initializePages for:', page);
                             window.initializePages();
-                        }
-                        // Also manually trigger load if it's a specific page
-                        if (page === 'goals' && typeof loadGoalsPageData === 'function') {
-                            console.log('🔄 Manually calling loadGoalsPageData for goals page');
-                            loadGoalsPageData();
-                        }
-                    }, 500);
+                    }
+                    // Also manually trigger load if it's a specific page
+                    if (page === 'goals' && typeof loadGoalsPageData === 'function') {
+                        console.log('🔄 Manually calling loadGoalsPageData for goals page');
+                        loadGoalsPageData();
+                    }
+                }, 500);
                 });
             } else {
                 console.error('Page content not found for:', page);
@@ -2036,42 +2036,7 @@
                         </div>
                     </div>
 
-                    <!-- Recommendations -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="fas fa-star"></i> Recommendations</h3>
-                        </div>
-                        <div class="card-body">
-                            <div id="recommendationsList">
-                                <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); margin-bottom: 1rem; background: var(--bg-tertiary);">
-                                    <div style="display: flex; align-items: start; gap: 1rem;">
-                                        <div style="font-size: 1.5rem; color: var(--accent-primary);">
-                                            <i class="fas fa-lightbulb"></i>
-                                        </div>
-                                        <div style="flex: 1;">
-                                            <strong>Optimize Your Investment Portfolio</strong>
-                                            <p style="margin: 0.5rem 0 0 0; color: var(--text-secondary);">
-                                                Consider diversifying your investments across different asset classes for better risk management.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); margin-bottom: 1rem; background: var(--bg-tertiary);">
-                                    <div style="display: flex; align-items: start; gap: 1rem;">
-                                        <div style="font-size: 1.5rem; color: var(--accent-success);">
-                                            <i class="fas fa-check-circle"></i>
-                                        </div>
-                                        <div style="flex: 1;">
-                                            <strong>Build Emergency Fund</strong>
-                                            <p style="margin: 0.5rem 0 0 0; color: var(--text-secondary);">
-                                                Aim to save 3-6 months of expenses in your emergency fund for financial security.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- All insights are generated by AI above - no separate recommendations section needed -->
                 `,
                 'profile': `
                     <!-- Profile Header -->
@@ -2135,11 +2100,13 @@
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
                                         <div>
                                             <strong>Two-Factor Authentication</strong>
-                                            <p style="margin: 0.25rem 0 0 0; color: var(--text-tertiary); font-size: 0.875rem;">Add an extra layer of security</p>
+                                            <p style="margin: 0.25rem 0 0 0; color: var(--text-tertiary); font-size: 0.875rem;" id="twoFactorStatus">Add an extra layer of security</p>
                                         </div>
-                                        <label style="position: relative; display: inline-block; width: 50px; height: 26px;">
-                                            <input type="checkbox" id="enable2FA" style="opacity: 0; width: 0; height: 0;">
-                                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-tertiary); border-radius: 26px; transition: 0.3s;"></span>
+                                        <label style="position: relative; display: inline-block; width: 50px; height: 26px; cursor: pointer;">
+                                            <input type="checkbox" id="enable2FA" style="opacity: 0; width: 0; height: 0; position: absolute;">
+                                            <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-tertiary); border-radius: 26px; transition: all 0.3s ease;">
+                                                <span class="toggle-knob" style="content: ''; position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+                                            </span>
                                         </label>
                                     </div>
                                 </div>
