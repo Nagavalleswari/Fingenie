@@ -54,18 +54,20 @@ def init_finance_routes(db):
             if not any([assets, liabilities, goals]):
                 return jsonify({'error': 'At least one field (assets, liabilities, or goals) must be provided'}), 400
             
-            # IMPORTANT: If goals are provided but fewer than 5, don't save them
-            # This prevents partial goal sets from being saved and ensures mock_data goals are always shown
+            # IMPORTANT: Only prevent saving if goals are provided but fewer than 5
+            # If user has 5+ goals, allow saving (user is adding their own goals)
             if goals is not None:
                 goals_list = goals if isinstance(goals, list) else []
                 mock_data_file = load_mock_data_from_file()
                 mock_goals_count = len(mock_data_file.get('financial_data', {}).get('goals', [])) if mock_data_file else 5
                 
-                # Only save goals if user has ALL goals (complete set of 5)
-                # Otherwise, don't save partial goals - let get_data return mock_data goals instead
-                if len(goals_list) < mock_goals_count:
-                    print(f"⚠️ Not saving partial goals ({len(goals_list)} goals). User needs all {mock_goals_count} goals to override mock_data.")
+                # Only prevent saving if user has fewer than 5 goals (partial set)
+                # If user has 5 or more goals, allow saving (they're managing their own goals)
+                if len(goals_list) > 0 and len(goals_list) < mock_goals_count:
+                    print(f"⚠️ Not saving partial goals ({len(goals_list)} goals). User needs at least {mock_goals_count} goals to override mock_data, or can add more.")
                     goals = None  # Don't save partial goals - this will trigger removal in finance_model
+                elif len(goals_list) >= mock_goals_count:
+                    print(f"✅ Saving {len(goals_list)} goals (user has {mock_goals_count}+ goals)")
             
             # Add or update data (finance_model will also validate and prevent partial goals)
             result, error = finance_model.add_or_update_data(
@@ -130,6 +132,20 @@ def init_finance_routes(db):
                         'data': {}
                     }), 200
             
+            # STEP 1: Clean up partial goals FIRST, before any processing
+            # This ensures ALL accounts get cleaned up regardless of other data
+            if data and data.get('goals'):
+                user_goals_list = data.get('goals', [])
+                user_goals_count_before = len(user_goals_list) if isinstance(user_goals_list, list) else 0
+                
+                # If partial goals exist (< 5), remove them immediately
+                if user_goals_count_before > 0 and user_goals_count_before < 5:
+                    print(f"🧹 STEP 1: Removing partial goals ({user_goals_count_before} goals) from MongoDB for user {user_id}")
+                    finance_model.remove_goals(user_id)
+                    # Remove goals from data object so they're not used below
+                    data.pop('goals', None)
+                    print(f"✅ Partial goals removed from database for user {user_id}")
+            
             # If user has data, merge with mock data (user data takes precedence, but fill missing from mock)
             merged_data = {}
             
@@ -145,10 +161,10 @@ def init_finance_routes(db):
             else:
                 merged_data['liabilities'] = mock_data.get('liabilities', {})
             
-            # ALWAYS use mock_data goals - never use database goals unless user explicitly saved ALL 5
+            # STEP 2: Handle goals - ALWAYS use mock_data goals unless user has ALL 5 goals
             # This ensures users always see the complete 5 goals from mock_data.json
             mock_goals_count = len(mock_data.get('goals', []))
-            user_goals = data.get('goals', [])
+            user_goals = data.get('goals', [])  # This should be None or empty after cleanup
             user_goals_count = len(user_goals) if isinstance(user_goals, list) else 0
             
             # Only use user goals if they have ALL 5 goals (complete set)
@@ -156,17 +172,13 @@ def init_finance_routes(db):
             if user_goals_count == mock_goals_count and user_goals_count == 5:
                 # User has explicitly saved all 5 goals - use those
                 merged_data['goals'] = user_goals
+                print(f"✅ Using user's complete goal set (5 goals) for user {user_id}")
             else:
                 # Always use mock goals (either no user goals, or incomplete set)
                 # This ensures users always see all 5 goals from mock_data.json
                 merged_data['goals'] = mock_data.get('goals', [])
                 merged_data['is_mock'] = True  # Flag that goals are from mock
-                print(f"📊 Using mock_data goals ({len(mock_data.get('goals', []))} goals) instead of user goals ({user_goals_count} goals)")
-                
-                # IMPORTANT: Remove partial goals from MongoDB to prevent them from persisting
-                if user_goals_count > 0 and user_goals_count < 5:
-                    print(f"🧹 Cleaning up partial goals ({user_goals_count} goals) from MongoDB for user {user_id}")
-                    finance_model.remove_goals(user_id)
+                print(f"📊 Using mock_data goals ({len(mock_data.get('goals', []))} goals) for user {user_id} (user had {user_goals_count} goals after cleanup)")
             
             # Merge other fields (budget, transactions, investments, etc.)
             merged_data['budget'] = data.get('budget') or mock_data.get('budget', {})

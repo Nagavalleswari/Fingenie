@@ -25,20 +25,21 @@ class FinanceModel:
         if liabilities:
             update_doc["liabilities"] = liabilities
         
-        # IMPORTANT: Only save goals if it's a complete set (5 goals) or explicitly None
-        # Never save partial goal sets (< 5 goals) - this is enforced at the database model level
+        # IMPORTANT: Only prevent saving if it's a partial set (< 5 goals)
+        # Allow saving if user has 5+ goals (user is managing their own goals)
         goals_to_save = None
         if goals is not None:
             goals_list = goals if isinstance(goals, list) else []
             goals_count = len(goals_list)
             
-            # Only save if we have exactly 5 goals (complete set from mock_data)
-            if goals_count == 5:
+            # Allow saving if user has 5 or more goals (complete set or user-added goals)
+            if goals_count >= 5:
                 goals_to_save = goals
                 update_doc["goals"] = goals
+                print(f"✅ Saving {goals_count} goals to database")
             elif goals_count > 0 and goals_count < 5:
                 # Partial goals - NEVER save, always remove if exists
-                print(f"⚠️ BLOCKING save of partial goals ({goals_count} goals). Only complete sets of 5 goals are allowed.")
+                print(f"⚠️ BLOCKING save of partial goals ({goals_count} goals). User needs at least 5 goals to override mock_data.")
                 goals_to_save = None  # Explicitly set to None to trigger removal
                 # Don't include goals in update_doc - will be removed via $unset
             # If goals is empty list [], treat as None (remove)
@@ -82,10 +83,25 @@ class FinanceModel:
         except Exception:
             return None, "Invalid user ID"
         
+        # Remove goals field and ensure it's completely deleted
         result = self.collection.update_one(
             {"user_id": user_obj_id},
             {"$unset": {"goals": ""}}
         )
+        
+        if result.modified_count > 0:
+            print(f"✅ Successfully removed goals from MongoDB for user {user_id}")
+        else:
+            # Check if goals field existed
+            existing = self.collection.find_one({"user_id": user_obj_id}, {"goals": 1})
+            if existing and "goals" in existing:
+                print(f"⚠️ Goals field still exists for user {user_id} - retrying removal...")
+                # Force removal again
+                self.collection.update_one(
+                    {"user_id": user_obj_id},
+                    {"$unset": {"goals": ""}}
+                )
+        
         return {"success": True, "updated": result.modified_count > 0}, None
     
     def set_assets(self, user_id, assets):
