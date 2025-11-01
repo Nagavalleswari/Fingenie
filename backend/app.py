@@ -5,7 +5,7 @@ from config import Config
 from routes.auth_routes import init_auth_routes
 from routes.finance_routes import init_finance_routes
 from routes.chat_routes import init_chat_routes
-
+import numpy as np
 def create_app():
     """Flask application factory"""
     app = Flask(__name__, 
