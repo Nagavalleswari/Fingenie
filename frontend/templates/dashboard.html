@@ -684,6 +684,95 @@
         </div>
     </div>
 
+    <!-- Add Investment Modal -->
+    <div id="addInvestmentModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>Add Investment</h3>
+                <button class="modal-close" onclick="closeModal('addInvestmentModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addInvestmentFormModal">
+                    <div class="form-group">
+                        <label class="form-label">Investment Name</label>
+                        <input type="text" class="form-control" id="investmentNameModal" placeholder="e.g., HDFC Equity Fund, Reliance Industries" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Investment Type</label>
+                        <select class="form-control" id="investmentTypeModal" required>
+                            <option value="mutual_fund">Mutual Fund</option>
+                            <option value="stock">Stock</option>
+                            <option value="fixed_deposit">Fixed Deposit</option>
+                            <option value="gold">Gold</option>
+                            <option value="etf">ETF</option>
+                            <option value="bond">Bond</option>
+                            <option value="savings">Savings Account</option>
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Invested Amount (₹)</label>
+                            <input type="number" class="form-control" id="investmentAmountModal" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Current Value (₹)</label>
+                            <input type="number" class="form-control" id="investmentCurrentValueModal" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Symbol/Code (Optional)</label>
+                            <input type="text" class="form-control" id="investmentSymbolModal" placeholder="e.g., RELIANCE, TCS">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quantity (Optional)</label>
+                            <input type="number" class="form-control" id="investmentQuantityModal" step="1" min="0" placeholder="No. of shares/units">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Risk Level</label>
+                            <select class="form-control" id="investmentRiskLevelModal" required>
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select class="form-control" id="investmentCategoryModal" required>
+                                <option value="equity">Equity</option>
+                                <option value="fixed_income">Fixed Income</option>
+                                <option value="commodity">Commodity</option>
+                                <option value="hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Purchase Date</label>
+                            <input type="date" class="form-control" id="investmentPurchaseDateModal" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Maturity Date (Optional)</label>
+                            <input type="date" class="form-control" id="investmentMaturityDateModal">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('addInvestmentModal')" style="flex: 1;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">
+                            <i class="fas fa-save"></i> Save Investment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Chart Menu Dropdown -->
     <div id="chartMenu" class="dropdown-menu" style="display: none;">
         <a href="#" onclick="exportChart('assets'); closeDropdown('chartMenu'); return false;">
@@ -1267,7 +1356,7 @@
                         </div>
                     </div>
 
-                    <!-- Investment Portfolio -->
+                    <!-- Investment Charts -->
                     <div class="grid grid-cols-2 mb-4">
                         <div class="card fade-in">
                             <div class="card-header">
@@ -1281,61 +1370,32 @@
                         </div>
                         <div class="card fade-in">
                             <div class="card-header">
-                                <h3 class="card-title"><i class="fas fa-table"></i> Investment Details</h3>
-                                <div class="card-actions">
-                                    <button class="card-action-btn" id="addInvestmentBtn">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
+                                <h3 class="card-title"><i class="fas fa-chart-area"></i> Investment Performance</h3>
                             </div>
                             <div class="card-body">
-                                <div id="investmentsList">
-                                    <div style="padding: 1rem; border-bottom: 1px solid var(--border-primary);">
-                                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <div>
-                                                <strong><i class="fas fa-chart-pie"></i> Mutual Funds</strong>
-                                                <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.25rem;" id="mutualFundsInvestment">Loading...</div>
-                                            </div>
-                                            <div style="text-align: right;">
-                                                <div style="color: var(--accent-success); font-weight: 600;" id="mutualFundsReturn">+0%</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div style="padding: 1rem; border-bottom: 1px solid var(--border-primary);">
-                                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <div>
-                                                <strong><i class="fas fa-chart-line"></i> Stocks</strong>
-                                                <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.25rem;" id="stocksInvestment">Loading...</div>
-                                            </div>
-                                            <div style="text-align: right;">
-                                                <div style="color: var(--accent-success); font-weight: 600;" id="stocksReturn">+0%</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div style="padding: 1rem;">
-                                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <div>
-                                                <strong><i class="fas fa-piggy-bank"></i> Savings</strong>
-                                                <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.25rem;" id="savingsInvestment">Loading...</div>
-                                            </div>
-                                            <div style="text-align: right;">
-                                                <div style="color: var(--accent-info); font-weight: 600;" id="savingsReturn">+0%</div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div style="position: relative; height: 300px;">
+                                    <canvas id="investmentPerformanceChart"></canvas>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Investment Performance Chart -->
+                    <!-- Investment Portfolio List -->
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h3 class="card-title"><i class="fas fa-chart-area"></i> Investment Performance</h3>
+                            <h3 class="card-title"><i class="fas fa-list"></i> Investment Portfolio</h3>
+                            <div class="card-actions">
+                                <button class="card-action-btn" id="addInvestmentBtn">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body">
-                            <div style="position: relative; height: 300px;">
-                                <canvas id="investmentPerformanceChart"></canvas>
+                            <div id="investmentsList" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                                <p style="color: var(--text-tertiary); text-align: center; padding: 2rem; grid-column: 1 / -1;">
+                                    <i class="fas fa-chart-pie" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+                                    Loading investments...
+                                </p>
                             </div>
                         </div>
                     </div>

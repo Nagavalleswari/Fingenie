@@ -812,189 +812,576 @@ window.updateBudgetSpent = updateBudgetSpent;
 // ========== INVESTMENTS PAGE ==========
 async function loadInvestmentsData() {
     try {
-        console.log('🔄 Loading Investments data from mock_data.json...');
+        console.log('🔄 Loading Investments data...');
         const data = await getFinancialData();
         console.log('✅ Investments data loaded:', data);
-        const assets = data.assets || {};
-        const investments = data.investments || {};
         
-        // Handle investments data structure (could be dict with holdings or just assets)
-        let portfolioValue = 0;
-        let holdings = [];
-        
-        if (investments.portfolio_value) {
-            portfolioValue = investments.portfolio_value;
-            holdings = investments.holdings || [];
-        } else if (Array.isArray(investments)) {
-            holdings = investments;
-            portfolioValue = investments.reduce((sum, inv) => sum + (inv.current_value || inv.amount || 0), 0);
-        } else {
-            // Fallback to assets
-            portfolioValue = (assets.mutual_funds || 0) + (assets.stocks || 0) + (assets.savings || 0);
+        // Handle investments - should be an array from mock_data
+        let investments = [];
+        if (Array.isArray(data.investments)) {
+            investments = data.investments;
+        } else if (data.investments && Array.isArray(data.investments.holdings)) {
+            investments = data.investments.holdings;
         }
         
-        const mutualFunds = assets.mutual_funds || 0;
-        const stocks = assets.stocks || 0;
-        const savings = assets.savings || 0;
-        const totalInvestments = portfolioValue || (mutualFunds + stocks);
+        // Calculate totals
+        const portfolioValue = investments.reduce((sum, inv) => sum + (inv.current_value || inv.amount || 0), 0);
+        const totalInvested = investments.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+        const totalGains = investments.reduce((sum, inv) => {
+            const invested = inv.amount || 0;
+            const current = inv.current_value || invested;
+            return sum + (current - invested);
+        }, 0);
+        const roi = totalInvested > 0 ? ((totalGains / totalInvested) * 100).toFixed(2) : 0;
         
-        // Calculate returns from holdings if available
-        let totalGains = 0;
-        if (holdings.length > 0) {
-            totalGains = holdings.reduce((sum, h) => sum + (h.gain_loss || 0), 0);
-        }
-        const estimatedReturns = totalGains || Math.round(totalInvestments * 0.08);
-        const roi = totalInvestments > 0 ? Math.round((estimatedReturns / totalInvestments) * 100) : 0;
-        const investmentCount = holdings.length || ((mutualFunds > 0 ? 1 : 0) + (stocks > 0 ? 1 : 0) + (savings > 0 ? 1 : 0));
-        
-        updateElement('totalInvestments', '₹' + totalInvestments.toLocaleString());
-        updateElement('investmentReturns', '₹' + estimatedReturns.toLocaleString());
+        // Update stat cards
+        updateElement('totalInvestments', '₹' + portfolioValue.toLocaleString('en-IN'));
+        updateElement('investmentReturns', '₹' + totalGains.toLocaleString('en-IN'));
         updateElement('investmentROI', roi + '%');
-        updateElement('investmentCount', investmentCount);
+        updateElement('investmentCount', investments.length);
         
-        updateElement('mutualFundsInvestment', '₹' + mutualFunds.toLocaleString());
-        updateElement('mutualFundsReturn', '+' + roi + '%');
-        updateElement('stocksInvestment', '₹' + stocks.toLocaleString());
-        updateElement('stocksReturn', '+' + roi + '%');
-        updateElement('savingsInvestment', '₹' + savings.toLocaleString());
-        updateElement('savingsReturn', '+4%');
+        // Render investments list
+        renderInvestmentsList(investments);
         
-        // Display holdings if available
-        const holdingsContainer = document.getElementById('investmentsHoldingsList');
-        if (holdingsContainer && holdings.length > 0) {
-            let html = '';
-            holdings.forEach(holding => {
-                const value = holding.value || holding.current_value || 0;
-                const gainLoss = holding.gain_loss || 0;
-                const gainPct = value > 0 ? ((gainLoss / (value - gainLoss)) * 100).toFixed(2) : 0;
-                const sign = gainLoss >= 0 ? '+' : '';
-                const color = gainLoss >= 0 ? '#10b981' : '#ef4444';
-                
-                html += `
-                    <div style="padding: 1rem; border-bottom: 1px solid var(--border-primary);">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <strong>${holding.name || 'Investment'}</strong>
-                                <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.25rem;">
-                                    ${holding.type || 'investment'} • Value: ₹${value.toLocaleString()}
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-size: 1.1rem; font-weight: 700; color: ${color};">
-                                    ${sign}₹${Math.abs(gainLoss).toLocaleString()}
-                                </div>
-                                <div style="font-size: 0.875rem; color: ${color};">
-                                    ${sign}${gainPct}%
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            holdingsContainer.innerHTML = html;
-        }
+        // Create charts
+        createInvestmentDistributionChart(investments);
+        createInvestmentPerformanceChart(investments);
         
-        // Create investment distribution chart
-        const ctx = document.getElementById('investmentDistributionChart');
-        if (ctx && typeof Chart !== 'undefined') {
-            new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['Mutual Funds', 'Stocks', 'Savings'],
-                    datasets: [{
-                        data: [mutualFunds, stocks, savings],
-                        backgroundColor: ['#3b82f6', '#f59e0b', '#10b981']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
-        }
-        
-        // Create performance chart - use investment data from mock_data.json if available
-        const perfCtx = document.getElementById('investmentPerformanceChart');
-        if (perfCtx && typeof Chart !== 'undefined') {
-            // Check if we have historical investment data from financial_health_metrics
-            const financialHealth = data.financial_health_metrics || {};
-            const monthlyTrends = financialHealth.monthly_trends || [];
-            
-            if (monthlyTrends.length > 0 && typeof Chart !== 'undefined') {
-                // Use actual monthly trends data
-                const months = monthlyTrends.map(t => t.month || 'Month');
-                const investmentData = monthlyTrends.map(t => {
-                    // Try to calculate from portfolio value or estimate from assets
-                    const portfolioValue = investments.portfolio_value || 
-                                         ((assets.mutual_funds || 0) + (assets.stocks || 0));
-                    return portfolioValue || 0;
-                });
-                
-                // Destroy existing chart if it exists
-                if (perfCtx.chart) {
-                    perfCtx.chart.destroy();
-                }
-                
-                perfCtx.chart = new Chart(perfCtx, {
-                    type: 'line',
-                    data: {
-                        labels: months,
-                        datasets: [{
-                            label: 'Portfolio Value',
-                            data: investmentData,
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: false,
-                                ticks: {
-                                    callback: function(value) {
-                                        return '₹' + value.toLocaleString();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            } else {
-                // No historical data available - show empty state
-                perfCtx.parentElement.innerHTML = `
-                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-tertiary);">
-                        <div style="text-align: center;">
-                            <i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                            <p>Investment performance data not available. This requires monthly_trends from mock_data.json.</p>
-                        </div>
-                    </div>
-                `;
-            }
-        }
         console.log('✅ Investments page data rendered successfully');
     } catch (error) {
         console.error('❌ Error loading investments:', error);
     }
 }
 
+function renderInvestmentsList(investments) {
+    const container = document.getElementById('investmentsList');
+    if (!container) return;
+    
+    // Ensure grid layout
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    container.style.gap = '1rem';
+    
+    if (investments.length === 0) {
+        container.innerHTML = `
+            <p style="color: var(--text-tertiary); text-align: center; padding: 2rem; grid-column: 1 / -1;">
+                <i class="fas fa-chart-pie" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+                No investments added yet. Click the "+" button to add your first investment!
+            </p>
+        `;
+        return;
+    }
+    
+    // Limit initial display to 4 investments (2 rows of 2 cards)
+    const INITIAL_DISPLAY_COUNT = 4;
+    const showAll = container.dataset.showAll === 'true';
+    const displayCount = showAll ? investments.length : Math.min(INITIAL_DISPLAY_COUNT, investments.length);
+    const hasMore = investments.length > INITIAL_DISPLAY_COUNT;
+    const investmentsToShow = investments.slice(0, displayCount);
+    
+    let html = '';
+    investmentsToShow.forEach(inv => {
+        const invested = inv.amount || 0;
+        const current = inv.current_value || invested;
+        const gainLoss = current - invested;
+        const returns = inv.returns || (invested > 0 ? ((gainLoss / invested) * 100).toFixed(2) : 0);
+        const sign = gainLoss >= 0 ? '+' : '';
+        const color = gainLoss >= 0 ? '#10b981' : '#ef4444';
+        const typeIcon = getInvestmentTypeIcon(inv.type);
+        const riskColor = getRiskLevelColor(inv.risk_level);
+        const investmentId = inv.id || Date.now();
+        const escapedName = (inv.name || 'Investment').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        
+        html += `
+            <div style="padding: 1.25rem; background: var(--bg-elevated); border-radius: var(--radius-md); border: 1px solid var(--border-primary); height: 100%; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: ${riskColor}20; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas ${typeIcon}" style="color: ${riskColor}; font-size: 1.1rem;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <h4 style="margin: 0 0 0.25rem 0; color: var(--text-primary); font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${inv.name || 'Investment'}</h4>
+                            <div style="font-size: 0.75rem; color: var(--text-tertiary);">
+                                ${formatInvestmentType(inv.type)}
+                                ${inv.symbol ? ' • ' + inv.symbol : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.25rem; font-weight: 700; color: ${color}; margin-bottom: 0.125rem;">
+                            ${sign}₹${Math.abs(gainLoss).toLocaleString('en-IN')}
+                        </div>
+                        <div style="font-size: 0.75rem; color: ${color};">
+                            ${sign}${returns}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: var(--radius-sm); flex: 1;">
+                    <div>
+                        <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Invested</div>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${invested.toLocaleString('en-IN')}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 0.25rem;">Current</div>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">₹${current.toLocaleString('en-IN')}</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 0.75rem;">
+                    <span style="background: ${riskColor}20; color: ${riskColor}; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.7rem; display: inline-block;">
+                        ${(inv.risk_level || 'medium').toUpperCase()} Risk
+                    </span>
+                    ${inv.purchase_date ? `
+                        <span style="font-size: 0.7rem; color: var(--text-tertiary); margin-left: 0.5rem;">
+                            ${new Date(inv.purchase_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+                        </span>
+                    ` : ''}
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem; margin-top: auto;">
+                    <button onclick="editInvestment(${investmentId})" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="updateInvestmentValue(${investmentId}, '${escapedName}')" class="btn btn-primary btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button onclick="deleteInvestment(${investmentId})" class="btn btn-danger btn-sm" style="font-size: 0.8rem; padding: 0.4rem 0.6rem;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    container.dataset.showAll = showAll.toString();
+    
+    // Add "Show More" / "Show Less" button if there are more investments - separate row
+    if (hasMore) {
+        const buttonDiv = document.createElement('div');
+        buttonDiv.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 1rem;';
+        buttonDiv.innerHTML = `
+            <button onclick="toggleInvestmentsDisplay()" class="btn btn-secondary btn-sm" style="min-width: 200px;">
+                <i class="fas fa-${showAll ? 'chevron-up' : 'chevron-down'}"></i>
+                ${showAll ? 'Show Less' : `Show More (${investments.length - INITIAL_DISPLAY_COUNT} more)`}
+            </button>
+        `;
+        container.appendChild(buttonDiv);
+    }
+}
+
+function toggleInvestmentsDisplay() {
+    const container = document.getElementById('investmentsList');
+    if (!container) return;
+    
+    const currentShowAll = container.dataset.showAll === 'true';
+    container.dataset.showAll = (!currentShowAll).toString();
+    
+    // Reload investments list with new display state
+    loadInvestmentsData();
+}
+
+function getInvestmentTypeIcon(type) {
+    const icons = {
+        'mutual_fund': 'fa-chart-pie',
+        'stock': 'fa-chart-line',
+        'fixed_deposit': 'fa-piggy-bank',
+        'gold': 'fa-coins',
+        'savings': 'fa-wallet',
+        'bond': 'fa-file-invoice',
+        'etf': 'fa-box'
+    };
+    return icons[type] || 'fa-circle';
+}
+
+function formatInvestmentType(type) {
+    return (type || 'investment').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function getRiskLevelColor(risk) {
+    const colors = {
+        'low': '#10b981',
+        'medium': '#f59e0b',
+        'high': '#ef4444'
+    };
+    return colors[risk?.toLowerCase()] || '#6b7280';
+}
+
+function createInvestmentDistributionChart(investments) {
+    const ctx = document.getElementById('investmentDistributionChart');
+    if (!ctx || typeof Chart === 'undefined') return;
+    
+    // Destroy existing chart
+    if (ctx.chart) {
+        ctx.chart.destroy();
+    }
+    
+    // Group by type
+    const typeGroups = {};
+    investments.forEach(inv => {
+        const type = inv.type || 'other';
+        if (!typeGroups[type]) {
+            typeGroups[type] = 0;
+        }
+        typeGroups[type] += (inv.current_value || inv.amount || 0);
+    });
+    
+    const labels = Object.keys(typeGroups).map(formatInvestmentType);
+    const data = Object.values(typeGroups);
+    const colors = generateUniqueColors(data.length);
+    
+    ctx.chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderColor: colors.map(c => adjustColorBrightness(c, -20)),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ₹${value.toLocaleString('en-IN')} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createInvestmentPerformanceChart(investments) {
+    const perfCtx = document.getElementById('investmentPerformanceChart');
+    if (!perfCtx || typeof Chart === 'undefined') return;
+    
+    // Destroy existing chart
+    if (perfCtx.chart) {
+        perfCtx.chart.destroy();
+    }
+    
+    if (investments.length === 0) {
+        perfCtx.parentElement.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-tertiary);">
+                <div style="text-align: center;">
+                    <i class="fas fa-chart-area" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>No investment data available for performance chart.</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Calculate performance metrics for each investment
+    const performanceData = investments.map(inv => {
+        const invested = inv.amount || 0;
+        const current = inv.current_value || invested;
+        const gainLoss = current - invested;
+        const returns = invested > 0 ? ((gainLoss / invested) * 100) : 0;
+        return {
+            name: inv.name || 'Investment',
+            invested: invested,
+            current: current,
+            returns: returns,
+            gainLoss: gainLoss
+        };
+    });
+    
+    // Sort by returns (best performers first)
+    performanceData.sort((a, b) => b.returns - a.returns);
+    
+    const labels = performanceData.map(d => {
+        // Truncate long names
+        const name = d.name.length > 15 ? d.name.substring(0, 12) + '...' : d.name;
+        return name;
+    });
+    const returnsData = performanceData.map(d => d.returns);
+    const colors = returnsData.map(ret => ret >= 0 ? '#10b981' : '#ef4444');
+    
+    perfCtx.chart = new Chart(perfCtx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Returns %',
+                data: returnsData,
+                backgroundColor: colors.map(c => c + '80'),
+                borderColor: colors,
+                borderWidth: 2,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y', // Horizontal bar chart
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const index = context.dataIndex;
+                            const data = performanceData[index];
+                            return [
+                                `Investment: ${data.name}`,
+                                `Returns: ${data.returns >= 0 ? '+' : ''}${data.returns.toFixed(2)}%`,
+                                `Invested: ₹${data.invested.toLocaleString('en-IN')}`,
+                                `Current: ₹${data.current.toLocaleString('en-IN')}`,
+                                `Gain/Loss: ${data.gainLoss >= 0 ? '+' : ''}₹${data.gainLoss.toLocaleString('en-IN')}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(1) + '%';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
 function setupInvestmentHandlers() {
     const addBtn = document.getElementById('addInvestmentBtn');
     if (addBtn) {
         addBtn.addEventListener('click', function() {
-            toast.info('Investment tracking feature coming soon!', 'info');
+            showInvestmentModal();
         });
     }
 }
+
+async function saveInvestmentsToBackend(investments) {
+    try {
+        await apiRequest('/finance/update_investments', 'POST', { investments });
+        return true;
+    } catch (error) {
+        console.error('Error saving investments:', error);
+        toast.error(error.message || 'Failed to save investments', 'error');
+        return false;
+    }
+}
+
+async function showInvestmentModal(investmentId = null) {
+    const modal = document.getElementById('addInvestmentModal');
+    if (!modal) {
+        toast.error('Investment modal not found', 'error');
+        return;
+    }
+    
+    modal.style.display = 'flex';
+    
+    const form = document.getElementById('addInvestmentFormModal');
+    const title = modal.querySelector('h3');
+    if (title) {
+        title.textContent = investmentId ? 'Edit Investment' : 'Add Investment';
+    }
+    
+    // Load investment data if editing
+    if (investmentId) {
+        try {
+            const data = await getFinancialData();
+            const investments = Array.isArray(data.investments) ? data.investments : [];
+            const investment = investments.find(inv => inv.id === investmentId);
+            
+            if (investment) {
+                document.getElementById('investmentNameModal').value = investment.name || '';
+                document.getElementById('investmentTypeModal').value = investment.type || 'mutual_fund';
+                document.getElementById('investmentAmountModal').value = investment.amount || 0;
+                document.getElementById('investmentCurrentValueModal').value = investment.current_value || investment.amount || 0;
+                document.getElementById('investmentSymbolModal').value = investment.symbol || '';
+                document.getElementById('investmentQuantityModal').value = investment.quantity || '';
+                document.getElementById('investmentRiskLevelModal').value = investment.risk_level || 'medium';
+                document.getElementById('investmentCategoryModal').value = investment.category || 'equity';
+                document.getElementById('investmentPurchaseDateModal').value = investment.purchase_date || '';
+                document.getElementById('investmentMaturityDateModal').value = investment.maturity_date || '';
+            }
+        } catch (error) {
+            console.error('Error loading investment:', error);
+        }
+    } else {
+        form.reset();
+        // Set default purchase date to today
+        document.getElementById('investmentPurchaseDateModal').value = new Date().toISOString().split('T')[0];
+    }
+    
+    // Setup form handler
+    if (form) {
+        // Remove old listener
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        newForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('investmentNameModal').value.trim();
+            const type = document.getElementById('investmentTypeModal').value;
+            const amount = parseFloat(document.getElementById('investmentAmountModal').value) || 0;
+            const currentValue = parseFloat(document.getElementById('investmentCurrentValueModal').value) || amount;
+            const symbol = document.getElementById('investmentSymbolModal').value.trim();
+            const quantity = document.getElementById('investmentQuantityModal').value.trim();
+            const riskLevel = document.getElementById('investmentRiskLevelModal').value;
+            const category = document.getElementById('investmentCategoryModal').value;
+            const purchaseDate = document.getElementById('investmentPurchaseDateModal').value;
+            const maturityDate = document.getElementById('investmentMaturityDateModal').value;
+            
+            if (!name || amount <= 0) {
+                toast.error('Please enter a valid name and amount', 'error');
+                return;
+            }
+            
+            try {
+                const data = await getFinancialData();
+                let investments = Array.isArray(data.investments) ? data.investments : [];
+                
+                const gainLoss = currentValue - amount;
+                const returns = amount > 0 ? ((gainLoss / amount) * 100).toFixed(2) : 0;
+                
+                if (investmentId) {
+                    // Update existing investment
+                    const index = investments.findIndex(inv => inv.id === investmentId);
+                    if (index !== -1) {
+                        investments[index] = {
+                            ...investments[index],
+                            name: name,
+                            type: type,
+                            amount: amount,
+                            current_value: currentValue,
+                            returns: parseFloat(returns),
+                            symbol: symbol || undefined,
+                            quantity: quantity ? parseInt(quantity) : undefined,
+                            risk_level: riskLevel,
+                            category: category,
+                            purchase_date: purchaseDate || undefined,
+                            maturity_date: maturityDate || undefined
+                        };
+                    }
+                } else {
+                    // Add new investment
+                    const maxId = investments.length > 0 ? Math.max(...investments.map(inv => inv.id || 0)) : 0;
+                    investments.push({
+                        id: maxId + 1,
+                        name: name,
+                        type: type,
+                        amount: amount,
+                        current_value: currentValue,
+                        returns: parseFloat(returns),
+                        symbol: symbol || undefined,
+                        quantity: quantity ? parseInt(quantity) : undefined,
+                        risk_level: riskLevel,
+                        category: category,
+                        purchase_date: purchaseDate || undefined,
+                        maturity_date: maturityDate || undefined
+                    });
+                }
+                
+                const success = await saveInvestmentsToBackend(investments);
+                if (success) {
+                    toast.success(investmentId ? 'Investment updated!' : 'Investment added!', 'success');
+                    closeModal('addInvestmentModal');
+                    await loadInvestmentsData();
+                }
+            } catch (error) {
+                console.error('Error saving investment:', error);
+            }
+        });
+    }
+}
+
+async function editInvestment(investmentId) {
+    await showInvestmentModal(investmentId);
+}
+
+async function deleteInvestment(investmentId) {
+    if (!confirm('Are you sure you want to delete this investment?')) {
+        return;
+    }
+    
+    try {
+        const data = await getFinancialData();
+        let investments = Array.isArray(data.investments) ? data.investments : [];
+        
+        investments = investments.filter(inv => inv.id !== investmentId);
+        
+        const success = await saveInvestmentsToBackend(investments);
+        if (success) {
+            toast.success('Investment deleted!', 'success');
+            await loadInvestmentsData();
+        }
+    } catch (error) {
+        console.error('Error deleting investment:', error);
+    }
+}
+
+async function updateInvestmentValue(investmentId, investmentName) {
+    const currentData = await getFinancialData();
+    const investments = Array.isArray(currentData.investments) ? currentData.investments : [];
+    const investment = investments.find(inv => inv.id === investmentId);
+    
+    if (!investment) return;
+    
+    const currentValue = investment.current_value || investment.amount || 0;
+    const newValue = prompt(`Update current value for "${investmentName}":`, currentValue);
+    
+    if (newValue === null) return; // User cancelled
+    
+    const valueAmount = parseFloat(newValue);
+    if (isNaN(valueAmount) || valueAmount < 0) {
+        toast.error('Please enter a valid amount', 'error');
+        return;
+    }
+    
+    try {
+        const data = await getFinancialData();
+        let investments = Array.isArray(data.investments) ? data.investments : [];
+        
+        const index = investments.findIndex(inv => inv.id === investmentId);
+        if (index !== -1) {
+            investments[index].current_value = valueAmount;
+            const invested = investments[index].amount || 0;
+            const gainLoss = valueAmount - invested;
+            investments[index].returns = invested > 0 ? parseFloat(((gainLoss / invested) * 100).toFixed(2)) : 0;
+        }
+        
+        const success = await saveInvestmentsToBackend(investments);
+        if (success) {
+            toast.success('Investment value updated!', 'success');
+            await loadInvestmentsData();
+        }
+    } catch (error) {
+        console.error('Error updating investment value:', error);
+    }
+}
+
+// Expose functions globally
+window.editInvestment = editInvestment;
+window.deleteInvestment = deleteInvestment;
+window.updateInvestmentValue = updateInvestmentValue;
+window.toggleInvestmentsDisplay = toggleInvestmentsDisplay;
 
 // ========== TRANSACTIONS PAGE ==========
 async function loadTransactionsData() {

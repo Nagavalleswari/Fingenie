@@ -122,6 +122,37 @@ def init_finance_routes(db):
         except Exception as e:
             return jsonify({'error': f'Server error: {str(e)}'}), 500
     
+    @finance_bp.route('/update_investments', methods=['POST'])
+    @require_auth
+    def update_investments():
+        """Update user investments data"""
+        try:
+            user_id = request.user_id
+            data = request.get_json()
+            
+            if not data or 'investments' not in data:
+                return jsonify({'error': 'Investments data is required'}), 400
+            
+            investments = data.get('investments')
+            
+            # Validate investments structure - can be array or object
+            if not isinstance(investments, (list, dict)):
+                return jsonify({'error': 'Investments must be an array or object'}), 400
+            
+            # Update investments
+            result, error = finance_model.update_investments(user_id, investments)
+            
+            if error:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'message': 'Investments updated successfully',
+                'data': result
+            }), 200
+            
+        except Exception as e:
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
     @finance_bp.route('/get_data', methods=['GET'])
     @require_auth
     def get_data():
