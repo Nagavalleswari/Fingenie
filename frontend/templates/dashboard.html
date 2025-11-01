@@ -1071,9 +1071,9 @@
         </div>
     </div>
 
-    <!-- Floating Loan Calculator Button -->
+    <!-- Floating Loan Calculator Button (only visible on Loans page) -->
     <button id="loanCalculatorFloatingBtn" onclick="openLoanCalculatorModal()" 
-            style="position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #00d4ff 0%, #a855f7 100%); border: none; color: white; font-size: 1.5rem; cursor: pointer; box-shadow: 0 8px 24px rgba(0,212,255,0.4), 0 0 40px rgba(168,85,247,0.3); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);"
+            style="position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #00d4ff 0%, #a855f7 100%); border: none; color: white; font-size: 1.5rem; cursor: pointer; box-shadow: 0 8px 24px rgba(0,212,255,0.4), 0 0 40px rgba(168,85,247,0.3); z-index: 9999; display: none; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);"
             onmouseover="this.style.transform='translateY(-3px) scale(1.1)'; this.style.boxShadow='0 12px 32px rgba(0,212,255,0.5), 0 0 50px rgba(168,85,247,0.4)';"
             onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 8px 24px rgba(0,212,255,0.4), 0 0 40px rgba(168,85,247,0.3)';"
             title="Loan Calculator">
@@ -1156,6 +1156,16 @@
             const pageData = pages[page];
             console.log('Page data for', page, ':', pageData);
             
+            // Show/hide loan calculator floating button based on current page
+            const loanCalculatorBtn = document.getElementById('loanCalculatorFloatingBtn');
+            if (loanCalculatorBtn) {
+                if (page === 'loans') {
+                    loanCalculatorBtn.style.display = 'flex';
+                } else {
+                    loanCalculatorBtn.style.display = 'none';
+                }
+            }
+            
             if (pageData) {
                 document.getElementById('pageTitle').textContent = pageData.title;
                 document.getElementById('pageSubtitle').textContent = pageData.subtitle;
@@ -1207,6 +1217,17 @@
             if (hashPage) {
                 showPage(hashPage);
             }
+            
+            // Initialize loan calculator button visibility
+            const loanCalculatorBtn = document.getElementById('loanCalculatorFloatingBtn');
+            if (loanCalculatorBtn) {
+                const currentPage = hashPage || 'dashboard';
+                if (currentPage === 'loans') {
+                    loanCalculatorBtn.style.display = 'flex';
+                } else {
+                    loanCalculatorBtn.style.display = 'none';
+                }
+            }
         });
         window.addEventListener('hashchange', () => {
             const hashPage = (window.location.hash || '').replace('#', '');
@@ -1214,6 +1235,17 @@
                 showPage(hashPage);
             } else {
                 showPage('dashboard');
+            }
+            
+            // Update loan calculator button visibility on hash change
+            const loanCalculatorBtn = document.getElementById('loanCalculatorFloatingBtn');
+            if (loanCalculatorBtn) {
+                const currentPage = hashPage || 'dashboard';
+                if (currentPage === 'loans') {
+                    loanCalculatorBtn.style.display = 'flex';
+                } else {
+                    loanCalculatorBtn.style.display = 'none';
+                }
             }
         });
 
