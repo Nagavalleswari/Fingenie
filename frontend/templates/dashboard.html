@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - FinGenie</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <a href="/" class="sidebar-logo">
+                <div class="sidebar-logo-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <span class="sidebar-logo-text">FinGenie</span>
+            </a>
+        </div>
+
+        <!-- Sidebar Menu -->
+        <div class="sidebar-menu">
+            <div class="menu-section">
+                <div class="menu-section-title">Main</div>
+                <a href="/dashboard" class="menu-item active">
+                    <div class="menu-item-icon"><i class="fas fa-chart-line"></i></div>
+                    <span class="menu-item-text">Dashboard</span>
+                </a>
+                <a href="/chat" class="menu-item">
+                    <div class="menu-item-icon"><i class="fas fa-comments"></i></div>
+                    <span class="menu-item-text">AI Assistant</span>
+                    <span class="menu-item-badge">New</span>
+                </a>
+                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('analytics')">
+                    <div class="menu-item-icon"><i class="fas fa-chart-bar"></i></div>
+                    <span class="menu-item-text">Analytics</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-section-title">Finance</div>
+                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('budget')">
+                    <div class="menu-item-icon"><i class="fas fa-wallet"></i></div>
+                    <span class="menu-item-text">Budget</span>
+                </a>
+                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('investments')">
+                    <div class="menu-item-icon"><i class="fas fa-chart-pie"></i></div>
+                    <span class="menu-item-text">Investments</span>
+                </a>
+                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('transactions')">
+                    <div class="menu-item-icon"><i class="fas fa-exchange-alt"></i></div>
+                    <span class="menu-item-text">Transactions</span>
+                </a>
+                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('goals')">
+                    <div class="menu-item-icon"><i class="fas fa-bullseye"></i></div>
+                    <span class="menu-item-text">Goals</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-section-title">Reports</div>
+                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('reports')">
+                    <div class="menu-item-icon"><i class="fas fa-file-alt"></i></div>
+                    <span class="menu-item-text">Reports</span>
+                </a>
+                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('insights')">
+                    <div class="menu-item-icon"><i class="fas fa-lightbulb"></i></div>
+                    <span class="menu-item-text">Insights</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-section-title">Account</div>
+                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('profile')">
+                    <div class="menu-item-icon"><i class="fas fa-user"></i></div>
+                    <span class="menu-item-text">Profile</span>
+                </a>
+                <a href="#" class="menu-item" onclick="event.preventDefault(); showPage('settings')">
+                    <div class="menu-item-icon"><i class="fas fa-cog"></i></div>
+                    <span class="menu-item-text">Settings</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name">User</div>
+                    <div class="sidebar-user-email">user@fingenie.com</div>
+                </div>
+                <i class="fas fa-sign-out-alt" id="logoutBtn" style="cursor: pointer; color: var(--text-tertiary);"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="topbar-action-btn" id="sidebarToggle" style="display: none;">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="topbar-title">Dashboard</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-search">
+                    <i class="fas fa-search topbar-search-icon"></i>
+                    <input type="text" class="topbar-search-input" placeholder="Search...">
+                </div>
+                <div class="topbar-actions">
+                    <!-- Theme Toggle -->
+                    <div class="theme-toggle" title="Toggle theme">
+                        <i class="fas fa-moon theme-toggle-icon moon"></i>
+                        <div class="theme-toggle-slider">
+                            <i class="fas fa-moon theme-icon"></i>
+                        </div>
+                        <i class="fas fa-sun theme-toggle-icon sun"></i>
+                    </div>
+                    <button class="topbar-action-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </button>
+                    <button class="topbar-action-btn">
+                        <i class="fas fa-envelope"></i>
+                        <span class="badge">5</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Container -->
+        <div class="content-container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h2 class="page-title" id="pageTitle">Financial Overview</h2>
+                <p class="page-subtitle" id="pageSubtitle">Track your financial health and progress</p>
+            </div>
+
+            <!-- Dynamic Content Area - All Pages -->
+            <div id="pageContent">
+            <!-- Dashboard Content (Default) -->
+            <div class="dashboard-content">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-4 mb-4">
+                <div class="stat-card fade-in">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="stat-card-trend up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>12.5%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card-value" id="totalAssets">₹0</div>
+                    <div class="stat-card-label">Total Assets</div>
+                </div>
+
+                <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon" style="background: var(--gradient-danger);">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="stat-card-trend down">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>5.2%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card-value" id="totalLiabilities">₹0</div>
+                    <div class="stat-card-label">Total Liabilities</div>
+                </div>
+
+                <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon" style="background: var(--gradient-success);">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-card-trend up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>18.3%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card-value" id="netWorth">₹0</div>
+                    <div class="stat-card-label">Net Worth</div>
+                </div>
+
+                <div class="stat-card fade-in" style="animation-delay: 0.3s;">
+                    <div class="stat-card-header">
+                        <div class="stat-card-icon" style="background: var(--gradient-warm);">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <div class="stat-card-trend up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>8.7%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card-value" id="goalsProgress">0%</div>
+                    <div class="stat-card-label">Goals Progress</div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid grid-cols-2 mb-4">
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h3 class="card-title">Asset Distribution</h3>
+                    </div>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="assetsChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card fade-in" style="animation-delay: 0.1s;">
+                    <div class="card-header">
+                        <h3 class="card-title">Financial Overview</h3>
+                    </div>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="overviewChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goals Section -->
+            <div class="card fade-in mb-4">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-bullseye"></i> Financial Goals</h3>
+                    <div class="card-actions">
+                        <button class="card-action-btn" id="addGoalBtn" title="Add Goal">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" id="goalsContainer">
+                    <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">
+                        <i class="fas fa-bullseye" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+                        No financial goals set yet. Add your first goal to start tracking!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Financial Analysis Section -->
+            <div class="card fade-in mb-4" id="financialAnalysisCard" style="display: none;">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-chart-line"></i> Financial Analysis & Insights</h3>
+                    <div class="card-actions">
+                        <button class="card-action-btn" id="insightsInfoBtn" title="About Insights">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                        <button class="card-action-btn" onclick="showInsights()" title="View Detailed Insights">
+                            <i class="fas fa-lightbulb"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="financialAnalysis"></div>
+                </div>
+            </div>
+
+            <!-- Update Financial Data Form -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h3 class="card-title">Update Financial Data</h3>
+                    <div class="card-actions">
+                        <button class="card-action-btn" id="financialDataInfoBtn">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+                <form id="financialDataForm">
+                    <div class="grid grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-piggy-bank"></i> Savings
+                            </label>
+                            <input type="number" class="form-control" id="savings" placeholder="Enter savings amount" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-chart-pie"></i> Mutual Funds
+                            </label>
+                            <input type="number" class="form-control" id="mutualFunds" placeholder="Enter mutual funds amount" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-chart-line"></i> Stocks
+                            </label>
+                            <input type="number" class="form-control" id="stocks" placeholder="Enter stocks amount" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-credit-card"></i> Loan
+                            </label>
+                            <input type="number" class="form-control" id="loan" placeholder="Enter loan amount" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-credit-card"></i> Credit Card Due
+                            </label>
+                            <input type="number" class="form-control" id="creditCard" placeholder="Enter credit card due" step="0.01" min="0">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Save Financial Data
+                    </button>
+                </form>
+            </div>
+            </div>
+            <!-- End Dashboard Content -->
+            </div>
+            <!-- End of Dynamic Content Area -->
+        </div>
+    </div>
+
+    <!-- Modals and Overlays -->
+    <!-- Info Modal -->
+    <div id="infoModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="infoModalTitle">Information</h3>
+                <button class="modal-close" onclick="closeModal('infoModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="infoModalBody">
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Goal Modal -->
+    <div id="addGoalModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Add Financial Goal</h3>
+                <button class="modal-close" onclick="closeModal('addGoalModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addGoalForm">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-bullseye"></i> Goal Name
+                        </label>
+                        <input type="text" class="form-control" id="newGoalName" placeholder="e.g., Buy Car, Emergency Fund" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-tag"></i> Target Amount (₹)
+                        </label>
+                        <input type="number" class="form-control" id="newGoalTarget" placeholder="Enter target amount" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-calendar"></i> Target Year
+                        </label>
+                        <input type="number" class="form-control" id="newGoalYear" placeholder="2025" min="2025" max="2100" required>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('addGoalModal')" style="flex: 1;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">
+                            <i class="fas fa-save"></i> Add Goal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal -->
+    <div id="addTransactionModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Add Transaction</h3>
+                <button class="modal-close" onclick="closeModal('addTransactionModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addTransactionFormModal">
+                    <div class="form-group">
+                        <label class="form-label">Type</label>
+                        <select class="form-control" id="transactionTypeModal" required>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                            <option value="transfer">Transfer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select class="form-control" id="transactionCategoryModal" required>
+                            <option value="food">Food & Dining</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="bills">Bills & Utilities</option>
+                            <option value="transport">Transport</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="salary">Salary</option>
+                            <option value="investment">Investment</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount (₹)</label>
+                        <input type="number" class="form-control" id="transactionAmountModal" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" id="transactionDescriptionModal" placeholder="Transaction description" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" id="transactionDateModal" required>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('addTransactionModal')" style="flex: 1;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">
+                            <i class="fas fa-save"></i> Add Transaction
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Budget Category Modal -->
+    <div id="addBudgetCategoryModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Add Budget Category</h3>
+                <button class="modal-close" onclick="closeModal('addBudgetCategoryModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addBudgetCategoryFormModal">
+                    <div class="form-group">
+                        <label class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="budgetCategoryNameModal" placeholder="e.g., Food, Transport" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Monthly Budget (₹)</label>
+                        <input type="number" class="form-control" id="budgetCategoryAmountModal" step="0.01" min="0" required>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('addBudgetCategoryModal')" style="flex: 1;">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">
+                            <i class="fas fa-save"></i> Add Category
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Menu Dropdown -->
+    <div id="chartMenu" class="dropdown-menu" style="display: none;">
+        <a href="#" onclick="exportChart('assets'); closeDropdown('chartMenu'); return false;">
+            <i class="fas fa-download"></i> Export Chart
+        </a>
+        <a href="#" onclick="refreshChart('assets'); closeDropdown('chartMenu'); return false;">
+            <i class="fas fa-sync"></i> Refresh Data
+        </a>
+        <a href="#" onclick="showChartInfo('assets'); closeDropdown('chartMenu'); return false;">
+            <i class="fas fa-info-circle"></i> Chart Info
+        </a>
+    </div>
+
+    <!-- Notifications Dropdown -->
+    <div id="notificationsDropdown" class="dropdown-menu" style="display: none;">
+        <div class="dropdown-header">Notifications</div>
+        <div id="notificationsList">
+            <div class="notification-item">
+                <i class="fas fa-chart-line notification-icon"></i>
+                <div class="notification-content">
+                    <div class="notification-title">Financial Data Updated</div>
+                    <div class="notification-time">2 hours ago</div>
+                </div>
+            </div>
+            <div class="notification-item">
+                <i class="fas fa-bullseye notification-icon"></i>
+                <div class="notification-content">
+                    <div class="notification-title">Goal Progress Update</div>
+                    <div class="notification-time">1 day ago</div>
+                </div>
+            </div>
+            <div class="notification-item">
+                <i class="fas fa-lightbulb notification-icon"></i>
+                <div class="notification-content">
+                    <div class="notification-title">New Insight Available</div>
+                    <div class="notification-time">2 days ago</div>
+                </div>
+            </div>
+        </div>
+        <div class="dropdown-footer">
+            <a href="#" onclick="markAllNotificationsRead(); return false;">Mark all as read</a>
+        </div>
+    </div>
+
+    <!-- Messages Dropdown -->
+    <div id="messagesDropdown" class="dropdown-menu" style="display: none;">
+        <div class="dropdown-header">Messages</div>
+        <div id="messagesList">
+            <div class="message-item">
+                <i class="fas fa-user-circle message-avatar"></i>
+                <div class="message-content">
+                    <div class="message-title">Welcome to FinGenie!</div>
+                    <div class="message-preview">Start by adding your financial data...</div>
+                    <div class="message-time">3 days ago</div>
+                </div>
+            </div>
+        </div>
+        <div class="dropdown-footer">
+            <a href="#" onclick="viewAllMessages(); return false;">View all messages</a>
+        </div>
+    </div>
+
+    <style>
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .modal-content {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .modal-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        /* Dropdown Menu Styles */
+        .dropdown-menu {
+            position: fixed;
+            background: var(--bg-elevated);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-xl);
+            min-width: 250px;
+            max-width: 320px;
+            z-index: 10000;
+            animation: slideDown 0.2s ease;
+        }
+        .dropdown-header {
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        .dropdown-menu a {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: background var(--transition-fast);
+        }
+        .dropdown-menu a:hover {
+            background: var(--bg-tertiary);
+        }
+        .dropdown-menu a i {
+            margin-right: 0.5rem;
+            width: 20px;
+        }
+        .dropdown-footer {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid var(--border-primary);
+            text-align: center;
+        }
+        .dropdown-footer a {
+            color: var(--accent-primary);
+            font-size: 0.875rem;
+        }
+        .notification-item, .message-item {
+            display: flex;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-primary);
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+        .notification-item:hover, .message-item:hover {
+            background: var(--bg-tertiary);
+        }
+        .notification-icon, .message-avatar {
+            margin-right: 1rem;
+            font-size: 1.5rem;
+            color: var(--accent-primary);
+        }
+        .notification-content, .message-content {
+            flex: 1;
+        }
+        .notification-title, .message-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        .notification-time, .message-time {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+        .message-preview {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin: 0.25rem 0;
+        }
+
+        /* Page Sections */
+        .page-section {
+            display: none;
+        }
+        .page-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+
+    <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard-pages.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pages-functionality.js') }}"></script>
+    <script>
+        // Sidebar toggle for mobile
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        
+        // Show toggle button on mobile
+        if (window.innerWidth <= 1024) {
+            sidebarToggle.style.display = 'flex';
+        }
+        
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 1024) {
+                if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            if (window.innerWidth <= 1024) {
+                sidebarToggle.style.display = 'flex';
+            } else {
+                sidebarToggle.style.display = 'none';
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Make showPage function available globally
+        window.showPage = function(page) {
+            const pages = {
+                'analytics': { title: 'Analytics & Trends', subtitle: 'Analyze your financial trends and patterns' },
+                'budget': { title: 'Budget Planning', subtitle: 'Create and manage your monthly budgets' },
+                'investments': { title: 'Investment Portfolio', subtitle: 'Track and manage your investments' },
+                'transactions': { title: 'Transaction History', subtitle: 'View all your financial transactions' },
+                'goals': { title: 'Financial Goals', subtitle: 'Set and track your financial objectives' },
+                'reports': { title: 'Financial Reports', subtitle: 'Generate detailed financial reports' },
+                'insights': { title: 'Financial Insights', subtitle: 'AI-powered financial recommendations' },
+                'profile': { title: 'User Profile', subtitle: 'Manage your account information' },
+                'settings': { title: 'Settings', subtitle: 'Customize your FinGenie experience' }
+            };
+
+            // Update active menu item
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Find and activate the clicked menu item
+            const clickedItem = event?.target?.closest('.menu-item');
+            if (clickedItem) {
+                clickedItem.classList.add('active');
+            }
+
+            const pageData = pages[page];
+            if (pageData) {
+                document.getElementById('pageTitle').textContent = pageData.title;
+                document.getElementById('pageSubtitle').textContent = pageData.subtitle;
+                loadPageContent(page);
+            } else {
+                // Show default dashboard
+                document.getElementById('pageTitle').textContent = 'Financial Overview';
+                document.getElementById('pageSubtitle').textContent = 'Track your financial health and progress';
+                loadPageContent('dashboard');
+            }
+        };
+
+        // Load page content
+        function loadPageContent(page) {
+            const pageContent = document.getElementById('pageContent');
+            const dashboardContent = document.querySelector('.dashboard-content');
+            
+            if (page === 'dashboard') {
+                if (dashboardContent) {
+                    dashboardContent.style.display = 'block';
+                }
+                // Remove any page sections
+                document.querySelectorAll('.page-section').forEach(section => section.remove());
+                return;
+            }
+
+            // Hide dashboard, show page-specific content
+            if (dashboardContent) {
+                dashboardContent.style.display = 'none';
+            }
+            
+            // Remove existing page sections
+            document.querySelectorAll('.page-section').forEach(section => section.remove());
+            
+            const content = getPageContent(page);
+            if (content) {
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'page-section active';
+                pageDiv.innerHTML = content;
+                pageContent.appendChild(pageDiv);
+                
+                // Initialize page functionality after content is added
+                setTimeout(() => {
+                    if (typeof initializePages === 'function') {
+                        initializePages();
+                    }
+                }, 100);
+            }
+        }
+
+        // Get page content HTML
+        function getPageContent(page) {
+            const contents = {
+                'analytics': `
+                    <!-- Stats Summary -->
+                    <div class="grid grid-cols-4 mb-4">
+                        <div class="stat-card fade-in">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="analyticsGrowth">0%</div>
+                            <div class="stat-card-label">Growth Rate</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                    <i class="fas fa-trending-up"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="analyticsSavingsRate">0%</div>
+                            <div class="stat-card-label">Savings Rate</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-danger);">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="analyticsDebtRatio">0%</div>
+                            <div class="stat-card-label">Debt Ratio</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.3s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-warm);">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="analyticsROI">0%</div>
+                            <div class="stat-card-label">ROI Estimate</div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="grid grid-cols-2 mb-4">
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-chart-area"></i> Monthly Trends</h3>
+                                <div class="card-actions">
+                                    <select class="form-control" style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.875rem;" id="trendPeriod">
+                                        <option value="6">Last 6 Months</option>
+                                        <option value="12" selected>Last 12 Months</option>
+                                        <option value="24">Last 2 Years</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div style="position: relative; height: 300px;">
+                                    <canvas id="monthlyTrendChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-chart-pie"></i> Asset Category Breakdown</h3>
+                            </div>
+                            <div class="card-body">
+                                <div style="position: relative; height: 300px;">
+                                    <canvas id="categoryBreakdownChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Analysis -->
+                    <div class="grid grid-cols-2 mb-4">
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-table"></i> Performance Metrics</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="performanceMetrics">
+                                    <div style="padding: 1rem; border-bottom: 1px solid var(--border-primary);">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                            <span><i class="fas fa-wallet"></i> Asset Growth</span>
+                                            <strong id="assetGrowthVal">Calculating...</strong>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 1rem; border-bottom: 1px solid var(--border-primary);">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                            <span><i class="fas fa-chart-line"></i> Investment Performance</span>
+                                            <strong id="investmentPerfVal">Calculating...</strong>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 1rem;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                            <span><i class="fas fa-bullseye"></i> Goal Progress</span>
+                                            <strong id="goalProgressVal">Calculating...</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-calendar-alt"></i> Time Period Analysis</h3>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                                    <button class="btn btn-secondary" onclick="loadAnalyticsPeriod('week')">Week</button>
+                                    <button class="btn btn-secondary" onclick="loadAnalyticsPeriod('month')">Month</button>
+                                    <button class="btn btn-secondary" onclick="loadAnalyticsPeriod('year')">Year</button>
+                                </div>
+                                <div id="periodAnalysis">
+                                    <p style="color: var(--text-tertiary);">Select a time period to view analysis</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'budget': `
+                    <!-- Budget Overview -->
+                    <div class="grid grid-cols-3 mb-4">
+                        <div class="stat-card fade-in">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="totalBudget">₹0</div>
+                            <div class="stat-card-label">Total Budget</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="budgetSpent">₹0</div>
+                            <div class="stat-card-label">Amount Spent</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-warm);">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="budgetRemaining">0%</div>
+                            <div class="stat-card-label">Remaining</div>
+                        </div>
+                    </div>
+
+                    <!-- Budget Categories -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-list"></i> Budget Categories</h3>
+                            <div class="card-actions">
+                                <button class="card-action-btn" id="addBudgetCategoryBtn">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="budgetCategoriesList">
+                                <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">
+                                    <i class="fas fa-wallet" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+                                    No budget categories set. Create your monthly budget to start tracking!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Budget Progress Chart -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-chart-bar"></i> Budget vs Spending</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="position: relative; height: 300px;">
+                                <canvas id="budgetChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Budget Category Modal (will be added dynamically) -->
+                `,
+                'investments': `
+                    <!-- Investment Summary -->
+                    <div class="grid grid-cols-4 mb-4">
+                        <div class="stat-card fade-in">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon">
+                                    <i class="fas fa-chart-pie"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="totalInvestments">₹0</div>
+                            <div class="stat-card-label">Total Investments</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="investmentReturns">₹0</div>
+                            <div class="stat-card-label">Estimated Returns</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-primary);">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="investmentROI">0%</div>
+                            <div class="stat-card-label">ROI</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.3s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-warm);">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="investmentCount">0</div>
+                            <div class="stat-card-label">Active Investments</div>
+                        </div>
+                    </div>
+
+                    <!-- Investment Portfolio -->
+                    <div class="grid grid-cols-2 mb-4">
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-chart-pie"></i> Investment Distribution</h3>
+                            </div>
+                            <div class="card-body">
+                                <div style="position: relative; height: 300px;">
+                                    <canvas id="investmentDistributionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-table"></i> Investment Details</h3>
+                                <div class="card-actions">
+                                    <button class="card-action-btn" id="addInvestmentBtn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="investmentsList">
+                                    <div style="padding: 1rem; border-bottom: 1px solid var(--border-primary);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <strong><i class="fas fa-chart-pie"></i> Mutual Funds</strong>
+                                                <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.25rem;" id="mutualFundsInvestment">Loading...</div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div style="color: var(--accent-success); font-weight: 600;" id="mutualFundsReturn">+0%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 1rem; border-bottom: 1px solid var(--border-primary);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <strong><i class="fas fa-chart-line"></i> Stocks</strong>
+                                                <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.25rem;" id="stocksInvestment">Loading...</div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div style="color: var(--accent-success); font-weight: 600;" id="stocksReturn">+0%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 1rem;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <strong><i class="fas fa-piggy-bank"></i> Savings</strong>
+                                                <div style="font-size: 0.875rem; color: var(--text-tertiary); margin-top: 0.25rem;" id="savingsInvestment">Loading...</div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div style="color: var(--accent-info); font-weight: 600;" id="savingsReturn">+0%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Investment Performance Chart -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-chart-area"></i> Investment Performance</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="position: relative; height: 300px;">
+                                <canvas id="investmentPerformanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'transactions': `
+                    <!-- Transaction Summary -->
+                    <div class="grid grid-cols-4 mb-4">
+                        <div class="stat-card fade-in">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="totalIncome">₹0</div>
+                            <div class="stat-card-label">Total Income</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-danger);">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="totalExpenses">₹0</div>
+                            <div class="stat-card-label">Total Expenses</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-primary);">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="totalTransactions">0</div>
+                            <div class="stat-card-label">Transactions</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.3s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-warm);">
+                                    <i class="fas fa-balance-scale"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="netTransaction">₹0</div>
+                            <div class="stat-card-label">Net Amount</div>
+                        </div>
+                    </div>
+
+                    <!-- Filters and Add Transaction -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-filter"></i> Filters</h3>
+                            <div class="card-actions">
+                                <button class="card-action-btn" id="addTransactionBtn">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <div class="form-group" style="flex: 1; min-width: 150px;">
+                                    <label class="form-label">Type</label>
+                                    <select class="form-control" id="transactionTypeFilter">
+                                        <option value="all">All Types</option>
+                                        <option value="income">Income</option>
+                                        <option value="expense">Expense</option>
+                                        <option value="transfer">Transfer</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 1; min-width: 150px;">
+                                    <label class="form-label">Category</label>
+                                    <select class="form-control" id="transactionCategoryFilter">
+                                        <option value="all">All Categories</option>
+                                        <option value="food">Food & Dining</option>
+                                        <option value="shopping">Shopping</option>
+                                        <option value="bills">Bills & Utilities</option>
+                                        <option value="transport">Transport</option>
+                                        <option value="entertainment">Entertainment</option>
+                                        <option value="salary">Salary</option>
+                                        <option value="investment">Investment</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 1; min-width: 150px;">
+                                    <label class="form-label">Date Range</label>
+                                    <select class="form-control" id="transactionDateFilter">
+                                        <option value="all">All Time</option>
+                                        <option value="today">Today</option>
+                                        <option value="week">This Week</option>
+                                        <option value="month" selected>This Month</option>
+                                        <option value="year">This Year</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction List -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-list"></i> Transaction History</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="transactionsList">
+                                <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">
+                                    <i class="fas fa-exchange-alt" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+                                    No transactions found. Add your first transaction to start tracking!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'goals': `
+                    <!-- Goals Summary -->
+                    <div class="grid grid-cols-4 mb-4">
+                        <div class="stat-card fade-in">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon">
+                                    <i class="fas fa-bullseye"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="totalGoals">0</div>
+                            <div class="stat-card-label">Total Goals</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="completedGoals">0</div>
+                            <div class="stat-card-label">Completed</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-primary);">
+                                    <i class="fas fa-spinner"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="activeGoals">0</div>
+                            <div class="stat-card-label">Active Goals</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.3s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-warm);">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="goalsProgressAvg">0%</div>
+                            <div class="stat-card-label">Avg. Progress</div>
+                        </div>
+                    </div>
+
+                    <!-- Goals List -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-bullseye"></i> Financial Goals</h3>
+                            <div class="card-actions">
+                                <button class="card-action-btn" onclick="document.getElementById('addGoalModal').style.display = 'flex'">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body" id="goalsPageContainer">
+                            <div id="goalsPageList">
+                                <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">
+                                    <i class="fas fa-bullseye" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+                                    No financial goals set yet. Add your first goal to start tracking!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Goals Progress Chart -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-chart-line"></i> Goals Progress</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="position: relative; height: 300px;">
+                                <canvas id="goalsProgressChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'reports': `
+                    <!-- Report Options -->
+                    <div class="grid grid-cols-2 mb-4">
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-calendar"></i> Generate Report</h3>
+                            </div>
+                            <div class="card-body">
+                                <form id="reportForm">
+                                    <div class="form-group">
+                                        <label class="form-label">Report Type</label>
+                                        <select class="form-control" id="reportType" required>
+                                            <option value="summary">Financial Summary</option>
+                                            <option value="monthly">Monthly Report</option>
+                                            <option value="annual">Annual Report</option>
+                                            <option value="goals">Goals Progress Report</option>
+                                            <option value="investments">Investment Report</option>
+                                            <option value="full">Complete Financial Report</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Date Range</label>
+                                        <div style="display: flex; gap: 1rem;">
+                                            <input type="date" class="form-control" id="reportStartDate" required>
+                                            <input type="date" class="form-control" id="reportEndDate" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Format</label>
+                                        <select class="form-control" id="reportFormat">
+                                            <option value="json">JSON</option>
+                                            <option value="pdf">PDF (Coming Soon)</option>
+                                            <option value="csv">CSV</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-file-download"></i> Generate & Download Report
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-history"></i> Recent Reports</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="recentReportsList">
+                                    <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">
+                                        <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+                                        No reports generated yet. Create your first report above!
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Export Options -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-bolt"></i> Quick Export</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button class="btn btn-primary" onclick="exportData()">
+                                    <i class="fas fa-download"></i> Export All Data (JSON)
+                                </button>
+                                <button class="btn btn-secondary" onclick="exportMonthlyReport()">
+                                    <i class="fas fa-calendar-alt"></i> Monthly Summary
+                                </button>
+                                <button class="btn btn-secondary" onclick="exportGoalsReport()">
+                                    <i class="fas fa-bullseye"></i> Goals Report
+                                </button>
+                                <button class="btn btn-secondary" onclick="exportInvestmentsReport()">
+                                    <i class="fas fa-chart-pie"></i> Investments Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'insights': `
+                    <!-- Insights Summary -->
+                    <div class="grid grid-cols-3 mb-4">
+                        <div class="stat-card fade-in">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="totalInsights">0</div>
+                            <div class="stat-card-label">Active Insights</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-warning);">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="warningInsights">0</div>
+                            <div class="stat-card-label">Warnings</div>
+                        </div>
+                        <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+                            <div class="stat-card-header">
+                                <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div class="stat-card-value" id="positiveInsights">0</div>
+                            <div class="stat-card-label">Positive</div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Insights -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-brain"></i> AI-Powered Insights</h3>
+                            <div class="card-actions">
+                                <button class="card-action-btn" onclick="refreshInsights()">
+                                    <i class="fas fa-sync"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body" id="insightsPageContent">
+                            <div id="detailedInsights">
+                                <p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">
+                                    Loading financial insights...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-star"></i> Recommendations</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="recommendationsList">
+                                <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); margin-bottom: 1rem; background: var(--bg-tertiary);">
+                                    <div style="display: flex; align-items: start; gap: 1rem;">
+                                        <div style="font-size: 1.5rem; color: var(--accent-primary);">
+                                            <i class="fas fa-lightbulb"></i>
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <strong>Optimize Your Investment Portfolio</strong>
+                                            <p style="margin: 0.5rem 0 0 0; color: var(--text-secondary);">
+                                                Consider diversifying your investments across different asset classes for better risk management.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); margin-bottom: 1rem; background: var(--bg-tertiary);">
+                                    <div style="display: flex; align-items: start; gap: 1rem;">
+                                        <div style="font-size: 1.5rem; color: var(--accent-success);">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <strong>Build Emergency Fund</strong>
+                                            <p style="margin: 0.5rem 0 0 0; color: var(--text-secondary);">
+                                                Aim to save 3-6 months of expenses in your emergency fund for financial security.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'profile': `
+                    <!-- Profile Header -->
+                    <div class="card mb-4">
+                        <div class="card-body" style="text-align: center; padding: 3rem;">
+                            <div style="width: 120px; height: 120px; border-radius: 50%; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 3rem; color: white;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <h2 style="margin-bottom: 0.5rem;" id="profileDisplayName">User Name</h2>
+                            <p style="color: var(--text-tertiary);" id="profileDisplayEmail">user@example.com</p>
+                        </div>
+                    </div>
+
+                    <!-- Profile Information -->
+                    <div class="grid grid-cols-2 mb-4">
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-user-edit"></i> Personal Information</h3>
+                            </div>
+                            <div class="card-body">
+                                <form id="profileForm">
+                                    <div class="form-group">
+                                        <label class="form-label"><i class="fas fa-user"></i> Full Name</label>
+                                        <input type="text" class="form-control" id="profileName" placeholder="Your full name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
+                                        <input type="email" class="form-control" id="profileEmail" placeholder="your.email@example.com" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label"><i class="fas fa-phone"></i> Phone Number</label>
+                                        <input type="tel" class="form-control" id="profilePhone" placeholder="+91 1234567890">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label"><i class="fas fa-calendar"></i> Date of Birth</label>
+                                        <input type="date" class="form-control" id="profileDOB">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-save"></i> Update Profile
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-shield-alt"></i> Account Security</h3>
+                            </div>
+                            <div class="card-body">
+                                <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <strong>Password</strong>
+                                            <p style="margin: 0.25rem 0 0 0; color: var(--text-tertiary); font-size: 0.875rem;">Last updated 30 days ago</p>
+                                        </div>
+                                        <button class="btn btn-secondary" onclick="showChangePasswordModal()">
+                                            <i class="fas fa-key"></i> Change
+                                        </button>
+                                    </div>
+                                </div>
+                                <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <strong>Two-Factor Authentication</strong>
+                                            <p style="margin: 0.25rem 0 0 0; color: var(--text-tertiary); font-size: 0.875rem;">Add an extra layer of security</p>
+                                        </div>
+                                        <label style="position: relative; display: inline-block; width: 50px; height: 26px;">
+                                            <input type="checkbox" id="enable2FA" style="opacity: 0; width: 0; height: 0;">
+                                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-tertiary); border-radius: 26px; transition: 0.3s;"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Statistics -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-chart-bar"></i> Account Statistics</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid grid-cols-4">
+                                <div style="text-align: center; padding: 1rem;">
+                                    <div style="font-size: 2rem; font-weight: 700; color: var(--accent-primary);" id="accountDaysActive">0</div>
+                                    <div style="color: var(--text-tertiary); margin-top: 0.5rem;">Days Active</div>
+                                </div>
+                                <div style="text-align: center; padding: 1rem;">
+                                    <div style="font-size: 2rem; font-weight: 700; color: var(--accent-success);" id="accountDataUpdates">0</div>
+                                    <div style="color: var(--text-tertiary); margin-top: 0.5rem;">Data Updates</div>
+                                </div>
+                                <div style="text-align: center; padding: 1rem;">
+                                    <div style="font-size: 2rem; font-weight: 700; color: var(--accent-info);" id="accountGoalsSet">0</div>
+                                    <div style="color: var(--text-tertiary); margin-top: 0.5rem;">Goals Set</div>
+                                </div>
+                                <div style="text-align: center; padding: 1rem;">
+                                    <div style="font-size: 2rem; font-weight: 700; color: var(--accent-warning);" id="accountReportsGen">0</div>
+                                    <div style="color: var(--text-tertiary); margin-top: 0.5rem;">Reports Generated</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'settings': `
+                    <!-- General Settings -->
+                    <div class="grid grid-cols-2 mb-4">
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-globe"></i> General Settings</h3>
+                            </div>
+                            <div class="card-body">
+                                <form id="settingsForm">
+                                    <div class="form-group">
+                                        <label class="form-label"><i class="fas fa-coins"></i> Currency</label>
+                                        <select class="form-control" id="currencySetting">
+                                            <option value="INR" selected>₹ Indian Rupee (INR)</option>
+                                            <option value="USD">$ US Dollar (USD)</option>
+                                            <option value="EUR">€ Euro (EUR)</option>
+                                            <option value="GBP">£ British Pound (GBP)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label"><i class="fas fa-language"></i> Language</label>
+                                        <select class="form-control" id="languageSetting">
+                                            <option value="en" selected>English</option>
+                                            <option value="hi">हिंदी (Hindi)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label"><i class="fas fa-calendar"></i> Date Format</label>
+                                        <select class="form-control" id="dateFormatSetting">
+                                            <option value="DD/MM/YYYY" selected>DD/MM/YYYY</option>
+                                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-save"></i> Save General Settings
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card fade-in">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-bell"></i> Notifications</h3>
+                            </div>
+                            <div class="card-body">
+                                <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); margin-bottom: 1rem;">
+                                    <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                                        <div>
+                                            <strong><i class="fas fa-envelope"></i> Email Notifications</strong>
+                                            <p style="margin: 0.25rem 0 0 0; color: var(--text-tertiary); font-size: 0.875rem;">Receive updates via email</p>
+                                        </div>
+                                        <input type="checkbox" id="emailNotifications" style="width: 50px; height: 26px;">
+                                    </label>
+                                </div>
+                                <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); margin-bottom: 1rem;">
+                                    <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                                        <div>
+                                            <strong><i class="fas fa-chart-line"></i> Financial Alerts</strong>
+                                            <p style="margin: 0.25rem 0 0 0; color: var(--text-tertiary); font-size: 0.875rem;">Get notified about important changes</p>
+                                        </div>
+                                        <input type="checkbox" id="financialAlerts" checked style="width: 50px; height: 26px;">
+                                    </label>
+                                </div>
+                                <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); margin-bottom: 1rem;">
+                                    <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                                        <div>
+                                            <strong><i class="fas fa-bullseye"></i> Goal Reminders</strong>
+                                            <p style="margin: 0.25rem 0 0 0; color: var(--text-tertiary); font-size: 0.875rem;">Reminders for your financial goals</p>
+                                        </div>
+                                        <input type="checkbox" id="goalReminders" checked style="width: 50px; height: 26px;">
+                                    </label>
+                                </div>
+                                <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md);">
+                                    <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                                        <div>
+                                            <strong><i class="fas fa-lightbulb"></i> Insight Updates</strong>
+                                            <p style="margin: 0.25rem 0 0 0; color: var(--text-tertiary); font-size: 0.875rem;">New insights and recommendations</p>
+                                        </div>
+                                        <input type="checkbox" id="insightUpdates" checked style="width: 50px; height: 26px;">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Privacy & Data -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-shield-alt"></i> Privacy & Data</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); margin-bottom: 1rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong><i class="fas fa-download"></i> Export My Data</strong>
+                                        <p style="margin: 0.25rem 0 0 0; color: var(--text-tertiary); font-size: 0.875rem;">Download all your financial data</p>
+                                    </div>
+                                    <button class="btn btn-secondary" onclick="exportData()">
+                                        <i class="fas fa-file-download"></i> Export
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="padding: 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); margin-bottom: 1rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong><i class="fas fa-trash"></i> Delete Account</strong>
+                                        <p style="margin: 0.25rem 0 0 0; color: var(--text-tertiary); font-size: 0.875rem;">Permanently delete your account and all data</p>
+                                    </div>
+                                    <button class="btn btn-danger" onclick="showDeleteAccountModal()">
+                                        <i class="fas fa-exclamation-triangle"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- About -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-info-circle"></i> About FinGenie</h3>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Version:</strong> 1.0.0</p>
+                            <p style="color: var(--text-tertiary); margin-top: 1rem;">
+                                FinGenie is your AI-powered personal finance assistant helping you manage your finances, 
+                                track goals, and make informed financial decisions.
+                            </p>
+                            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                                <a href="#" style="color: var(--accent-primary);"><i class="fas fa-question-circle"></i> Help & Support</a>
+                                <a href="#" style="color: var(--accent-primary);"><i class="fas fa-file-alt"></i> Terms of Service</a>
+                                <a href="#" style="color: var(--accent-primary);"><i class="fas fa-lock"></i> Privacy Policy</a>
+                            </div>
+                        </div>
+                    </div>
+                `
+            };
+            return contents[page] || null;
+        }
+
+        let goalInputCount = 1;
+        window.addGoalInput = function() {
+            const container = document.getElementById('goalsInputContainer');
+            const newGoalInput = document.createElement('div');
+            newGoalInput.className = 'flex gap-2 mb-2';
+            newGoalInput.innerHTML = `
+                <input type="text" class="form-control" placeholder="Goal name" id="goalName${goalInputCount}">
+                <input type="number" class="form-control" placeholder="Target amount" id="goalTarget${goalInputCount}" step="0.01" min="0">
+                <input type="number" class="form-control" placeholder="Year" id="goalYear${goalInputCount}" min="2025" max="2100">
+                <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(newGoalInput);
+            goalInputCount++;
+        };
+
+        // Add search functionality
+        document.querySelector('.topbar-search-input')?.addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+            if (query.length > 2) {
+                performSearch(query);
+            }
+        });
+
+        // Financial data form info button
+        document.getElementById('financialDataInfoBtn')?.addEventListener('click', function() {
+            showInfoModal(
+                'Financial Data Entry Guide',
+                '<p>Enter your financial information below:</p>' +
+                '<ul style="margin-top: 1rem; padding-left: 1.5rem; line-height: 1.8;">' +
+                '<li><strong>Assets:</strong> Your savings, mutual funds, and stock investments</li>' +
+                '<li><strong>Liabilities:</strong> Any loans or credit card debt</li>' +
+                '</ul>' +
+                '<p style="margin-top: 1rem; color: var(--text-tertiary);">All amounts should be in ₹ (Indian Rupees).</p>' +
+                '<p style="margin-top: 0.5rem; color: var(--text-tertiary);"><strong>Note:</strong> To add financial goals, use the + button in the Financial Goals card above.</p>'
+            );
+        });
+
+        // Insights info button
+        document.getElementById('insightsInfoBtn')?.addEventListener('click', function() {
+            showInfoModal(
+                'How Financial Insights Are Generated',
+                '<p>Our financial insights are generated using advanced analysis algorithms that examine your financial data:</p>' +
+                '<ul style="margin-top: 1rem; padding-left: 1.5rem; line-height: 1.8;">' +
+                '<li><strong>Asset Allocation Analysis:</strong> Evaluates the distribution of your assets across savings, mutual funds, and stocks to recommend optimal balance</li>' +
+                '<li><strong>Debt Ratio Analysis:</strong> Calculates your debt-to-asset ratio and provides recommendations for debt management</li>' +
+                '<li><strong>Net Worth Trends:</strong> Analyzes your net worth and projects potential growth based on current financial patterns</li>' +
+                '<li><strong>Goal Progress Tracking:</strong> Assesses progress toward your financial goals and suggests monthly savings targets</li>' +
+                '</ul>' +
+                '<p style="margin-top: 1rem; color: var(--text-tertiary);">Insights are automatically updated whenever you update your financial data. For personalized AI-powered recommendations, visit the AI Assistant.</p>'
+            );
+        });
+
+        // Add Goal button - opens modal form
+        document.getElementById('addGoalBtn')?.addEventListener('click', function() {
+            document.getElementById('addGoalModal').style.display = 'flex';
+        });
+
+        // Handle add goal form submission
+        document.getElementById('addGoalForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('newGoalName').value.trim();
+            const target = parseFloat(document.getElementById('newGoalTarget').value);
+            const year = parseInt(document.getElementById('newGoalYear').value);
+
+            if (!name || !target || !year) {
+                toast.error('Please fill in all fields', 'error');
+                return;
+            }
+
+            try {
+                // Get current financial data
+                const result = await apiRequest('/finance/get_data');
+                const data = result.data || {};
+                const currentGoals = data.goals || [];
+                
+                // Add new goal
+                const newGoal = { name, target, year };
+                currentGoals.push(newGoal);
+
+                // Update financial data with new goal
+                await apiRequest('/finance/add_data', 'POST', {
+                    assets: data.assets || {},
+                    liabilities: data.liabilities || {},
+                    goals: currentGoals
+                });
+
+                toast.success('Goal added successfully!', 'success');
+                closeModal('addGoalModal');
+                
+                // Reset form
+                this.reset();
+                
+                // Reload financial data to update dashboard
+                if (typeof window.loadFinancialData === 'function') {
+                    await window.loadFinancialData();
+                }
+            } catch (error) {
+                toast.error(error.message || 'Failed to add goal', 'error');
+            }
+        });
+
+        // Financial data form submission handler (preserves existing goals)
+        document.getElementById('financialDataForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Get existing goals to preserve them
+            let goals = [];
+            try {
+                const currentDataResult = await apiRequest('/finance/get_data');
+                const currentData = currentDataResult.data || {};
+                goals = currentData.goals || [];
+            } catch (error) {
+                console.warn('Could not load existing goals:', error);
+            }
+
+            const assets = {
+                savings: parseFloat(document.getElementById('savings').value) || 0,
+                mutual_funds: parseFloat(document.getElementById('mutualFunds').value) || 0,
+                stocks: parseFloat(document.getElementById('stocks').value) || 0
+            };
+
+            const liabilities = {
+                loan: parseFloat(document.getElementById('loan').value) || 0,
+                credit_card_due: parseFloat(document.getElementById('creditCard').value) || 0
+            };
+
+            try {
+                await apiRequest('/finance/add_data', 'POST', { assets, liabilities, goals });
+                toast.success('Financial data updated successfully!', 'success');
+                // Reload data using main.js function
+                if (typeof window.loadFinancialData === 'function') {
+                    await window.loadFinancialData();
+                }
+                this.reset();
+            } catch (error) {
+                toast.error(error.message || 'Failed to update financial data', 'error');
+            }
+        });
+
+        // Logout handler - using apiRequest from main.js
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            try {
+                await apiRequest('/auth/logout', 'POST');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Error:', error);
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            }
+        });
+    </script>
+</body>
+</html>
