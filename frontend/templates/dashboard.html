@@ -63,10 +63,6 @@
                     <div class="menu-item-icon"><i class="fas fa-file-invoice-dollar"></i></div>
                     <span class="menu-item-text">Loans & Debt</span>
                 </a>
-                <a href="#loan-calculator" class="menu-item" onclick="showPage('loan-calculator', event)">
-                    <div class="menu-item-icon"><i class="fas fa-calculator"></i></div>
-                    <span class="menu-item-text">Loan Calculator</span>
-                </a>
             </div>
 
             <div class="menu-section">
@@ -835,6 +831,255 @@
         </div>
     </div>
 
+    <!-- Loan Calculator Modal -->
+    <div id="loanCalculatorModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 900px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-calculator"></i> Loan Calculator</h3>
+                <button class="modal-close" onclick="closeLoanCalculatorModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Loan Calculator Tabs -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-calculator"></i> Loan Calculators</h3>
+                        <div class="card-actions">
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-primary loan-tab-btn active" onclick="switchLoanTab('emi')">
+                                    <i class="fas fa-calculator"></i> EMI Calculator
+                                </button>
+                                <button class="btn btn-sm btn-secondary loan-tab-btn" onclick="switchLoanTab('prepayment')">
+                                    <i class="fas fa-money-bill-wave"></i> Prepayment
+                                </button>
+                                <button class="btn btn-sm btn-secondary loan-tab-btn" onclick="switchLoanTab('affordability')">
+                                    <i class="fas fa-wallet"></i> Affordability
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- EMI Calculator Tab -->
+                        <div id="emiCalculatorTab" class="loan-tab-content active">
+                            <form id="loanCalculatorForm" onsubmit="event.preventDefault(); calculateEMI(); return false;">
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Loan Type</label>
+                                        <select id="loanPresetSelect" class="form-control">
+                                            <option value="">Select Loan Type</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Loan Amount (₹)</label>
+                                        <input type="number" id="loanPrincipal" class="form-control currency-input" 
+                                               placeholder="Enter loan amount" step="1000" min="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Interest Rate (% per annum)</label>
+                                        <input type="number" id="loanRate" class="form-control" 
+                                               placeholder="Enter interest rate" step="0.1" min="0" max="30" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Loan Tenure</label>
+                                        <div style="display: flex; gap: 1rem; align-items: center;">
+                                            <input type="range" id="loanTenureSlider" class="form-control" 
+                                                   min="1" max="360" value="60" style="flex: 1;">
+                                            <input type="number" id="loanTenure" class="form-control" 
+                                                   placeholder="Months" min="1" max="360" value="60" 
+                                                   style="width: 100px;" required>
+                                        </div>
+                                        <div id="tenureDisplay" style="margin-top: 0.5rem; color: var(--text-tertiary); font-size: 0.875rem;">5 years</div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-calculator"></i> Calculate EMI
+                                </button>
+                            </form>
+                            
+                            <!-- EMI Results -->
+                            <div id="emiResultsSection" style="display: none; margin-top: 2rem;">
+                                <div class="grid grid-cols-4 gap-4 mb-4">
+                                    <div class="stat-card">
+                                        <div class="stat-card-header">
+                                            <div class="stat-card-icon">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card-value" id="emiAmount">₹0</div>
+                                        <div class="stat-card-label">Monthly EMI</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-card-header">
+                                            <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                                <i class="fas fa-rupee-sign"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card-value" id="totalAmount">₹0</div>
+                                        <div class="stat-card-label">Total Amount</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-card-header">
+                                            <div class="stat-card-icon" style="background: var(--gradient-danger);">
+                                                <i class="fas fa-percentage"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card-value" id="totalInterest">₹0</div>
+                                        <div class="stat-card-label">Total Interest</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-card-header">
+                                            <div class="stat-card-icon" style="background: var(--gradient-warm);">
+                                                <i class="fas fa-chart-pie"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card-value" id="interestPercentage">0%</div>
+                                        <div class="stat-card-label">Interest %</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Amortization Schedule -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title"><i class="fas fa-table"></i> Amortization Schedule (First 12 Months)</h4>
+                                    </div>
+                                    <div class="card-body" id="amortizationSchedule">
+                                        <!-- Schedule will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Prepayment Calculator Tab -->
+                        <div id="prepaymentCalculatorTab" class="loan-tab-content" style="display: none;">
+                            <form id="prepaymentCalculatorForm" onsubmit="calculatePrepaymentSavings(); return false;">
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Loan Principal (₹)</label>
+                                        <input type="number" id="prepayPrincipal" class="form-control" 
+                                               placeholder="Enter loan amount" step="1000" min="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Interest Rate (% per annum)</label>
+                                        <input type="number" id="prepayRate" class="form-control" 
+                                               placeholder="Enter interest rate" step="0.1" min="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Loan Tenure (Months)</label>
+                                        <input type="number" id="prepayTenure" class="form-control" 
+                                               placeholder="Enter tenure" min="1" max="360" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Prepayment Amount (₹)</label>
+                                        <input type="number" id="prepaymentAmount" class="form-control" 
+                                               placeholder="Enter prepayment amount" step="1000" min="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Prepayment Month</label>
+                                        <input type="number" id="prepaymentMonth" class="form-control" 
+                                               placeholder="Month number" min="1" required>
+                                        <small style="color: var(--text-tertiary);">Enter the month in which you plan to make the prepayment</small>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-calculator"></i> Calculate Savings
+                                </button>
+                            </form>
+                            
+                            <!-- Prepayment Results -->
+                            <div id="prepaymentResultsSection" style="display: none; margin-top: 2rem;">
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="stat-card">
+                                        <div class="stat-card-header">
+                                            <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                                <i class="fas fa-rupee-sign"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card-value" id="prepayInterestSaved">₹0</div>
+                                        <div class="stat-card-label">Interest Saved</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-card-header">
+                                            <div class="stat-card-icon" style="background: var(--gradient-primary);">
+                                                <i class="fas fa-percentage"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card-value" id="prepaySavingsPercentage">0%</div>
+                                        <div class="stat-card-label">Savings %</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-card-header">
+                                            <div class="stat-card-icon" style="background: var(--gradient-warm);">
+                                                <i class="fas fa-calendar-alt"></i>
+                                            </div>
+                                        </div>
+                                        <div class="stat-card-value" id="prepayMonthsReduced">0</div>
+                                        <div class="stat-card-label">Months Reduced</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Affordability Calculator Tab -->
+                        <div id="affordabilityCalculatorTab" class="loan-tab-content" style="display: none;">
+                            <form id="affordabilityCalculatorForm" onsubmit="calculateAffordability(); return false;">
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Monthly Income (₹)</label>
+                                        <input type="number" id="affordabilityIncome" class="form-control" 
+                                               placeholder="Enter monthly income" step="1000" min="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Monthly Expenses (₹)</label>
+                                        <input type="number" id="affordabilityExpenses" class="form-control" 
+                                               placeholder="Enter monthly expenses" step="1000" min="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">EMI to Income Ratio</label>
+                                        <input type="number" id="affordabilityRatio" class="form-control" 
+                                               placeholder="0.4" step="0.1" min="0.1" max="0.6" value="0.4" required>
+                                        <small style="color: var(--text-tertiary);">Recommended: 40% (0.4). Maximum EMI should not exceed this percentage of income.</small>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-calculator"></i> Calculate Affordability
+                                </button>
+                            </form>
+                            
+                            <!-- Affordability Results -->
+                            <div id="affordabilityResultsSection" style="display: none; margin-top: 2rem;">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4 style="margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Affordability Analysis</h4>
+                                        <div class="stat-card" style="margin-bottom: 1rem;">
+                                            <div class="stat-card-header">
+                                                <div class="stat-card-icon" style="background: var(--gradient-success);">
+                                                    <i class="fas fa-rupee-sign"></i>
+                                                </div>
+                                            </div>
+                                            <div class="stat-card-value" id="affordabilityEMI">₹0</div>
+                                            <div class="stat-card-label">Maximum Affordable EMI</div>
+                                        </div>
+                                        <p id="affordabilityRecommendation" style="color: var(--text-secondary); padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md);"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Loan Calculator Button -->
+    <button id="loanCalculatorFloatingBtn" onclick="openLoanCalculatorModal()" 
+            style="position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #00d4ff 0%, #a855f7 100%); border: none; color: white; font-size: 1.5rem; cursor: pointer; box-shadow: 0 8px 24px rgba(0,212,255,0.4), 0 0 40px rgba(168,85,247,0.3); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);"
+            onmouseover="this.style.transform='translateY(-3px) scale(1.1)'; this.style.boxShadow='0 12px 32px rgba(0,212,255,0.5), 0 0 50px rgba(168,85,247,0.4)';"
+            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 8px 24px rgba(0,212,255,0.4), 0 0 40px rgba(168,85,247,0.3)';"
+            title="Loan Calculator">
+        <i class="fas fa-calculator"></i>
+    </button>
+
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dashboard-pages.js') }}"></script>
@@ -869,7 +1114,6 @@
                 'transactions': { title: 'Transaction History', subtitle: 'View all your financial transactions' },
                 'goals': { title: 'Financial Goals', subtitle: 'Set and track your financial objectives' },
                 'loans': { title: 'Loans & Debt', subtitle: 'View and manage all your loans and debts' },
-                'loan-calculator': { title: 'Loan Calculator', subtitle: 'Calculate EMI, prepayment savings, and loan affordability' },
                 'reports': { title: 'Financial Reports', subtitle: 'Generate detailed financial reports' },
                 'insights': { title: 'Financial Insights', subtitle: 'AI-powered financial recommendations' },
                 'profile': { title: 'User Profile', subtitle: 'Manage your account information' },
@@ -1659,234 +1903,6 @@
                             <div class="card-body">
                                 <div class="stat-card-value" id="debtRatioDisplay">0%</div>
                                 <div class="stat-card-label">Of Total Assets</div>
-                            </div>
-                        </div>
-                    </div>
-                `,
-                'loan-calculator': `
-                    <!-- Loan Calculator Tabs -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="fas fa-calculator"></i> Loan Calculators</h3>
-                            <div class="card-actions">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-primary loan-tab-btn active" onclick="switchLoanTab('emi')">
-                                        <i class="fas fa-calculator"></i> EMI Calculator
-                                    </button>
-                                    <button class="btn btn-sm btn-secondary loan-tab-btn" onclick="switchLoanTab('prepayment')">
-                                        <i class="fas fa-money-bill-wave"></i> Prepayment
-                                    </button>
-                                    <button class="btn btn-sm btn-secondary loan-tab-btn" onclick="switchLoanTab('affordability')">
-                                        <i class="fas fa-wallet"></i> Affordability
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <!-- EMI Calculator Tab -->
-                            <div id="emiCalculatorTab" class="loan-tab-content active">
-                                <form id="loanCalculatorForm" onsubmit="event.preventDefault(); calculateEMI(); return false;">
-                                    <div class="grid grid-cols-2 gap-4 mb-4">
-                                        <div class="form-group">
-                                            <label class="form-label">Loan Type</label>
-                                            <select id="loanPresetSelect" class="form-control">
-                                                <option value="">Select Loan Type</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Loan Amount (₹)</label>
-                                            <input type="number" id="loanPrincipal" class="form-control currency-input" 
-                                                   placeholder="Enter loan amount" step="1000" min="0" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Interest Rate (% per annum)</label>
-                                            <input type="number" id="loanRate" class="form-control" 
-                                                   placeholder="Enter interest rate" step="0.1" min="0" max="30" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Loan Tenure</label>
-                                            <div style="display: flex; gap: 1rem; align-items: center;">
-                                                <input type="range" id="loanTenureSlider" class="form-control" 
-                                                       min="1" max="360" value="60" style="flex: 1;">
-                                                <input type="number" id="loanTenure" class="form-control" 
-                                                       placeholder="Months" min="1" max="360" value="60" 
-                                                       style="width: 100px;" required>
-                                            </div>
-                                            <div id="tenureDisplay" style="margin-top: 0.5rem; color: var(--text-tertiary); font-size: 0.875rem;">5 years</div>
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-calculator"></i> Calculate EMI
-                                    </button>
-                                </form>
-                                
-                                <!-- EMI Results -->
-                                <div id="emiResultsSection" style="display: none; margin-top: 2rem;">
-                                    <div class="grid grid-cols-4 gap-4 mb-4">
-                                        <div class="stat-card">
-                                            <div class="stat-card-header">
-                                                <div class="stat-card-icon">
-                                                    <i class="fas fa-money-bill-wave"></i>
-                                                </div>
-                                            </div>
-                                            <div class="stat-card-value" id="emiAmount">₹0</div>
-                                            <div class="stat-card-label">Monthly EMI</div>
-                                        </div>
-                                        <div class="stat-card">
-                                            <div class="stat-card-header">
-                                                <div class="stat-card-icon" style="background: var(--gradient-success);">
-                                                    <i class="fas fa-rupee-sign"></i>
-                                                </div>
-                                            </div>
-                                            <div class="stat-card-value" id="totalAmount">₹0</div>
-                                            <div class="stat-card-label">Total Amount</div>
-                                        </div>
-                                        <div class="stat-card">
-                                            <div class="stat-card-header">
-                                                <div class="stat-card-icon" style="background: var(--gradient-danger);">
-                                                    <i class="fas fa-percentage"></i>
-                                                </div>
-                                            </div>
-                                            <div class="stat-card-value" id="totalInterest">₹0</div>
-                                            <div class="stat-card-label">Total Interest</div>
-                                        </div>
-                                        <div class="stat-card">
-                                            <div class="stat-card-header">
-                                                <div class="stat-card-icon" style="background: var(--gradient-warm);">
-                                                    <i class="fas fa-chart-pie"></i>
-                                                </div>
-                                            </div>
-                                            <div class="stat-card-value" id="interestPercentage">0%</div>
-                                            <div class="stat-card-label">Interest %</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Amortization Schedule -->
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h4 class="card-title"><i class="fas fa-table"></i> Amortization Schedule (First 12 Months)</h4>
-                                        </div>
-                                        <div class="card-body" id="amortizationSchedule">
-                                            <!-- Schedule will be populated here -->
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Prepayment Calculator Tab -->
-                            <div id="prepaymentCalculatorTab" class="loan-tab-content" style="display: none;">
-                                <form id="prepaymentCalculatorForm" onsubmit="calculatePrepaymentSavings(); return false;">
-                                    <div class="grid grid-cols-2 gap-4 mb-4">
-                                        <div class="form-group">
-                                            <label class="form-label">Loan Principal (₹)</label>
-                                            <input type="number" id="prepayPrincipal" class="form-control" 
-                                                   placeholder="Enter loan amount" step="1000" min="0" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Interest Rate (% per annum)</label>
-                                            <input type="number" id="prepayRate" class="form-control" 
-                                                   placeholder="Enter interest rate" step="0.1" min="0" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Loan Tenure (Months)</label>
-                                            <input type="number" id="prepayTenure" class="form-control" 
-                                                   placeholder="Enter tenure" min="1" max="360" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Prepayment Amount (₹)</label>
-                                            <input type="number" id="prepaymentAmount" class="form-control" 
-                                                   placeholder="Enter prepayment amount" step="1000" min="0" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Prepayment Month</label>
-                                            <input type="number" id="prepaymentMonth" class="form-control" 
-                                                   placeholder="Month number" min="1" required>
-                                            <small style="color: var(--text-tertiary);">Enter the month in which you plan to make the prepayment</small>
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-calculator"></i> Calculate Savings
-                                    </button>
-                                </form>
-                                
-                                <!-- Prepayment Results -->
-                                <div id="prepaymentResultsSection" style="display: none; margin-top: 2rem;">
-                                    <div class="grid grid-cols-3 gap-4">
-                                        <div class="stat-card">
-                                            <div class="stat-card-header">
-                                                <div class="stat-card-icon" style="background: var(--gradient-success);">
-                                                    <i class="fas fa-rupee-sign"></i>
-                                                </div>
-                                            </div>
-                                            <div class="stat-card-value" id="prepayInterestSaved">₹0</div>
-                                            <div class="stat-card-label">Interest Saved</div>
-                                        </div>
-                                        <div class="stat-card">
-                                            <div class="stat-card-header">
-                                                <div class="stat-card-icon" style="background: var(--gradient-primary);">
-                                                    <i class="fas fa-percentage"></i>
-                                                </div>
-                                            </div>
-                                            <div class="stat-card-value" id="prepaySavingsPercentage">0%</div>
-                                            <div class="stat-card-label">Savings %</div>
-                                        </div>
-                                        <div class="stat-card">
-                                            <div class="stat-card-header">
-                                                <div class="stat-card-icon" style="background: var(--gradient-warm);">
-                                                    <i class="fas fa-calendar-alt"></i>
-                                                </div>
-                                            </div>
-                                            <div class="stat-card-value" id="prepayMonthsReduced">0</div>
-                                            <div class="stat-card-label">Months Reduced</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Affordability Calculator Tab -->
-                            <div id="affordabilityCalculatorTab" class="loan-tab-content" style="display: none;">
-                                <form id="affordabilityCalculatorForm" onsubmit="calculateAffordability(); return false;">
-                                    <div class="grid grid-cols-2 gap-4 mb-4">
-                                        <div class="form-group">
-                                            <label class="form-label">Monthly Income (₹)</label>
-                                            <input type="number" id="affordabilityIncome" class="form-control" 
-                                                   placeholder="Enter monthly income" step="1000" min="0" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Monthly Expenses (₹)</label>
-                                            <input type="number" id="affordabilityExpenses" class="form-control" 
-                                                   placeholder="Enter monthly expenses" step="1000" min="0" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">EMI to Income Ratio</label>
-                                            <input type="number" id="affordabilityRatio" class="form-control" 
-                                                   placeholder="0.4" step="0.1" min="0.1" max="0.6" value="0.4" required>
-                                            <small style="color: var(--text-tertiary);">Recommended: 40% (0.4). Maximum EMI should not exceed this percentage of income.</small>
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-calculator"></i> Calculate Affordability
-                                    </button>
-                                </form>
-                                
-                                <!-- Affordability Results -->
-                                <div id="affordabilityResultsSection" style="display: none; margin-top: 2rem;">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h4 style="margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Affordability Analysis</h4>
-                                            <div class="stat-card" style="margin-bottom: 1rem;">
-                                                <div class="stat-card-header">
-                                                    <div class="stat-card-icon" style="background: var(--gradient-success);">
-                                                        <i class="fas fa-rupee-sign"></i>
-                                                    </div>
-                                                </div>
-                                                <div class="stat-card-value" id="affordabilityEMI">₹0</div>
-                                                <div class="stat-card-label">Maximum Affordable EMI</div>
-                                            </div>
-                                            <p id="affordabilityRecommendation" style="color: var(--text-secondary); padding: 1rem; background: var(--bg-tertiary); border-radius: var(--radius-md);"></p>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -2713,29 +2729,36 @@
         };
         
         // Ensure showPage is available immediately when DOM loads
-        // Set up event listeners for menu items as a backup to inline onclick
+        // Loan Calculator Modal Functions
+        window.openLoanCalculatorModal = function() {
+            const modal = document.getElementById('loanCalculatorModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                // Load loan presets when modal opens
+                if (typeof loadLoanPresets === 'function') {
+                    loadLoanPresets();
+                }
+                // Initialize loan calculator handlers
+                if (typeof setupLoanCalculatorHandlers === 'function') {
+                    setupLoanCalculatorHandlers();
+                }
+            }
+        };
+
+        window.closeLoanCalculatorModal = function() {
+            const modal = document.getElementById('loanCalculatorModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        // Close modal when clicking outside
         document.addEventListener('DOMContentLoaded', function() {
-            // Set up loan calculator menu item click handler
-            const loanCalcMenuItem = Array.from(document.querySelectorAll('.menu-item')).find(item => {
-                return item.textContent.includes('Loan Calculator');
-            });
-            
-            if (loanCalcMenuItem) {
-                loanCalcMenuItem.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('Loan calculator menu item clicked (via event listener)');
-                    if (typeof window.showPage === 'function') {
-                        window.showPage('loan-calculator', e);
-                    } else {
-                        console.error('showPage not available yet, retrying...');
-                        setTimeout(() => {
-                            if (typeof window.showPage === 'function') {
-                                window.showPage('loan-calculator', e);
-                            } else {
-                                console.error('showPage still not available');
-                            }
-                        }, 100);
+            const modal = document.getElementById('loanCalculatorModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeLoanCalculatorModal();
                     }
                 });
             }

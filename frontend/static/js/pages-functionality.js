@@ -122,18 +122,7 @@ window.initializePages = function() {
         initializedPages.add('loans');
     }
     
-    // Loan Calculator page - check for loan calculator-specific elements
-    const loanCalculatorForm = document.getElementById('loanCalculatorForm');
-    if (loanCalculatorForm && !initializedPages.has('loan-calculator')) {
-        console.log('Initializing Loan Calculator page...');
-        if (typeof loadLoanPresets === 'function') {
-            loadLoanPresets();
-        }
-        if (typeof setupLoanCalculatorHandlers === 'function') {
-            setupLoanCalculatorHandlers();
-        }
-        initializedPages.add('loan-calculator');
-    }
+    // Loan Calculator is now a modal, initialized when modal opens
     
     console.log('Page initialization complete. Initialized pages:', Array.from(initializedPages));
 }
