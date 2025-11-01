@@ -1,4 +1,5 @@
 // Complete functionality for all dashboard pages
+console.log('✅ pages-functionality.js loaded successfully');
 
 // Track which pages have been initialized to prevent duplicate initialization
 const initializedPages = new Set();
@@ -1203,6 +1204,9 @@ window.loadGoalsPageData = async function() {
                     const progress = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
                     const yearsRemaining = Math.max(0, goal.year - new Date().getFullYear());
                     
+                    // Escape goal name for use in HTML attribute
+                    const escapedGoalName = (goal.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    
                     html += `
                         <div style="padding: 1.5rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-tertiary); margin-bottom: 1rem; position: relative;">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
@@ -1230,7 +1234,7 @@ window.loadGoalsPageData = async function() {
                                 <button onclick="editGoal(${goal.id})" class="btn btn-secondary btn-animated" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
                                     <i class="fas fa-pen-to-square"></i> Edit
                                 </button>
-                                <button onclick="openDeleteGoalModal(${goal.id}, '${goal.name.replace(/'/g, \"\\'\")}')" class="btn btn-danger btn-animated" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <button onclick="openDeleteGoalModal(${goal.id}, '${escapedGoalName}')" class="btn btn-danger btn-animated" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
                                     <i class="fas fa-trash"></i> Delete
                                 </button>
                             </div>
@@ -1378,12 +1382,12 @@ function setupReportHandlers() {
                     downloadCSV(reportData, `report-${reportType}-${new Date().toISOString().split('T')[0]}.csv`);
                 }
                 
-toast.success('Report generated and downloaded!');
+                toast.success('Report generated and downloaded!');
                 
                 // Add to recent reports
                 addToRecentReports(reportType, startDate, endDate);
             } catch (error) {
-toast.error('Failed to generate report');
+                toast.error('Failed to generate report');
             }
         });
     }
@@ -1455,20 +1459,20 @@ function addToRecentReports(type, startDate, endDate) {
 }
 
 function exportMonthlyReport() {
-toast.info('Generating monthly report...');
+    toast.info('Generating monthly report...');
     setTimeout(() => {
         const data = { type: 'Monthly Report', date: new Date().toISOString().split('T')[0] };
         downloadJSON(data, `monthly-report-${new Date().toISOString().split('T')[0]}.json`);
-toast.success('Monthly report downloaded!');
+        toast.success('Monthly report downloaded!');
     }, 1000);
 }
 
 function exportGoalsReport() {
-toast.info('Generating goals report...');
+    toast.info('Generating goals report...');
     setTimeout(() => {
         const data = { type: 'Goals Report', date: new Date().toISOString().split('T')[0] };
         downloadJSON(data, `goals-report-${new Date().toISOString().split('T')[0]}.json`);
-toast.success('Goals report downloaded!');
+        toast.success('Goals report downloaded!');
     }, 1000);
 }
 
@@ -1808,10 +1812,10 @@ function markdownToHtml(text) {
 }
 
 function refreshInsights() {
-toast.info('Refreshing insights...');
+    toast.info('Refreshing insights...');
     setTimeout(() => {
         loadInsightsPageData();
-toast.success('Insights refreshed!');
+        toast.success('Insights refreshed!');
     }, 1000);
 }
 
@@ -1856,7 +1860,7 @@ function setupProfileHandlers() {
             updateElement('profileDisplayName', name);
             updateElement('profileDisplayEmail', email);
             
-toast.success('Profile updated successfully!');
+            toast.success('Profile updated successfully!');
         });
     }
 }
@@ -1889,11 +1893,11 @@ function showChangePasswordModal() {
         const confirmPass = document.getElementById('confirmPassword').value;
         
         if (newPass !== confirmPass) {
-toast.error('Passwords do not match');
+            toast.error('Passwords do not match');
             return;
         }
         
-toast.success('Password changed successfully!');
+        toast.success('Password changed successfully!');
         closeModal('infoModal');
     });
 }
@@ -1931,7 +1935,7 @@ function setupSettingsHandlers() {
             localStorage.setItem('language', language);
             localStorage.setItem('dateFormat', dateFormat);
             
-toast.success('General settings saved!');
+            toast.success('General settings saved!');
         });
     }
     
@@ -1941,7 +1945,7 @@ toast.success('General settings saved!');
         if (checkbox) {
             checkbox.addEventListener('change', function() {
                 localStorage.setItem(id, this.checked);
-toast.success('Notification settings updated!');
+                toast.success('Notification settings updated!');
             });
         }
     });
@@ -1949,7 +1953,7 @@ toast.success('Notification settings updated!');
 
 function showDeleteAccountModal() {
     if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-toast.error('Account deletion feature coming soon. Please contact support.');
+        toast.error('Account deletion feature coming soon. Please contact support.');
     }
 }
 

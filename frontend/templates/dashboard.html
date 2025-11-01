@@ -730,8 +730,25 @@
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dashboard-pages.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/pages-functionality.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pages-functionality.js') }}" onerror="console.error('Failed to load pages-functionality.js')"></script>
     <script src="{{ url_for('static', filename='js/loan-calculator.js') }}"></script>
+    <script>
+        // Wait for pages-functionality.js to load before proceeding
+        function waitForInitializePages(callback, maxAttempts = 50) {
+            let attempts = 0;
+            const checkInterval = setInterval(() => {
+                attempts++;
+                if (typeof window.initializePages === 'function') {
+                    clearInterval(checkInterval);
+                    console.log('✅ initializePages function loaded successfully');
+                    callback();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkInterval);
+                    console.error('❌ Failed to load initializePages function after', maxAttempts, 'attempts');
+                }
+            }, 50);
+        }
+    </script>
     <script>
         // Define showPage function IMMEDIATELY before any DOM manipulation
         window.showPage = function(page, event) {
@@ -896,36 +913,37 @@
                 }, 50);
                 
                 // Initialize page functionality after content is added
-                // Use multiple timeouts to ensure DOM is fully ready
-                setTimeout(() => {
-                    if (typeof initializePages === 'function') {
-                        console.log('🔄 Calling initializePages for:', page);
-                        initializePages();
-                    } else {
-                        console.warn('⚠️ initializePages function not available');
-                    }
-                }, 100);
-                
-                // Also try again after a longer delay to ensure all elements are rendered
-                setTimeout(() => {
-                    if (typeof initializePages === 'function') {
-                        console.log('🔄 Retrying initializePages for:', page);
-                        initializePages();
-                    }
-                }, 300);
-                
-                // Final retry for stubborn pages
-                setTimeout(() => {
-                    if (typeof initializePages === 'function') {
-                        console.log('🔄 Final retry initializePages for:', page);
-                        initializePages();
-                    }
-                    // Also manually trigger load if it's a specific page
-                    if (page === 'goals' && typeof loadGoalsPageData === 'function') {
-                        console.log('🔄 Manually calling loadGoalsPageData for goals page');
-                        loadGoalsPageData();
-                    }
-                }, 500);
+                // Wait for initializePages to be available, then call it with retries
+                waitForInitializePages(() => {
+                    // First attempt after 100ms
+                    setTimeout(() => {
+                        if (typeof window.initializePages === 'function') {
+                            console.log('🔄 Calling initializePages for:', page);
+                            window.initializePages();
+                        }
+                    }, 100);
+                    
+                    // Retry after 300ms to ensure all elements are rendered
+                    setTimeout(() => {
+                        if (typeof window.initializePages === 'function') {
+                            console.log('🔄 Retrying initializePages for:', page);
+                            window.initializePages();
+                        }
+                    }, 300);
+                    
+                    // Final retry after 500ms
+                    setTimeout(() => {
+                        if (typeof window.initializePages === 'function') {
+                            console.log('🔄 Final retry initializePages for:', page);
+                            window.initializePages();
+                        }
+                        // Also manually trigger load if it's a specific page
+                        if (page === 'goals' && typeof loadGoalsPageData === 'function') {
+                            console.log('🔄 Manually calling loadGoalsPageData for goals page');
+                            loadGoalsPageData();
+                        }
+                    }, 500);
+                });
             } else {
                 console.error('Page content not found for:', page);
                 // If content not found, show error message instead of dashboard
