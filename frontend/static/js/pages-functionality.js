@@ -585,14 +585,14 @@ function renderBudgetCategories(budgetCategories) {
                     </div>
                 </div>
                 
-                <div style="display: flex; gap: 0.5rem; margin-top: auto;">
-                    <button onclick="editBudgetCategory(${categoryId})" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                <div style="display: flex; justify-content:end; gap: 0.5rem; margin-top: auto;">
+                    <button onclick="editBudgetCategory(${categoryId})" class="btn btn-secondary" style="font-size: 0.8rem; width: 60px; height: 45px; display: flex; justify-content:center; padding: 0.4rem;">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button onclick="updateBudgetSpent(${categoryId}, '${escapedName}')" class="btn btn-primary btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                    <button onclick="updateBudgetSpent(${categoryId}, '${escapedName}')" class="btn btn-primary" style="font-size: 0.8rem;width: 60px;display: flex; justify-content:center; padding: 0.4rem;">
                         <i class="fa-solid fa-indian-rupee-sign"></i>
                     </button>
-                    <button onclick="deleteBudgetCategory(${categoryId})" class="btn btn-danger btn-sm" style="font-size: 0.8rem; padding: 0.4rem 0.6rem;">
+                    <button onclick="deleteBudgetCategory(${categoryId})" class="btn btn-danger " style="font-size: 0.8rem; padding: 0.4rem 0.6rem;width: 55px;display: flex; justify-content:center;">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -948,14 +948,14 @@ function renderInvestmentsList(investments) {
                     ` : ''}
                 </div>
                 
-                <div style="display: flex; gap: 0.5rem; margin-top: auto;">
-                    <button onclick="editInvestment(${investmentId})" class="btn btn-secondary btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                <div style="display: flex; justify-content: end; gap: 0.5rem; margin-top: auto;">
+                    <button onclick="editInvestment(${investmentId})" class="btn btn-secondary btn-sm"; font-size: 0.8rem;text-align:center; width: 60px; padding: 0.4rem;">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button onclick="updateInvestmentValue(${investmentId}, '${escapedName}')" class="btn btn-primary btn-sm" style="flex: 1; font-size: 0.8rem; padding: 0.4rem;">
+                    <button onclick="updateInvestmentValue(${investmentId}, '${escapedName}')" class="btn btn-primary btn-sm"; text-align:center; width: 60px; font-size: 0.8rem; padding: 0.4rem;">
                         <i class="fas fa-sync-alt"></i>
                     </button>
-                    <button onclick="deleteInvestment(${investmentId})" class="btn btn-danger btn-sm" style="font-size: 0.8rem; padding: 0.4rem 0.6rem;">
+                    <button onclick="deleteInvestment(${investmentId})" class="btn btn-danger btn-sm" style="font-size: 0.8rem; display:flex; justify-content: center; width: 60px; padding: 0.4rem 0.6rem;">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
