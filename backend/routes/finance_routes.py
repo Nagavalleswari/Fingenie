@@ -3,6 +3,7 @@ import sys
 import os
 import json
 import flask_cors
+from datetime import datetime
 
 # Add parent directory to path for imports
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -17,6 +18,8 @@ from utils.loan_calculator import (
     compare_loans,
     calculate_affordability
 )
+from utils.gemini_client import GeminiClient
+import uuid
 
 finance_bp = Blueprint('finance', __name__)
 
@@ -180,11 +183,24 @@ def init_finance_routes(db):
                 merged_data['is_mock'] = True  # Flag that goals are from mock
                 print(f"📊 Using mock_data goals ({len(mock_data.get('goals', []))} goals) for user {user_id} (user had {user_goals_count} goals after cleanup)")
             
-            # Merge other fields (budget, transactions, investments, etc.)
-            merged_data['budget'] = data.get('budget') or mock_data.get('budget', {})
-            merged_data['transactions'] = data.get('transactions') or mock_data.get('transactions', [])
-            merged_data['investments'] = data.get('investments') or mock_data.get('investments', {})
-            merged_data['financial_health_metrics'] = data.get('financial_health_metrics') or mock_data.get('financial_health_metrics', {})
+            # Merge other fields (budget, transactions, investments, loans, analytics, insights, etc.)
+            # Save ALL fields from mock_data that aren't already handled above
+            fields_to_merge = ['budget', 'transactions', 'investments', 'loans', 'analytics', 'insights']
+            for field in fields_to_merge:
+                merged_data[field] = data.get(field) or mock_data.get(field, [] if field in ['transactions', 'loans', 'insights'] else {})
+            
+            # Handle financial_health_metrics - check if it exists directly, or derive from analytics
+            if data.get('financial_health_metrics'):
+                merged_data['financial_health_metrics'] = data.get('financial_health_metrics')
+            elif mock_data.get('financial_health_metrics'):
+                merged_data['financial_health_metrics'] = mock_data.get('financial_health_metrics')
+            elif merged_data.get('analytics'):
+                # Map analytics to financial_health_metrics format for compatibility
+                analytics = merged_data.get('analytics', {})
+                merged_data['financial_health_metrics'] = {
+                    'monthly_trends': analytics.get('monthly_trends', []),
+                    'expense_categories': analytics.get('expense_categories', [])
+                }
             
             # Preserve user_id and _id from database
             if data.get('_id'):
@@ -370,6 +386,247 @@ def init_finance_routes(db):
             else:
                 return jsonify({'error': 'Mock data not available'}), 404
                 
+        except Exception as e:
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @finance_bp.route('/generate_graph', methods=['POST'])
+    @require_auth
+    def generate_graph():
+        """Generate a graph configuration using Gemini AI"""
+        try:
+            user_id = request.user_id
+            data = request.get_json()
+            
+            if not data or not data.get('description'):
+                return jsonify({'error': 'Graph description is required'}), 400
+            
+            graph_description = data['description']
+            
+            # Get user's financial data for context - MUST have saved data
+            financial_data, _ = finance_model.get_data(user_id)
+            
+            # Check if user has actual financial data (not empty)
+            has_actual_data = False
+            if financial_data:
+                # Check if there's meaningful data (not just empty objects)
+                has_assets = financial_data.get('assets') and any(v for v in financial_data.get('assets', {}).values() if isinstance(v, (int, float)) and v > 0)
+                has_liabilities = financial_data.get('liabilities') and any(v for v in financial_data.get('liabilities', {}).values() if isinstance(v, (int, float)) and v > 0)
+                has_goals = financial_data.get('goals') and len(financial_data.get('goals', [])) > 0
+                budget = financial_data.get('budget', {}) or {}
+                has_budget = isinstance(budget, dict) and (budget.get('monthly_income') or budget.get('categories'))
+                has_transactions = financial_data.get('transactions') and len(financial_data.get('transactions', [])) > 0
+                has_investments = financial_data.get('investments')
+                
+                has_actual_data = has_assets or has_liabilities or has_goals or has_budget or has_transactions or has_investments
+            
+            if not has_actual_data:
+                return jsonify({
+                    'error': 'No financial data found. Please add your financial information before creating graphs. The data will be used to generate meaningful visualizations.'
+                }), 400
+            
+            # Use Gemini to generate chart configuration
+            gemini_client = GeminiClient()
+            
+            # Build prompt for Gemini to generate Chart.js configuration
+            financial_context = gemini_client._build_financial_context(financial_data) if financial_data else ""
+            
+            prompt = f"""{financial_context}
+
+You are a chart generation assistant. The user wants to create a chart based on this description: "{graph_description}"
+
+Based on the financial data provided above, generate a Chart.js configuration JSON object. The JSON should follow this exact structure:
+
+{{
+    "type": "line|bar|pie|doughnut|radar|polarArea",
+    "title": "Chart Title",
+    "labels": ["Label1", "Label2", ...],
+    "datasets": [
+        {{
+            "label": "Dataset Label",
+            "data": [value1, value2, ...],
+            "backgroundColor": ["#color1", "#color2", ...],
+            "borderColor": "#color",
+            "borderWidth": 2
+        }}
+    ],
+    "options": {{
+        "responsive": true,
+        "plugins": {{
+            "legend": {{ "position": "bottom" }},
+            "title": {{ "display": true, "text": "Chart Title" }}
+        }},
+        "scales": {{
+            "y": {{
+                "beginAtZero": true,
+                "ticks": {{
+                    "callback": "function(value) {{ return '₹' + value.toLocaleString(); }}"
+                }}
+            }}
+        }}
+    }}
+}}
+
+IMPORTANT:
+- Use ONLY the financial data provided above. DO NOT create fake or sample data. Only use the actual data provided.
+- All monetary values should be in Indian Rupees (₹).
+- If specific data is not available in the context, indicate that in the chart title or use available related data.
+- For pie and doughnut charts: Ensure each category has a UNIQUE color. Use a distinct color palette with no duplicate colors.
+- Double-check all values match the financial data exactly. Calculate percentages correctly for pie charts.
+- Verify that labels correspond to actual data values from the financial context.
+- Return ONLY valid JSON, no explanation text before or after.
+- Use appropriate chart type based on the description (line for trends, bar for comparisons, pie/doughnut for distributions, etc.).
+- Generate realistic data based on the user's financial context.
+- Use attractive color schemes with unique colors for each category in pie/doughnut charts.
+
+Return ONLY the JSON configuration. Do not include any explanation, markdown code blocks, or additional text. Just return the raw JSON object starting with {{ and ending with }}:"""
+            
+            # Generate response from Gemini
+            response_text = gemini_client.generate_response(prompt, user_financial_data=financial_data)
+            
+            # Try to extract JSON from response (Gemini might add explanation text)
+            try:
+                # Try to find JSON in the response - look for JSON that might be wrapped in code blocks
+                import re
+                # First try to extract from markdown code blocks
+                json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+                if not json_match:
+                    # If no code block, try to find JSON object directly
+                    json_match = re.search(r'(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})', response_text, re.DOTALL)
+                
+                if json_match:
+                    json_str = json_match.group(1) if json_match.lastindex else json_match.group(0)
+                    chart_config = json.loads(json_str)
+                else:
+                    # If no JSON found, create a default chart
+                    chart_config = {
+                        "type": "bar",
+                        "title": graph_description,
+                        "labels": ["Sample"],
+                        "datasets": [{
+                            "label": "Data",
+                            "data": [0],
+                            "backgroundColor": ["#3b82f6"],
+                            "borderColor": "#3b82f6",
+                            "borderWidth": 2
+                        }],
+                        "options": {
+                            "responsive": True,
+                            "plugins": {
+                                "legend": {"position": "bottom"},
+                                "title": {"display": True, "text": graph_description}
+                            }
+                        }
+                    }
+            except json.JSONDecodeError:
+                # Fallback: create a simple chart configuration
+                chart_config = {
+                    "type": "bar",
+                    "title": graph_description,
+                    "labels": ["Sample"],
+                    "datasets": [{
+                        "label": "Data",
+                        "data": [0],
+                        "backgroundColor": ["#3b82f6"],
+                        "borderColor": "#3b82f6",
+                        "borderWidth": 2
+                    }],
+                    "options": {
+                        "responsive": True,
+                        "plugins": {
+                            "legend": {"position": "bottom"},
+                            "title": {"display": True, "text": graph_description}
+                        }
+                    }
+                }
+            
+            return jsonify({
+                'message': 'Graph configuration generated successfully',
+                'data': chart_config
+            }), 200
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @finance_bp.route('/save_custom_graph', methods=['POST'])
+    @require_auth
+    def save_custom_graph():
+        """Save a custom graph configuration"""
+        try:
+            user_id = request.user_id
+            data = request.get_json()
+            
+            if not data or not data.get('graph_config'):
+                return jsonify({'error': 'Graph configuration is required'}), 400
+            
+            graph_config = data['graph_config']
+            graph_id = data.get('id', str(uuid.uuid4()))
+            graph_title = data.get('title', graph_config.get('title', 'Custom Graph'))
+            
+            graph_data = {
+                'id': graph_id,
+                'title': graph_title,
+                'description': data.get('description', ''),
+                'config': graph_config,
+                'created_at': datetime.now().isoformat()
+            }
+            
+            result, error = finance_model.save_custom_graph(user_id, graph_data)
+            
+            if error:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'message': 'Custom graph saved successfully',
+                'data': {'id': graph_id}
+            }), 200
+            
+        except Exception as e:
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @finance_bp.route('/get_custom_graphs', methods=['GET'])
+    @require_auth
+    def get_custom_graphs():
+        """Get all custom graphs for the user"""
+        try:
+            user_id = request.user_id
+            
+            graphs, error = finance_model.get_custom_graphs(user_id)
+            
+            if error:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'message': 'Custom graphs retrieved successfully',
+                'data': graphs
+            }), 200
+            
+        except Exception as e:
+            return jsonify({'error': f'Server error: {str(e)}'}), 500
+    
+    @finance_bp.route('/delete_custom_graph', methods=['POST'])
+    @require_auth
+    def delete_custom_graph():
+        """Delete a custom graph"""
+        try:
+            user_id = request.user_id
+            data = request.get_json()
+            
+            if not data or not data.get('graph_id'):
+                return jsonify({'error': 'Graph ID is required'}), 400
+            
+            graph_id = data['graph_id']
+            
+            result, error = finance_model.delete_custom_graph(user_id, graph_id)
+            
+            if error:
+                return jsonify({'error': error}), 400
+            
+            return jsonify({
+                'message': 'Custom graph deleted successfully'
+            }), 200
+            
         except Exception as e:
             return jsonify({'error': f'Server error: {str(e)}'}), 500
     

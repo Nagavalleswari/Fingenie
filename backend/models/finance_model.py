@@ -115,4 +115,49 @@ class FinanceModel:
     def set_goals(self, user_id, goals):
         """Set goals for a user"""
         return self.add_or_update_data(user_id, goals=goals)
+    
+    def save_custom_graph(self, user_id, graph_data):
+        """Save a custom graph configuration for a user"""
+        try:
+            user_obj_id = ObjectId(user_id)
+        except Exception:
+            return None, "Invalid user ID"
+        
+        # Initialize custom_graphs array if it doesn't exist
+        result = self.collection.update_one(
+            {"user_id": user_obj_id},
+            {
+                "$set": {"last_updated": datetime.now().isoformat()},
+                "$push": {"custom_graphs": graph_data}
+            },
+            upsert=True
+        )
+        
+        return {"success": True, "updated": result.modified_count > 0, "inserted": result.upserted_id is not None}, None
+    
+    def get_custom_graphs(self, user_id):
+        """Get all custom graphs for a user"""
+        try:
+            user_obj_id = ObjectId(user_id)
+        except Exception:
+            return [], "Invalid user ID"
+        
+        data = self.collection.find_one({"user_id": user_obj_id}, {"custom_graphs": 1})
+        if data and "custom_graphs" in data:
+            return data["custom_graphs"], None
+        return [], None
+    
+    def delete_custom_graph(self, user_id, graph_id):
+        """Delete a custom graph by ID"""
+        try:
+            user_obj_id = ObjectId(user_id)
+        except Exception:
+            return None, "Invalid user ID"
+        
+        result = self.collection.update_one(
+            {"user_id": user_obj_id},
+            {"$pull": {"custom_graphs": {"id": graph_id}}}
+        )
+        
+        return {"success": True, "updated": result.modified_count > 0}, None
 

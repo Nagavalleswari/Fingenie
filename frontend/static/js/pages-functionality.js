@@ -240,6 +240,9 @@ async function loadAnalyticsData() {
         }
         createCategoryBreakdownChart(assets);
         
+        // Load custom graphs
+        await loadCustomGraphs();
+        
         console.log('✅ Analytics page data rendered successfully');
     } catch (error) {
         console.error('❌ Error loading analytics:', error);
@@ -1978,6 +1981,554 @@ if (typeof MutationObserver !== 'undefined') {
     }
 }
 
+// ==================== Custom Graph Functions ====================
+
+// Store current graph config for saving
+let currentGraphConfig = null;
+let currentGraphDescription = '';
+
+// Open create graph modal
+window.openCreateGraphModal = function() {
+    const modal = document.getElementById('createGraphModal');
+    if (!modal) return;
+    
+    // Reset form
+    document.getElementById('graphDescription').value = '';
+    document.getElementById('graphPreviewContainer').style.display = 'none';
+    document.getElementById('graphGenerateStatus').style.display = 'none';
+    document.getElementById('generateGraphBtn').style.display = 'block';
+    document.getElementById('saveGraphBtn').style.display = 'none';
+    currentGraphConfig = null;
+    currentGraphDescription = '';
+    
+    modal.style.display = 'flex';
+};
+
+// Generate graph with AI
+window.generateGraphWithAI = async function(event) {
+    if (event) event.preventDefault();
+    
+    const description = document.getElementById('graphDescription').value.trim();
+    if (!description) {
+        alert('Please describe the graph you want to create');
+        return;
+    }
+    
+    const statusDiv = document.getElementById('graphGenerateStatus');
+    const previewContainer = document.getElementById('graphPreviewContainer');
+    const generateBtn = document.getElementById('generateGraphBtn');
+    const saveBtn = document.getElementById('saveGraphBtn');
+    
+    // Show loading state
+    statusDiv.style.display = 'block';
+    generateBtn.disabled = true;
+    previewContainer.style.display = 'none';
+    
+    try {
+        // Call API to generate graph
+        const response = await apiRequest('/finance/generate_graph', 'POST', {
+            description: description
+        });
+        
+        if (response.data) {
+            // Ensure unique colors for pie/doughnut charts before saving
+            const config = response.data;
+            const chartType = config.type || 'bar';
+            if (chartType === 'pie' || chartType === 'doughnut') {
+                const uniqueColors = generateUniqueColors(config.labels?.length || 0);
+                if (config.datasets && config.datasets.length > 0) {
+                    config.datasets[0].backgroundColor = uniqueColors;
+                    config.datasets[0].borderColor = uniqueColors.map(c => adjustColorBrightness(c, -20));
+                    config.datasets[0].borderWidth = 2;
+                }
+            }
+            
+            currentGraphConfig = config;
+            currentGraphDescription = description;
+            
+            // Render preview
+            renderGraphPreview(config);
+            previewContainer.style.display = 'block';
+            statusDiv.style.display = 'none';
+            generateBtn.style.display = 'none';
+            saveBtn.style.display = 'block';
+        } else {
+            throw new Error('No graph configuration returned');
+        }
+    } catch (error) {
+        console.error('Error generating graph:', error);
+        const errorMessage = error.message || 'Failed to generate graph';
+        statusDiv.innerHTML = `<div style="color: var(--accent-danger); padding: 1rem; background: var(--bg-elevated); border-radius: var(--radius-md); border-left: 4px solid var(--accent-danger);">
+            <i class="fas fa-exclamation-circle"></i> <strong>Error:</strong> ${errorMessage}
+            ${errorMessage.includes('No financial data') ? '<br><br><small>Please add your financial information first (assets, liabilities, goals, budget, etc.) before creating graphs.</small>' : ''}
+        </div>`;
+    } finally {
+        generateBtn.disabled = false;
+    }
+};
+
+// Render graph preview
+function renderGraphPreview(config) {
+    const canvas = document.getElementById('graphPreviewCanvas');
+    if (!canvas || typeof Chart === 'undefined') return;
+    
+    // Destroy existing chart if it exists
+    if (canvas.chart) {
+        canvas.chart.destroy();
+    }
+    
+    // Ensure unique colors for pie/doughnut charts
+    const chartType = config.type || 'bar';
+    if (chartType === 'pie' || chartType === 'doughnut') {
+        const uniqueColors = generateUniqueColors(config.labels?.length || 0);
+        if (config.datasets && config.datasets.length > 0) {
+            config.datasets[0].backgroundColor = uniqueColors;
+            config.datasets[0].borderColor = uniqueColors.map(c => adjustColorBrightness(c, -20));
+            config.datasets[0].borderWidth = 2;
+        }
+    }
+    
+    // Prepare enhanced chart configuration with tooltips
+    const chartConfig = {
+        type: chartType,
+        data: {
+            labels: config.labels || [],
+            datasets: config.datasets || []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                ...(config.options?.plugins || {}),
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].label || '';
+                        },
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.parsed || context.raw || 0;
+                            const isCurrency = chartType !== 'pie' && chartType !== 'doughnut';
+                            
+                            if (chartType === 'pie' || chartType === 'doughnut') {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ₹${value.toLocaleString('en-IN')} (${percentage}%)`;
+                            } else {
+                                return `${label}: ₹${value.toLocaleString('en-IN')}`;
+                            }
+                        },
+                        afterLabel: function(context) {
+                            if (chartType === 'line' || chartType === 'bar') {
+                                const dataset = context.dataset;
+                                const index = context.dataIndex;
+                                if (dataset.data.length > index + 1) {
+                                    const nextValue = dataset.data[index + 1];
+                                    const currentValue = context.parsed.y || context.raw || 0;
+                                    if (nextValue && typeof currentValue === 'number' && typeof nextValue === 'number') {
+                                        const change = nextValue - currentValue;
+                                        const changePercent = currentValue > 0 ? ((change / currentValue) * 100).toFixed(1) : 0;
+                                        if (change !== 0) {
+                                            return `Change: ${change > 0 ? '+' : ''}₹${change.toLocaleString('en-IN')} (${changePercent}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            ...(config.options || {})
+        }
+    };
+    
+    // Add scales if needed (for non-pie charts)
+    if (chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'radar' && chartType !== 'polarArea') {
+        chartConfig.options.scales = {
+            ...(config.options?.scales || {}),
+            y: {
+                ...(config.options?.scales?.y || {}),
+                beginAtZero: config.options?.scales?.y?.beginAtZero ?? true,
+                ticks: {
+                    ...(config.options?.scales?.y?.ticks || {}),
+                    callback: function(value) {
+                        return '₹' + value.toLocaleString('en-IN');
+                    }
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                ...(config.options?.scales?.x || {}),
+                grid: {
+                    display: false
+                }
+            }
+        };
+    }
+    
+    // Create chart
+    canvas.chart = new Chart(canvas, chartConfig);
+}
+
+// Generate unique colors for pie charts
+function generateUniqueColors(count) {
+    const colorPalette = [
+        '#10b981', '#3b82f6', '#f59e0b', '#a855f7', '#ec4899', '#14b8a6',
+        '#ef4444', '#06b6d4', '#8b5cf6', '#f97316', '#84cc16', '#eab308',
+        '#6366f1', '#ec4899', '#06b6d4', '#22c55e', '#f43f5e', '#8b5cf6',
+        '#14b8a6', '#3b82f6', '#f59e0b', '#a855f7', '#ec4899', '#10b981'
+    ];
+    
+    if (count <= colorPalette.length) {
+        return colorPalette.slice(0, count);
+    }
+    
+    // If we need more colors, generate them
+    const colors = [...colorPalette];
+    for (let i = colorPalette.length; i < count; i++) {
+        const hue = (i * 137.508) % 360; // Golden angle approximation
+        colors.push(`hsl(${hue}, 70%, 50%)`);
+    }
+    return colors;
+}
+
+// Adjust color brightness
+function adjustColorBrightness(color, percent) {
+    if (color.startsWith('#')) {
+        const num = parseInt(color.replace('#', ''), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+        const G = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
+        const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+        return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+    }
+    return color;
+}
+
+// Save custom graph
+window.saveCustomGraph = async function() {
+    if (!currentGraphConfig) {
+        alert('Please generate a graph first');
+        return;
+    }
+    
+    try {
+        const response = await apiRequest('/finance/save_custom_graph', 'POST', {
+            graph_config: currentGraphConfig,
+            title: currentGraphConfig.title || 'Custom Graph',
+            description: currentGraphDescription
+        });
+        
+        if (response.data) {
+            // Close modal
+            if (typeof closeModal === 'function') {
+                closeModal('createGraphModal');
+            }
+            
+            // Reload custom graphs
+            await loadCustomGraphs();
+            
+            // Show success message
+            if (typeof toast !== 'undefined') {
+                toast.success('Graph saved successfully!', 'success');
+            } else {
+                alert('Graph saved successfully!');
+            }
+        }
+    } catch (error) {
+        console.error('Error saving graph:', error);
+        if (typeof toast !== 'undefined') {
+            toast.error(error.message || 'Failed to save graph', 'error');
+        } else {
+            alert('Error: ' + (error.message || 'Failed to save graph'));
+        }
+    }
+};
+
+// Load custom graphs
+window.loadCustomGraphs = async function() {
+    const container = document.getElementById('customGraphsContainer');
+    if (!container) return;
+    
+    try {
+        const response = await apiRequest('/finance/get_custom_graphs', 'GET');
+        const graphs = response.data || [];
+        
+        if (graphs.length === 0) {
+            container.innerHTML = `
+                <p style="color: var(--text-tertiary); grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                    No custom graphs yet. Click "Create New Graph" to generate your first AI-powered visualization!
+                </p>
+            `;
+            return;
+        }
+        
+        // Clear container
+        container.innerHTML = '';
+        
+        // Render each graph
+        graphs.forEach((graph, index) => {
+            const graphCard = createGraphCard(graph);
+            container.appendChild(graphCard);
+        });
+    } catch (error) {
+        console.error('Error loading custom graphs:', error);
+        container.innerHTML = `
+            <p style="color: var(--accent-danger); grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                Error loading graphs: ${error.message || 'Unknown error'}
+            </p>
+        `;
+    }
+}
+
+// Create graph card element
+function createGraphCard(graph) {
+    const card = document.createElement('div');
+    card.className = 'card fade-in';
+    card.style.animationDelay = '0.1s';
+    
+    const graphId = 'customGraph_' + graph.id;
+    
+    card.innerHTML = `
+        <div class="card-header">
+            <h3 class="card-title">${escapeHtml(graph.title || 'Custom Graph')}</h3>
+            <div class="card-actions">
+                <button class="btn btn-danger btn-sm" onclick="deleteCustomGraph('${graph.id}')" title="Delete graph">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            ${graph.description ? `<p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.875rem;">${escapeHtml(graph.description)}</p>` : ''}
+            <div style="position: relative; height: 300px;">
+                <canvas id="${graphId}"></canvas>
+            </div>
+        </div>
+    `;
+    
+    // Render chart after card is added to DOM
+    setTimeout(() => {
+        renderCustomGraph(graphId, graph.config);
+    }, 100);
+    
+    return card;
+}
+
+// Render custom graph
+function renderCustomGraph(canvasId, config) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || typeof Chart === 'undefined') return;
+    
+    // Destroy existing chart if it exists
+    if (canvas.chart) {
+        canvas.chart.destroy();
+    }
+    
+    // Ensure unique colors for pie/doughnut charts
+    const chartType = config.type || 'bar';
+    if (chartType === 'pie' || chartType === 'doughnut') {
+        const uniqueColors = generateUniqueColors(config.labels?.length || 0);
+        if (config.datasets && config.datasets.length > 0) {
+            config.datasets[0].backgroundColor = uniqueColors;
+            config.datasets[0].borderColor = uniqueColors.map(c => adjustColorBrightness(c, -20));
+            config.datasets[0].borderWidth = 2;
+        }
+    }
+    
+    // Prepare enhanced chart configuration with tooltips
+    const chartConfig = {
+        type: chartType,
+        data: {
+            labels: config.labels || [],
+            datasets: config.datasets || []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                ...(config.options?.plugins || {}),
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].label || '';
+                        },
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.parsed || context.raw || 0;
+                            
+                            if (chartType === 'pie' || chartType === 'doughnut') {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ₹${value.toLocaleString('en-IN')} (${percentage}%)`;
+                            } else {
+                                return `${label}: ₹${value.toLocaleString('en-IN')}`;
+                            }
+                        },
+                        afterLabel: function(context) {
+                            if (chartType === 'line' || chartType === 'bar') {
+                                const dataset = context.dataset;
+                                const index = context.dataIndex;
+                                if (dataset.data.length > index + 1) {
+                                    const nextValue = dataset.data[index + 1];
+                                    const currentValue = context.parsed.y || context.raw || 0;
+                                    if (nextValue && typeof currentValue === 'number' && typeof nextValue === 'number') {
+                                        const change = nextValue - currentValue;
+                                        const changePercent = currentValue > 0 ? ((change / currentValue) * 100).toFixed(1) : 0;
+                                        if (change !== 0) {
+                                            return `Change: ${change > 0 ? '+' : ''}₹${change.toLocaleString('en-IN')} (${changePercent}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            ...(config.options || {})
+        }
+    };
+    
+    // Add scales if needed (for non-pie charts)
+    if (chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'radar' && chartType !== 'polarArea') {
+        chartConfig.options.scales = {
+            ...(config.options?.scales || {}),
+            y: {
+                ...(config.options?.scales?.y || {}),
+                beginAtZero: config.options?.scales?.y?.beginAtZero ?? true,
+                ticks: {
+                    ...(config.options?.scales?.y?.ticks || {}),
+                    callback: function(value) {
+                        return '₹' + value.toLocaleString('en-IN');
+                    }
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            x: {
+                ...(config.options?.scales?.x || {}),
+                grid: {
+                    display: false
+                }
+            }
+        };
+    }
+    
+    // Create chart
+    canvas.chart = new Chart(canvas, chartConfig);
+}
+
+// Enhance prompt with AI
+window.enhancePrompt = async function() {
+    const textarea = document.getElementById('graphDescription');
+    const currentPrompt = textarea.value.trim();
+    
+    if (!currentPrompt) {
+        alert('Please enter a description first before enhancing');
+        return;
+    }
+    
+    // Show loading state
+    const originalValue = textarea.value;
+    textarea.disabled = true;
+    textarea.value = 'Enhancing prompt with AI...';
+    
+    try {
+        // Call dedicated enhance prompt endpoint (full path since it's under /api/chat)
+        const response = await apiRequest('/chat/enhance_prompt', 'POST', {
+            prompt: currentPrompt
+        });
+        
+        if (response.message) {
+            const enhancedText = response.message.trim();
+            
+            if (enhancedText && enhancedText.length > 10) {
+                textarea.value = enhancedText;
+                if (typeof toast !== 'undefined') {
+                    toast.success('Prompt enhanced successfully!', 'success');
+                }
+            } else {
+                // Fallback: use original if extraction fails
+                textarea.value = originalValue;
+                if (typeof toast !== 'undefined') {
+                    toast.warning('Could not extract enhanced prompt. Please try again.', 'warning');
+                }
+            }
+        } else {
+            textarea.value = originalValue;
+        }
+    } catch (error) {
+        console.error('Error enhancing prompt:', error);
+        textarea.value = originalValue;
+        if (typeof toast !== 'undefined') {
+            toast.error('Failed to enhance prompt. Please try again.', 'error');
+        } else {
+            alert('Failed to enhance prompt: ' + error.message);
+        }
+    } finally {
+        textarea.disabled = false;
+        textarea.focus();
+    }
+};
+
+// Delete custom graph
+window.deleteCustomGraph = async function(graphId) {
+    if (!confirm('Are you sure you want to delete this graph?')) {
+        return;
+    }
+    
+    try {
+        await apiRequest('/finance/delete_custom_graph', 'POST', {
+            graph_id: graphId
+        });
+        
+        // Reload graphs
+        await loadCustomGraphs();
+        
+        if (typeof toast !== 'undefined') {
+            toast.success('Graph deleted successfully', 'success');
+        }
+    } catch (error) {
+        console.error('Error deleting graph:', error);
+        if (typeof toast !== 'undefined') {
+            toast.error(error.message || 'Failed to delete graph', 'error');
+        } else {
+            alert('Error: ' + (error.message || 'Failed to delete graph'));
+        }
+    }
+};
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Expose functions globally
 window.loadAnalyticsPeriod = loadAnalyticsPeriod;
 window.loadAnalyticsData = loadAnalyticsData;
@@ -1992,6 +2543,10 @@ window.saveSettings = function() {
         document.getElementById('settingsForm').dispatchEvent(new Event('submit'));
     }
 };
+window.generateGraphWithAI = window.generateGraphWithAI;
+window.openCreateGraphModal = window.openCreateGraphModal;
+window.saveCustomGraph = window.saveCustomGraph;
+window.deleteCustomGraph = window.deleteCustomGraph;
 
 // Initialize pages when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {

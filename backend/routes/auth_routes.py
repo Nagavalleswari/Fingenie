@@ -8,13 +8,28 @@ if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
 from models.user_model import UserModel
+from models.finance_model import FinanceModel
 from utils.jwt_handler import encode_token
+from bson import ObjectId
+import json
 
 auth_bp = Blueprint('auth', __name__)
+
+# Load mock data from JSON file
+def load_mock_data_from_file():
+    """Load mock data from JSON file"""
+    try:
+        mock_data_path = os.path.join(parent_dir, 'mock_data.json')
+        with open(mock_data_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading mock data: {e}")
+        return None
 
 def init_auth_routes(db):
     """Initialize auth routes with database connection"""
     user_model = UserModel(db)
+    finance_model = FinanceModel(db)
     
     @auth_bp.route('/signup', methods=['POST'])
     def signup():
@@ -42,6 +57,54 @@ def init_auth_routes(db):
                 if 'already exists' in error.lower():
                     return jsonify({'success': False, 'error': error, 'message': error}), 409  # 409 Conflict
                 return jsonify({'success': False, 'error': error, 'message': error}), 400
+            
+            # Save mock financial data for new user
+            try:
+                mock_data_file = load_mock_data_from_file()
+                if mock_data_file and 'financial_data' in mock_data_file:
+                    mock_data = mock_data_file['financial_data']
+                    # Convert user_id string to ObjectId
+                    user_obj_id = ObjectId(user['_id'])
+                    
+                    # Build the update document with ALL keys from mock_data
+                    # This ensures we save everything: loans, analytics, insights, etc.
+                    update_doc = {
+                        "user_id": user_obj_id
+                    }
+                    
+                    # Save all keys from financial_data - don't miss any!
+                    for key, value in mock_data.items():
+                        if value is not None:  # Only save non-None values
+                            update_doc[key] = value
+                    
+                    # Map analytics to financial_health_metrics if analytics exists but financial_health_metrics doesn't
+                    # (some code expects financial_health_metrics, but mock_data has analytics)
+                    if 'analytics' in mock_data and 'financial_health_metrics' not in mock_data:
+                        # Convert analytics structure to financial_health_metrics format
+                        analytics = mock_data.get('analytics', {})
+                        update_doc['financial_health_metrics'] = {
+                            'monthly_trends': analytics.get('monthly_trends', []),
+                            'expense_categories': analytics.get('expense_categories', [])
+                        }
+                    
+                    # Also include last_updated from the root level if it exists
+                    if 'last_updated' in mock_data_file:
+                        update_doc['last_updated'] = mock_data_file.get('last_updated')
+                    
+                    # Save all mock data
+                    finance_model.collection.update_one(
+                        {"user_id": user_obj_id},
+                        {"$set": update_doc},
+                        upsert=True
+                    )
+                    saved_keys = list(mock_data.keys())
+                    print(f"✅ Saved mock financial data for new user: {user['email']}")
+                    print(f"   Saved keys: {', '.join(saved_keys)}")
+            except Exception as e:
+                print(f"⚠️ Warning: Could not save mock data for new user: {e}")
+                import traceback
+                traceback.print_exc()
+                # Don't fail signup if mock data saving fails
             
             # Generate token
             token = encode_token(user['_id'], user['email'])

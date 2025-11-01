@@ -472,6 +472,69 @@
         </div>
     </div>
 
+    <!-- Create Graph Modal -->
+    <div id="createGraphModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-magic"></i> Create AI-Generated Graph</h3>
+                <button class="modal-close" onclick="closeModal('createGraphModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createGraphForm">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-comment-alt"></i> Describe the graph you want to create
+                            <button type="button" class="btn btn-sm btn-secondary" style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="enhancePrompt()" title="Let AI enhance your prompt for better results">
+                                <i class="fas fa-magic"></i> Enhance Prompt
+                            </button>
+                        </label>
+                        <textarea 
+                            class="form-control" 
+                            id="graphDescription" 
+                            placeholder="e.g., Show me a line chart of my monthly expenses over the last 6 months, or a pie chart of my asset distribution, or a bar chart comparing my savings vs investments..."
+                            rows="4"
+                            required
+                        ></textarea>
+                        <small style="color: var(--text-tertiary); font-size: 0.875rem; margin-top: 0.25rem; display: block;">
+                            Be as specific as you want! Our AI will analyze your financial data and create the perfect visualization. Click "Enhance Prompt" to let AI improve your description.
+                        </small>
+                    </div>
+                    <div id="graphPreviewContainer" style="display: none; margin-top: 1.5rem;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4>Preview</h4>
+                            </div>
+                            <div class="card-body">
+                                <div style="position: relative; height: 300px;">
+                                    <canvas id="graphPreviewCanvas"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="graphGenerateStatus" style="margin-top: 1rem; display: none;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--accent-primary);">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Generating your graph with AI...</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('createGraphModal')" style="flex: 1;">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" id="generateGraphBtn" style="flex: 1;" onclick="generateGraphWithAI(event)">
+                            <i class="fas fa-magic"></i> Generate Graph
+                        </button>
+                        <button type="button" class="btn btn-success" id="saveGraphBtn" style="flex: 1; display: none;" onclick="saveCustomGraph()">
+                            <i class="fas fa-save"></i> Save Graph
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Delete Goal Confirmation Modal -->
     <div id="deleteGoalModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 500px;">
@@ -1152,6 +1215,25 @@
                                 <div id="periodAnalysis">
                                     <p style="color: var(--text-tertiary);">Select a time period to view analysis</p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Graphs Section -->
+                    <div class="card fade-in mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-magic"></i> AI-Generated Custom Graphs</h3>
+                            <div class="card-actions">
+                                <button class="btn btn-primary" onclick="openCreateGraphModal()">
+                                    <i class="fas fa-plus"></i> Create New Graph
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="customGraphsContainer" class="grid grid-cols-2" style="gap: 1rem;">
+                                <p style="color: var(--text-tertiary); grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                                    No custom graphs yet. Click "Create New Graph" to generate your first AI-powered visualization!
+                                </p>
                             </div>
                         </div>
                     </div>
