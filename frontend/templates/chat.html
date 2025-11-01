@@ -221,7 +221,7 @@
                                 </div>
                             </div>
 
-                            <form id="chatForm">
+                            <form id="chatForm" style="display: flex; gap: 0.875rem; align-items: flex-end;">
                                 <div class="chat-input-wrapper">
                                     <textarea 
                                         class="chat-input" 
@@ -230,12 +230,41 @@
                                         required
                                         rows="1"
                                     ></textarea>
+                                    <!-- Language selector (hidden native select for compatibility) -->
+                                    <select id="langSelect" class="chat-lang-select" title="Language" style="display: none;">
+                                        <option value="en-US">English (US)</option>
+                                        <option value="en-GB">English (UK)</option>
+                                        <option value="hi-IN">Hindi (IN)</option>
+                                        <option value="es-ES">Spanish (ES)</option>
+                                        <option value="fr-FR">French (FR)</option>
+                                        <option value="de-DE">German (DE)</option>
+                                    </select>
+                                    <button type="button" class="chat-mic-btn" id="recordBtn" title="Voice input">
+                                        <i class="fas fa-microphone"></i>
+                                    </button>
                                     <button type="submit" class="chat-send-btn" id="sendBtn">
                                         <i class="fas fa-arrow-up"></i>
                                     </button>
                                     <button type="button" class="chat-stop-btn" id="stopBtn" title="Stop generating" style="display: none;">
                                         <i class="fas fa-stop"></i>
                                     </button>
+                                </div>
+                                <!-- Language button moved beside the prompt input -->
+                                <button type="button" class="chat-lang-btn" id="langBtn" title="Language">
+                                    <i class="fas fa-globe"></i>
+                                </button>
+                                <div id="langCard" class="lang-card" style="display: none;">
+                                    <div class="lang-card-header">
+                                        <i class="fas fa-globe"></i> Language
+                                    </div>
+                                    <div class="lang-options">
+                                        <button type="button" class="lang-option" data-lang="en-US">🇺🇸 English (US)</button>
+                                        <button type="button" class="lang-option" data-lang="en-GB">🇬🇧 English (UK)</button>
+                                        <button type="button" class="lang-option" data-lang="hi-IN">🇮🇳 हिन्दी (IN)</button>
+                                        <button type="button" class="lang-option" data-lang="es-ES">🇪🇸 Español (ES)</button>
+                                        <button type="button" class="lang-option" data-lang="fr-FR">🇫🇷 Français (FR)</button>
+                                        <button type="button" class="lang-option" data-lang="de-DE">🇩🇪 Deutsch (DE)</button>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -341,16 +370,164 @@
             }
         });
 
-        // Press Enter to send (Shift+Enter for new line)
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                const form = document.getElementById('chatForm');
-                if (form) {
-                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            // Press Enter to send (Shift+Enter for new line)
+            messageInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    const form = document.getElementById('chatForm');
+                    if (form) {
+                        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    }
                 }
-            }
-        });
+            });
+
+            // Voice input (Web Speech API)
+            (function setupVoiceInput(){
+                const recordBtn = document.getElementById('recordBtn');
+                const langSelect = document.getElementById('langSelect');
+                const langBtn = document.getElementById('langBtn');
+                const langCard = document.getElementById('langCard');
+                if (!recordBtn || !langSelect || !langBtn || !langCard) return;
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    recordBtn && (recordBtn.style.display = 'none');
+                    return;
+                }
+                const recognition = new SpeechRecognition();
+                const getLang = () => (localStorage.getItem('chat_lang') || langSelect.value || 'en-US');
+                recognition.lang = getLang();
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                // Persist language selection
+                const savedLang = localStorage.getItem('chat_lang');
+                if (savedLang) langSelect.value = savedLang;
+                // Initialize active option
+                document.querySelectorAll('#langCard .lang-option').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.lang === (savedLang || langSelect.value));
+                });
+                function setLanguage(lang) {
+                    localStorage.setItem('chat_lang', lang);
+                    langSelect.value = lang;
+                    recognition.lang = lang;
+                    document.querySelectorAll('#langCard .lang-option').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.lang === lang);
+                    });
+                    langCard.style.display = 'none';
+                }
+
+                function positionLangCard() {
+                    try {
+                        const rect = langBtn.getBoundingClientRect();
+                        // Ensure card is attached to body for z-index/overflow safety
+                        if (!document.body.contains(langCard)) {
+                            document.body.appendChild(langCard);
+                        }
+                        // Temporarily show to measure
+                        const prevDisplay = langCard.style.display;
+                        const prevVisibility = langCard.style.visibility;
+                        langCard.style.visibility = 'hidden';
+                        langCard.style.display = 'block';
+                        const cardW = langCard.offsetWidth || 260;
+                        const cardH = langCard.offsetHeight || 280;
+                        // Prefer above the button
+                        let top = rect.top - cardH - 8;
+                        let placeAbove = true;
+                        if (top < 8) { top = rect.bottom + 8; placeAbove = false; }
+                        let left = Math.min(window.innerWidth - cardW - 8, Math.max(8, rect.right - cardW));
+                        // If too far left, align to left edge of button
+                        if (left + cardW > window.innerWidth - 8) left = window.innerWidth - cardW - 8;
+                        if (left < 8) left = 8;
+                        langCard.style.top = `${Math.round(top)}px`;
+                        langCard.style.left = `${Math.round(left)}px`;
+                        langCard.style.zIndex = '10010';
+                        langCard.style.visibility = prevVisibility || 'visible';
+                        langCard.style.display = prevDisplay === 'none' ? 'block' : prevDisplay;
+                    } catch (_) {}
+                }
+
+                langBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const open = (langCard.style.display === 'none' || !langCard.style.display);
+                    if (open) {
+                        // Attach to body and position near the button
+                        if (!document.body.contains(langCard)) document.body.appendChild(langCard);
+                        langCard.style.display = 'block';
+                        positionLangCard();
+                    } else {
+                        langCard.style.display = 'none';
+                    }
+                });
+                document.addEventListener('click', (e) => {
+                    if (!langCard.contains(e.target) && !langBtn.contains(e.target)) {
+                        langCard.style.display = 'none';
+                    }
+                });
+                window.addEventListener('resize', () => {
+                    if (langCard.style.display === 'block') positionLangCard();
+                });
+                window.addEventListener('scroll', () => {
+                    if (langCard.style.display === 'block') positionLangCard();
+                }, true);
+                document.querySelectorAll('#langCard .lang-option').forEach(btn => {
+                    btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+                });
+
+                let listening = false;
+                const setListening = (on) => {
+                    listening = on;
+                    recordBtn.classList.toggle('listening', on);
+                    recordBtn.title = on ? 'Listening... click to stop' : 'Voice input';
+                    recordBtn.innerHTML = on ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
+                };
+
+                recordBtn.addEventListener('click', () => {
+                    try {
+                        recognition.lang = getLang();
+                        if (!listening) { recognition.start(); setListening(true); }
+                        else { recognition.stop(); setListening(false); }
+                    } catch (e) { console.error(e); setListening(false); }
+                });
+
+                recognition.addEventListener('result', (event) => {
+                    const transcript = Array.from(event.results).map(r => r[0].transcript).join(' ');
+                    if (transcript) {
+                        messageInput.value = transcript.trim();
+                        messageInput.dispatchEvent(new Event('input'));
+                        // Auto-submit
+                        document.getElementById('chatForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    }
+                });
+                recognition.addEventListener('error', (e) => { console.warn('Speech recognition error', e); setListening(false); });
+                recognition.addEventListener('end', () => { setListening(false); });
+            })();
+
+            // Text-to-Speech for AI responses (simple version)
+            (function setupTTS(){
+                let ttsVoices = [];
+                function loadVoices(){
+                    try { ttsVoices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; } catch(e) {}
+                }
+                if ('speechSynthesis' in window) {
+                    loadVoices();
+                    window.speechSynthesis.onvoiceschanged = loadVoices;
+                }
+                window.speakText = function(text){
+                    try {
+                        if (!('speechSynthesis' in window)) { return; }
+                        window.speechSynthesis.cancel();
+                        const langSel = document.getElementById('langSelect');
+                        const lang = (localStorage.getItem('chat_lang') || (langSel && langSel.value) || navigator.language || 'en-US');
+                        const utter = new SpeechSynthesisUtterance(String(text || '').replace(/<[^>]*>/g, ''));
+                        utter.lang = lang;
+                        const base = lang.split('-')[0].toLowerCase();
+                        const voice = (ttsVoices || []).find(v => v.lang && (v.lang.toLowerCase() === lang.toLowerCase() || v.lang.toLowerCase().startsWith(base)));
+                        if (voice) utter.voice = voice;
+                        utter.rate = 1; utter.pitch = 1;
+                        speechSynthesis.speak(utter);
+                    } catch (e) { console.error(e); }
+                }
+            })();
 
         function sendQuickMessage(message) {
             // Hide suggestions immediately
@@ -875,12 +1052,19 @@ toast.success('Export ready');
             const copyBtn = document.createElement('button');
             copyBtn.className = 'message-action-btn';
             copyBtn.title = 'Copy';
-            copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
             copyBtn.onclick = () => copyToClipboard(text.replace(/`/g, '\\`').replace(/\$/g, '\\$').replace(/\\/g, '\\\\'));
             
             actions.appendChild(copyBtn);
             
             if (!isUser) {
+                const listenBtn = document.createElement('button');
+                listenBtn.className = 'message-action-btn';
+                listenBtn.title = 'Listen';
+                listenBtn.innerHTML = '<i class="fas fa-volume-up"></i> Listen';
+                listenBtn.onclick = () => speakText(text);
+                actions.appendChild(listenBtn);
+                
                 const likeBtn = document.createElement('button');
                 likeBtn.className = 'message-action-btn';
                 likeBtn.title = 'Good response';

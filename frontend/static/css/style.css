@@ -208,7 +208,11 @@ body::before {
     flex-direction: column;
     overflow: hidden;
 }
-
+#chatForm{
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
 .sidebar-header {
     padding: 1.25rem 1.5rem;
     border-bottom: 1px solid var(--border-primary);
