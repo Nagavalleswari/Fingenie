@@ -25,7 +25,11 @@
         <!-- Sidebar Menu -->
         <div class="sidebar-menu">
             <div class="menu-section">
-                <div class="menu-section-title">Main</div>
+                <div class="menu-section-title">Navigation</div>
+                <a href="/" class="menu-item">
+                    <div class="menu-item-icon"><i class="fas fa-home"></i></div>
+                    <span class="menu-item-text">Home</span>
+                </a>
                 <a href="#" class="menu-item active" onclick="showPage('dashboard', event)">
                     <div class="menu-item-icon"><i class="fas fa-chart-line"></i></div>
                     <span class="menu-item-text">Dashboard</span>
@@ -86,6 +90,26 @@
                 <a href="#settings" class="menu-item" onclick="showPage('settings', event)">
                     <div class="menu-item-icon"><i class="fas fa-cog"></i></div>
                     <span class="menu-item-text">Settings</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-section-title">More</div>
+                <a href="#about" class="menu-item" onclick="showPage('about', event)">
+                    <div class="menu-item-icon"><i class="fas fa-info-circle"></i></div>
+                    <span class="menu-item-text">About</span>
+                </a>
+                <a href="#help" class="menu-item" onclick="showPage('help', event)">
+                    <div class="menu-item-icon"><i class="fas fa-question-circle"></i></div>
+                    <span class="menu-item-text">Help & Support</span>
+                </a>
+                <a href="#privacy" class="menu-item" onclick="showPage('privacy', event)">
+                    <div class="menu-item-icon"><i class="fas fa-shield-alt"></i></div>
+                    <span class="menu-item-text">Privacy</span>
+                </a>
+                <a href="#terms" class="menu-item" onclick="showPage('terms', event)">
+                    <div class="menu-item-icon"><i class="fas fa-file-contract"></i></div>
+                    <span class="menu-item-text">Terms of Service</span>
                 </a>
             </div>
         </div>
@@ -1117,7 +1141,11 @@
                 'reports': { title: 'Financial Reports', subtitle: 'Generate detailed financial reports' },
                 'insights': { title: 'Financial Insights', subtitle: 'AI-powered financial recommendations' },
                 'profile': { title: 'User Profile', subtitle: 'Manage your account information' },
-                'settings': { title: 'Settings', subtitle: 'Customize your FinGenie experience' }
+                'settings': { title: 'Settings', subtitle: 'Customize your FinGenie experience' },
+                'about': { title: 'About FinGenie', subtitle: 'Learn more about your AI-powered finance assistant' },
+                'help': { title: 'Help & Support', subtitle: 'Get help and find answers to common questions' },
+                'privacy': { title: 'Privacy Policy', subtitle: 'How we protect and handle your data' },
+                'terms': { title: 'Terms of Service', subtitle: 'Terms and conditions for using FinGenie' }
             };
 
             // Sync URL hash without page reload
@@ -2296,13 +2324,297 @@
                         <div class="card-body">
                             <p><strong>Version:</strong> 1.0.0</p>
                             <p style="color: var(--text-tertiary); margin-top: 1rem;">
-                                FinGenie is your AI-powered personal finance assistant helping you manage your finances, 
+                                FinGenie is your AI-powered personal finance assistant helping you manage your finances,
                                 track goals, and make informed financial decisions.
                             </p>
                             <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-                                <a href="#" style="color: var(--accent-primary);"><i class="fas fa-question-circle"></i> Help & Support</a>
-                                <a href="#" style="color: var(--accent-primary);"><i class="fas fa-file-alt"></i> Terms of Service</a>
-                                <a href="#" style="color: var(--accent-primary);"><i class="fas fa-lock"></i> Privacy Policy</a>
+                                <a href="#help" onclick="showPage('help', event); return false;" style="color: var(--accent-primary);"><i class="fas fa-question-circle"></i> Help & Support</a>
+                                <a href="#terms" onclick="showPage('terms', event); return false;" style="color: var(--accent-primary);"><i class="fas fa-file-alt"></i> Terms of Service</a>
+                                <a href="#privacy" onclick="showPage('privacy', event); return false;" style="color: var(--accent-primary);"><i class="fas fa-lock"></i> Privacy Policy</a>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'about': `
+                    <!-- About FinGenie -->
+                    <div class="card fade-in mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-info-circle"></i> About FinGenie</h3>
+                        </div>
+                        <div class="card-body" style="line-height: 1.8;">
+                            <div style="text-align: center; margin-bottom: 2rem;">
+                                <div style="width: 120px; height: 120px; margin: 0 auto 1.5rem; background: var(--gradient-hero); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 4rem; box-shadow: var(--shadow-glow-cyan);">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                                <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">FinGenie</h2>
+                                <p style="color: var(--text-tertiary); font-size: 1.125rem;">Your AI-Powered Personal Finance Assistant</p>
+                                <p style="margin-top: 0.5rem;"><strong>Version:</strong> 1.0.0</p>
+                            </div>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Mission</h4>
+                            <p style="color: var(--text-secondary);">
+                                FinGenie is designed to help individuals take control of their financial future through intelligent automation,
+                                insightful analytics, and personalized guidance. We believe everyone deserves access to powerful financial tools.
+                            </p>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Features</h4>
+                            <ul style="color: var(--text-secondary); padding-left: 1.5rem;">
+                                <li>AI-powered financial insights and recommendations</li>
+                                <li>Real-time budget tracking and expense management</li>
+                                <li>Investment portfolio analysis and optimization</li>
+                                <li>Goal setting and progress monitoring</li>
+                                <li>Comprehensive financial reports and analytics</li>
+                                <li>Secure, encrypted data storage</li>
+                            </ul>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Technology</h4>
+                            <p style="color: var(--text-secondary);">
+                                Built with cutting-edge AI technology and modern web frameworks to provide a fast,
+                                secure, and intuitive experience across all devices.
+                            </p>
+
+                            <div style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border-primary); display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                                <a href="#help" onclick="showPage('help', event); return false;" class="btn btn-primary">
+                                    <i class="fas fa-question-circle"></i> Help & Support
+                                </a>
+                                <a href="#terms" onclick="showPage('terms', event); return false;" class="btn btn-secondary">
+                                    <i class="fas fa-file-contract"></i> Terms of Service
+                                </a>
+                                <a href="#privacy" onclick="showPage('privacy', event); return false;" class="btn btn-secondary">
+                                    <i class="fas fa-shield-alt"></i> Privacy Policy
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'help': `
+                    <!-- Help & Support -->
+                    <div class="card fade-in mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-question-circle"></i> Help & Support</h3>
+                        </div>
+                        <div class="card-body" style="line-height: 1.8;">
+                            <h4 style="color: var(--accent-cyan); margin-bottom: 1.5rem; font-size: 1.25rem;">Frequently Asked Questions</h4>
+
+                            <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); border: 1px solid var(--border-primary);">
+                                <h5 style="color: var(--text-primary); margin-bottom: 0.75rem; font-weight: 600;"><i class="fas fa-chevron-right" style="color: var(--accent-cyan);"></i> How do I get started with FinGenie?</h5>
+                                <p style="color: var(--text-secondary); margin-left: 1.5rem;">
+                                    Simply enter your financial data in the Dashboard, set your goals, and let our AI analyze your finances.
+                                    You'll receive personalized insights and recommendations within minutes.
+                                </p>
+                            </div>
+
+                            <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); border: 1px solid var(--border-primary);">
+                                <h5 style="color: var(--text-primary); margin-bottom: 0.75rem; font-weight: 600;"><i class="fas fa-chevron-right" style="color: var(--accent-cyan);"></i> Is my financial data secure?</h5>
+                                <p style="color: var(--text-secondary); margin-left: 1.5rem;">
+                                    Absolutely. We use bank-level encryption to protect your data. All information is encrypted at rest and in transit.
+                                    We never share your data with third parties without your explicit consent.
+                                </p>
+                            </div>
+
+                            <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); border: 1px solid var(--border-primary);">
+                                <h5 style="color: var(--text-primary); margin-bottom: 0.75rem; font-weight: 600;"><i class="fas fa-chevron-right" style="color: var(--accent-cyan);"></i> How does the AI Assistant work?</h5>
+                                <p style="color: var(--text-secondary); margin-left: 1.5rem;">
+                                    Our AI Assistant analyzes your financial data, spending patterns, and goals to provide personalized advice.
+                                    You can ask questions about budgeting, investments, or any financial topic, and receive intelligent recommendations.
+                                </p>
+                            </div>
+
+                            <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); border: 1px solid var(--border-primary);">
+                                <h5 style="color: var(--text-primary); margin-bottom: 0.75rem; font-weight: 600;"><i class="fas fa-chevron-right" style="color: var(--accent-cyan);"></i> Can I export my data?</h5>
+                                <p style="color: var(--text-secondary); margin-left: 1.5rem;">
+                                    Yes! You can export all your financial data at any time from the Settings page.
+                                    Your data is always yours, and you have full control over it.
+                                </p>
+                            </div>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2.5rem 0 1.5rem 0; font-size: 1.25rem;">Contact Support</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                                Can't find what you're looking for? Our support team is here to help!
+                            </p>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                                <div style="padding: 1.5rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); border: 1px solid var(--border-primary); text-align: center;">
+                                    <div style="font-size: 2.5rem; color: var(--accent-cyan); margin-bottom: 1rem;">
+                                        <i class="fas fa-envelope"></i>
+                                    </div>
+                                    <h5 style="margin-bottom: 0.5rem;">Email Support</h5>
+                                    <p style="color: var(--text-tertiary); font-size: 0.875rem; margin-bottom: 1rem;">We'll respond within 24 hours</p>
+                                    <a href="mailto:support@fingenie.com" style="color: var(--accent-cyan);">support@fingenie.com</a>
+                                </div>
+
+                                <div style="padding: 1.5rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); border: 1px solid var(--border-primary); text-align: center;">
+                                    <div style="font-size: 2.5rem; color: var(--accent-cyan); margin-bottom: 1rem;">
+                                        <i class="fas fa-comments"></i>
+                                    </div>
+                                    <h5 style="margin-bottom: 0.5rem;">AI Assistant</h5>
+                                    <p style="color: var(--text-tertiary); font-size: 0.875rem; margin-bottom: 1rem;">Get instant help 24/7</p>
+                                    <a href="/chat" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fas fa-robot"></i> Chat Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'privacy': `
+                    <!-- Privacy Policy -->
+                    <div class="card fade-in mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-shield-alt"></i> Privacy Policy</h3>
+                        </div>
+                        <div class="card-body" style="line-height: 1.8;">
+                            <p style="color: var(--text-tertiary); margin-bottom: 2rem; font-style: italic;">
+                                Last updated: January 2025
+                            </p>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Introduction</h4>
+                            <p style="color: var(--text-secondary);">
+                                FinGenie ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect,
+                                use, disclose, and safeguard your information when you use our application.
+                            </p>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Information We Collect</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem;">We collect information that you provide directly to us:</p>
+                            <ul style="color: var(--text-secondary); padding-left: 1.5rem; margin-bottom: 1.5rem;">
+                                <li><strong>Account Information:</strong> Name, email address, and password</li>
+                                <li><strong>Financial Data:</strong> Income, expenses, assets, liabilities, and goals you choose to enter</li>
+                                <li><strong>Usage Data:</strong> How you interact with our services</li>
+                                <li><strong>Device Information:</strong> Browser type, IP address, and device identifiers</li>
+                            </ul>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">How We Use Your Information</h4>
+                            <ul style="color: var(--text-secondary); padding-left: 1.5rem; margin-bottom: 1.5rem;">
+                                <li>Provide, maintain, and improve our services</li>
+                                <li>Personalize your experience and provide tailored recommendations</li>
+                                <li>Send you technical notices and support messages</li>
+                                <li>Respond to your comments and questions</li>
+                                <li>Monitor and analyze trends and usage</li>
+                                <li>Detect and prevent fraud and abuse</li>
+                            </ul>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Data Security</h4>
+                            <p style="color: var(--text-secondary);">
+                                We implement industry-standard security measures to protect your personal information:
+                            </p>
+                            <ul style="color: var(--text-secondary); padding-left: 1.5rem; margin-bottom: 1.5rem;">
+                                <li><strong>Encryption:</strong> All data is encrypted in transit (TLS/SSL) and at rest (AES-256)</li>
+                                <li><strong>Access Controls:</strong> Strict internal access policies and authentication requirements</li>
+                                <li><strong>Regular Audits:</strong> Security assessments and vulnerability testing</li>
+                                <li><strong>Secure Infrastructure:</strong> Hosted on secure, monitored servers</li>
+                            </ul>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Data Sharing</h4>
+                            <p style="color: var(--text-secondary);">
+                                We do not sell, trade, or rent your personal information to third parties. We may share information only in these limited circumstances:
+                            </p>
+                            <ul style="color: var(--text-secondary); padding-left: 1.5rem; margin-bottom: 1.5rem;">
+                                <li>With your explicit consent</li>
+                                <li>To comply with legal obligations</li>
+                                <li>To protect our rights, privacy, safety, or property</li>
+                                <li>With service providers who assist in our operations (under strict confidentiality agreements)</li>
+                            </ul>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Your Rights</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem;">You have the right to:</p>
+                            <ul style="color: var(--text-secondary); padding-left: 1.5rem; margin-bottom: 1.5rem;">
+                                <li>Access and receive a copy of your personal data</li>
+                                <li>Correct inaccurate or incomplete data</li>
+                                <li>Delete your account and associated data</li>
+                                <li>Object to or restrict certain processing</li>
+                                <li>Export your data in a portable format</li>
+                            </ul>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Contact Us</h4>
+                            <p style="color: var(--text-secondary);">
+                                If you have questions about this Privacy Policy, please contact us at:
+                                <a href="mailto:privacy@fingenie.com" style="color: var(--accent-cyan); margin-left: 0.5rem;">privacy@fingenie.com</a>
+                            </p>
+                        </div>
+                    </div>
+                `,
+                'terms': `
+                    <!-- Terms of Service -->
+                    <div class="card fade-in mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-file-contract"></i> Terms of Service</h3>
+                        </div>
+                        <div class="card-body" style="line-height: 1.8;">
+                            <p style="color: var(--text-tertiary); margin-bottom: 2rem; font-style: italic;">
+                                Last updated: January 2025
+                            </p>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Acceptance of Terms</h4>
+                            <p style="color: var(--text-secondary);">
+                                By accessing or using FinGenie, you agree to be bound by these Terms of Service. If you do not agree to these terms,
+                                please do not use our service.
+                            </p>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Description of Service</h4>
+                            <p style="color: var(--text-secondary);">
+                                FinGenie provides AI-powered personal finance management tools, including budget tracking, investment analysis,
+                                goal setting, and financial insights. Our service is designed to help you make informed financial decisions.
+                            </p>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">User Responsibilities</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem;">You agree to:</p>
+                            <ul style="color: var(--text-secondary); padding-left: 1.5rem; margin-bottom: 1.5rem;">
+                                <li>Provide accurate and complete information</li>
+                                <li>Maintain the security of your account credentials</li>
+                                <li>Use the service only for lawful purposes</li>
+                                <li>Not attempt to gain unauthorized access to our systems</li>
+                                <li>Not use the service to transmit harmful code or content</li>
+                                <li>Respect the intellectual property rights of FinGenie and others</li>
+                            </ul>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Disclaimer of Warranties</h4>
+                            <div style="padding: 1.5rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); border-left: 4px solid var(--warning); margin: 1.5rem 0;">
+                                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                                    <strong>IMPORTANT:</strong> FinGenie is a financial management tool, not a professional financial advisor.
+                                    The insights and recommendations provided are for informational purposes only.
+                                </p>
+                                <ul style="color: var(--text-secondary); padding-left: 1.5rem;">
+                                    <li>Our AI provides suggestions based on patterns and data analysis</li>
+                                    <li>We do not provide personalized financial, investment, or legal advice</li>
+                                    <li>You should consult with qualified professionals for specific financial decisions</li>
+                                    <li>Past performance does not guarantee future results</li>
+                                </ul>
+                            </div>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Limitation of Liability</h4>
+                            <p style="color: var(--text-secondary);">
+                                To the fullest extent permitted by law, FinGenie shall not be liable for any indirect, incidental, special,
+                                consequential, or punitive damages resulting from your use of or inability to use the service.
+                            </p>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Account Termination</h4>
+                            <p style="color: var(--text-secondary);">
+                                You may terminate your account at any time through the Settings page. We reserve the right to suspend or
+                                terminate accounts that violate these terms.
+                            </p>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Changes to Terms</h4>
+                            <p style="color: var(--text-secondary);">
+                                We may update these Terms of Service from time to time. We will notify you of any material changes by posting
+                                the new terms and updating the "Last updated" date.
+                            </p>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Governing Law</h4>
+                            <p style="color: var(--text-secondary);">
+                                These terms shall be governed by and construed in accordance with applicable laws, without regard to
+                                conflict of law provisions.
+                            </p>
+
+                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Contact Information</h4>
+                            <p style="color: var(--text-secondary);">
+                                For questions about these Terms of Service, contact us at:
+                                <a href="mailto:legal@fingenie.com" style="color: var(--accent-cyan); margin-left: 0.5rem;">legal@fingenie.com</a>
+                            </p>
+
+                            <div style="margin-top: 2.5rem; padding: 1.5rem; background: var(--bg-tertiary); border-radius: var(--radius-lg); border: 1px solid var(--border-primary); text-align: center;">
+                                <p style="color: var(--text-secondary);">
+                                    By continuing to use FinGenie, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+                                </p>
                             </div>
                         </div>
                     </div>

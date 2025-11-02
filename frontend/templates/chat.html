@@ -22,7 +22,11 @@
 
         <div class="sidebar-menu">
             <div class="menu-section">
-                <div class="menu-section-title">Main</div>
+                <div class="menu-section-title">Navigation</div>
+                <a href="/" class="menu-item">
+                    <div class="menu-item-icon"><i class="fas fa-home"></i></div>
+                    <span class="menu-item-text">Home</span>
+                </a>
                 <a href="/dashboard" class="menu-item" onclick="if (event) event.preventDefault(); window.location.href='/dashboard'">
                     <div class="menu-item-icon"><i class="fas fa-chart-line"></i></div>
                     <span class="menu-item-text">Dashboard</span>
@@ -83,6 +87,26 @@
                 <a href="#settings" class="menu-item" onclick="showPage('settings', event)">
                     <div class="menu-item-icon"><i class="fas fa-cog"></i></div>
                     <span class="menu-item-text">Settings</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-section-title">More</div>
+                <a href="#about" class="menu-item" onclick="showPage('about', event)">
+                    <div class="menu-item-icon"><i class="fas fa-info-circle"></i></div>
+                    <span class="menu-item-text">About</span>
+                </a>
+                <a href="#help" class="menu-item" onclick="showPage('help', event)">
+                    <div class="menu-item-icon"><i class="fas fa-question-circle"></i></div>
+                    <span class="menu-item-text">Help & Support</span>
+                </a>
+                <a href="#privacy" class="menu-item" onclick="showPage('privacy', event)">
+                    <div class="menu-item-icon"><i class="fas fa-shield-alt"></i></div>
+                    <span class="menu-item-text">Privacy</span>
+                </a>
+                <a href="#terms" class="menu-item" onclick="showPage('terms', event)">
+                    <div class="menu-item-icon"><i class="fas fa-file-contract"></i></div>
+                    <span class="menu-item-text">Terms of Service</span>
                 </a>
             </div>
         </div>
