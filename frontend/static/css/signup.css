@@ -22,13 +22,13 @@ body::before {
                 radial-gradient(at 100% 0%, rgba(132, 204, 22, 0.25) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.25) 0px, transparent 50%),
                 radial-gradient(at 0% 100%, rgba(34, 211, 238, 0.25) 0px, transparent 50%);
-    opacity: 0.4;
-    animation: meshRotate 25s ease-in-out infinite;
+    opacity: 0.25;
+    animation: meshRotate 30s ease-in-out infinite;
 }
 
 @keyframes meshRotate {
     0%, 100% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(180deg) scale(1.1); }
+    50% { transform: rotate(90deg) scale(1.05); }
 }
 
 .signup-container {
@@ -42,13 +42,11 @@ body::before {
 @keyframes containerEnter {
     from {
         opacity: 0;
-        transform: scale(0.9) translateY(30px);
-        filter: blur(10px);
+        transform: translateY(20px);
     }
     to {
         opacity: 1;
-        transform: scale(1) translateY(0);
-        filter: blur(0);
+        transform: translateY(0);
     }
 }
 
@@ -114,40 +112,20 @@ body::before {
     height: 100%;
     border-radius: 50%;
     background: var(--gradient-success);
-    opacity: 0.4;
-    animation: pulseRing 3s ease-out infinite;
-}
-
-.signup-logo::after {
-    content: '';
-    position: absolute;
-    width: 120%;
-    height: 120%;
-    border-radius: 50%;
-    border: 2px solid var(--accent-emerald);
-    opacity: 0;
-    animation: pulseRing 3s ease-out infinite 1s;
+    opacity: 0.2;
+    filter: blur(12px);
+    z-index: -1;
 }
 
 @keyframes logoFloat {
     0%, 100% {
-        transform: translateY(0) rotate(0deg);
+        transform: translateY(0);
     }
     50% {
-        transform: translateY(-10px) rotate(5deg);
+        transform: translateY(-5px);
     }
 }
 
-@keyframes pulseRing {
-    0% {
-        transform: scale(0.8);
-        opacity: 0.6;
-    }
-    100% {
-        transform: scale(1.5);
-        opacity: 0;
-    }
-}
 
 .signup-title {
     font-size: 2.5rem;
@@ -268,8 +246,8 @@ body::before {
 }
 
 .signup-btn:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 15px 50px rgba(16, 185, 129, 0.6), var(--shadow-glow-green);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(45, 157, 124, 0.35);
 }
 
 .signup-btn:active {
@@ -363,10 +341,10 @@ body::before {
 
 .back-home:hover {
     color: var(--accent-emerald);
-    transform: translateX(-6px);
-    background: rgba(16, 185, 129, 0.1);
-    border-color: rgba(16, 185, 129, 0.4);
-    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+    transform: translateX(-4px);
+    background: rgba(45, 157, 124, 0.08);
+    border-color: rgba(45, 157, 124, 0.3);
+    box-shadow: 0 4px 16px rgba(45, 157, 124, 0.15);
 }
 
 @media (max-width: 576px) {

@@ -17,14 +17,14 @@
     right: 0;
     bottom: 0;
     background: var(--gradient-mesh);
-    opacity: 0.3;
+    opacity: 0.2;
     pointer-events: none;
     animation: meshRotate 30s ease-in-out infinite;
 }
 
 @keyframes meshRotate {
     0%, 100% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(180deg) scale(1.1); }
+    50% { transform: rotate(90deg) scale(1.05); }
 }
 
 /* Chat Sidebar */
@@ -96,8 +96,8 @@
 
 .new-chat-btn:hover,
 .new-chat-btn1:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 48px rgba(34, 211, 238, 0.6), var(--shadow-glow-cyan);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(61, 154, 255, 0.35);
 }
 
 .new-chat-btn:active,
