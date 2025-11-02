@@ -23,7 +23,7 @@
         <div class="sidebar-menu">
             <div class="menu-section">
                 <div class="menu-section-title">Main</div>
-                <a href="/dashboard" class="menu-item">
+                <a href="/dashboard" class="menu-item" onclick="if (event) event.preventDefault(); window.location.href='/dashboard'">
                     <div class="menu-item-icon"><i class="fas fa-chart-line"></i></div>
                     <span class="menu-item-text">Dashboard</span>
                 </a>
@@ -32,7 +32,7 @@
                     <span class="menu-item-text">AI Assistant</span>
                     <span class="menu-item-badge">New</span>
                 </a>
-                <a href="/dashboard" class="menu-item" onclick="event.preventDefault(); window.location.href='/dashboard';">
+                <a href="#analytics" class="menu-item" onclick="showPage('analytics', event)">
                     <div class="menu-item-icon"><i class="fas fa-chart-bar"></i></div>
                     <span class="menu-item-text">Analytics</span>
                 </a>
@@ -40,35 +40,35 @@
 
             <div class="menu-section">
                 <div class="menu-section-title">Finance</div>
-                <a href="/dashboard" class="menu-item" onclick="event.preventDefault(); window.location.href='/dashboard';">
+                <a href="#budget" class="menu-item" onclick="showPage('budget', event)">
                     <div class="menu-item-icon"><i class="fas fa-wallet"></i></div>
                     <span class="menu-item-text">Budget</span>
                 </a>
-                <a href="/dashboard" class="menu-item" onclick="event.preventDefault(); window.location.href='/dashboard';">
+                <a href="#investments" class="menu-item" onclick="showPage('investments', event)">
                     <div class="menu-item-icon"><i class="fas fa-chart-pie"></i></div>
                     <span class="menu-item-text">Investments</span>
                 </a>
-                <a href="/dashboard" class="menu-item" onclick="event.preventDefault(); window.location.href='/dashboard';">
+                <a href="#transactions" class="menu-item" onclick="showPage('transactions', event)">
                     <div class="menu-item-icon"><i class="fas fa-exchange-alt"></i></div>
                     <span class="menu-item-text">Transactions</span>
                 </a>
-                <a href="/dashboard" class="menu-item" onclick="event.preventDefault(); window.location.href='/dashboard';">
+                <a href="#goals" class="menu-item" onclick="showPage('goals', event)">
                     <div class="menu-item-icon"><i class="fas fa-bullseye"></i></div>
                     <span class="menu-item-text">Goals</span>
                 </a>
-                <a href="/dashboard" class="menu-item" onclick="event.preventDefault(); window.location.href='/dashboard';">
-                    <div class="menu-item-icon"><i class="fas fa-calculator"></i></div>
-                    <span class="menu-item-text">Loan Calculator</span>
+                <a href="#loans" class="menu-item" onclick="showPage('loans', event)">
+                    <div class="menu-item-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                    <span class="menu-item-text">Loans & Debt</span>
                 </a>
             </div>
 
             <div class="menu-section">
                 <div class="menu-section-title">Reports</div>
-                <a href="/dashboard" class="menu-item" onclick="event.preventDefault(); window.location.href='/dashboard';">
+                <a href="#reports" class="menu-item" onclick="showPage('reports', event)">
                     <div class="menu-item-icon"><i class="fas fa-file-alt"></i></div>
                     <span class="menu-item-text">Reports</span>
                 </a>
-                <a href="/dashboard" class="menu-item" onclick="event.preventDefault(); window.location.href='/dashboard';">
+                <a href="#insights" class="menu-item" onclick="showPage('insights', event)">
                     <div class="menu-item-icon"><i class="fas fa-lightbulb"></i></div>
                     <span class="menu-item-text">Insights</span>
                 </a>
@@ -76,11 +76,11 @@
 
             <div class="menu-section">
                 <div class="menu-section-title">Account</div>
-                <a href="/dashboard" class="menu-item" onclick="event.preventDefault(); window.location.href='/dashboard';">
+                <a href="#profile" class="menu-item" onclick="showPage('profile', event)">
                     <div class="menu-item-icon"><i class="fas fa-user"></i></div>
                     <span class="menu-item-text">Profile</span>
                 </a>
-                <a href="/dashboard" class="menu-item" onclick="event.preventDefault(); window.location.href='/dashboard';">
+                <a href="#settings" class="menu-item" onclick="showPage('settings', event)">
                     <div class="menu-item-icon"><i class="fas fa-cog"></i></div>
                     <span class="menu-item-text">Settings</span>
                 </a>
@@ -337,7 +337,11 @@
             updateSidebarToggleVisibility();
         });
 
-        function showPage(page) {
+        function showPage(page, event) {
+            // Prevent default link behavior
+            if (event) {
+                event.preventDefault();
+            }
             // Navigate to dashboard pages
             if (page !== 'dashboard' && page !== 'chat') {
                 window.location.href = `/dashboard#${page}`;

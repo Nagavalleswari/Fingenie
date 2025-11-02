@@ -287,9 +287,9 @@ function checkAuth() {
         return false;
     }
 
-    // If logged in and trying to access auth pages, redirect to dashboard
-    if (token && (path === '/login' || path === '/signup')) {
-        console.log('Token found on auth page, redirecting to dashboard');
+    // If logged in and trying to access auth pages or landing page, redirect to dashboard
+    if (token && (path === '/login' || path === '/signup' || path === '/')) {
+        console.log('Token found, redirecting to dashboard');
         window.location.href = '/dashboard';
         return false;
     }
@@ -465,9 +465,9 @@ toast.error('Failed to load financial data: ' + error.message);
 };
 
 // Dashboard initialization - load data when dashboard page loads
-// Only initialize if we're actually on the dashboard page (not just any page with dashboard elements)
+// Only initialize if we're actually on the dashboard page
 let dashboardInitialized = false;
-if ((window.location.pathname === '/dashboard' || window.location.pathname === '/') && !dashboardInitialized) {
+if (window.location.pathname === '/dashboard' && !dashboardInitialized) {
     // Load financial data on page load - ensure Chart.js is loaded first
     const initializeDashboard = async () => {
         if (dashboardInitialized) {
@@ -482,22 +482,33 @@ if ((window.location.pathname === '/dashboard' || window.location.pathname === '
             updateSidebarUserInfo();
         }
         
-        // Wait for Chart.js to be available
+        // Wait for Chart.js and DOM elements to be available
         let retries = 0;
         const maxRetries = 10; // Reduced from 20 to prevent excessive retries
         const checkChartJS = () => {
-            if (typeof Chart !== 'undefined') {
-                console.log('✅ Chart.js loaded, loading financial data...');
+            const chartLoaded = typeof Chart !== 'undefined';
+            const dashboardElementsReady = document.getElementById('totalAssets') !== null && 
+                                          document.getElementById('totalLiabilities') !== null && 
+                                          document.getElementById('netWorth') !== null;
+            
+            if (chartLoaded && dashboardElementsReady) {
+                console.log('✅ Chart.js and dashboard elements loaded, loading financial data...');
                 if (typeof window.loadFinancialData === 'function') {
                     window.loadFinancialData();
                 } else {
                     console.error('❌ loadFinancialData function not available');
                 }
             } else if (retries < maxRetries) {
+                if (!chartLoaded) {
+                    console.log(`⏳ Waiting for Chart.js... (${retries + 1}/${maxRetries})`);
+                }
+                if (!dashboardElementsReady) {
+                    console.log(`⏳ Waiting for dashboard elements... (${retries + 1}/${maxRetries})`);
+                }
                 retries++;
                 setTimeout(checkChartJS, 200); // Increased interval from 100ms to 200ms
             } else {
-                console.warn('⚠️ Chart.js failed to load, loading data anyway...');
+                console.warn('⚠️ Chart.js or elements failed to load, loading data anyway...');
                 if (typeof window.loadFinancialData === 'function') {
                     window.loadFinancialData(); // Load data anyway, charts will fail gracefully
                 }
