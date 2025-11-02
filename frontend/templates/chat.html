@@ -127,33 +127,99 @@
 
     <!-- Main Content -->
     <div class="main-content">
-        <!-- Top Bar -->
-        <div class="topbar">
-            <div class="topbar-left">
-                <button class="topbar-action-btn" id="sidebarToggle" style="display: none;">
+        <!-- Header Navigation -->
+        <header class="header-nav">
+            <div class="header-container">
+                <button class="topbar-action-btn header-sidebar-toggle" id="sidebarToggle" style="display: none;">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1 class="topbar-title">AI Assistant</h1>
-            </div>
-            <div class="topbar-right">
-                <div class="topbar-actions">
-                    <!-- Theme Toggle -->
-                    <div class="theme-toggle" title="Toggle theme">
-                        <i class="fas fa-moon theme-toggle-icon moon"></i>
-                        <div class="theme-toggle-slider">
-                            <i class="fas fa-moon theme-icon"></i>
-                        </div>
-                        <i class="fas fa-sun theme-toggle-icon sun"></i>
+
+                <a href="/" class="header-logo">
+                    <div class="header-logo-icon">
+                        <i class="fas fa-coins"></i>
                     </div>
-                    <button class="topbar-action-btn" id="chatHistoryToggleMobile" onclick="toggleChatHistory()" title="Toggle Chat History">
-                        <i class="fas fa-history"></i>
-                    </button>
-                    <button class="topbar-action-btn" onclick="clearChat()" title="Clear Chat">
-                        <i class="fas fa-trash"></i>
+                    <span class="header-logo-text">FinGenie</span>
+                </a>
+
+                <nav class="header-menu">
+                    <a href="/" class="header-link">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="/dashboard#about" class="header-link">
+                        <i class="fas fa-info-circle"></i> About
+                    </a>
+                    <div class="header-dropdown">
+                        <button class="header-link header-dropdown-toggle">
+                            <i class="fas fa-th"></i> Pages
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="header-dropdown-menu">
+                            <a href="/dashboard" class="header-dropdown-item">
+                                <i class="fas fa-chart-line"></i> Dashboard
+                            </a>
+                            <a href="/chat" class="header-dropdown-item">
+                                <i class="fas fa-comments"></i> AI Assistant
+                            </a>
+                            <div class="header-dropdown-divider"></div>
+                            <a href="/dashboard#analytics" class="header-dropdown-item">
+                                <i class="fas fa-chart-bar"></i> Analytics
+                            </a>
+                            <a href="/dashboard#budget" class="header-dropdown-item">
+                                <i class="fas fa-wallet"></i> Budget
+                            </a>
+                            <a href="/dashboard#investments" class="header-dropdown-item">
+                                <i class="fas fa-chart-pie"></i> Investments
+                            </a>
+                            <a href="/dashboard#transactions" class="header-dropdown-item">
+                                <i class="fas fa-exchange-alt"></i> Transactions
+                            </a>
+                            <a href="/dashboard#goals" class="header-dropdown-item">
+                                <i class="fas fa-bullseye"></i> Goals
+                            </a>
+                            <a href="/dashboard#loans" class="header-dropdown-item">
+                                <i class="fas fa-file-invoice-dollar"></i> Loans
+                            </a>
+                            <div class="header-dropdown-divider"></div>
+                            <a href="/dashboard#reports" class="header-dropdown-item">
+                                <i class="fas fa-file-alt"></i> Reports
+                            </a>
+                            <a href="/dashboard#insights" class="header-dropdown-item">
+                                <i class="fas fa-lightbulb"></i> Insights
+                            </a>
+                            <a href="/dashboard#profile" class="header-dropdown-item">
+                                <i class="fas fa-user"></i> Profile
+                            </a>
+                            <a href="/dashboard#settings" class="header-dropdown-item">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="header-actions">
+                        <!-- Theme Toggle -->
+                        <div class="theme-toggle" title="Toggle theme">
+                            <i class="fas fa-moon theme-toggle-icon moon"></i>
+                            <div class="theme-toggle-slider">
+                                <i class="fas fa-moon theme-icon"></i>
+                            </div>
+                            <i class="fas fa-sun theme-toggle-icon sun"></i>
+                        </div>
+                        <button class="topbar-action-btn" id="chatHistoryToggleMobile" onclick="toggleChatHistory()" title="Toggle Chat History">
+                            <i class="fas fa-history"></i>
+                        </button>
+                        <button class="topbar-action-btn" onclick="clearChat()" title="Clear Chat">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+
+                    <!-- Mobile Menu Toggle -->
+                    <button class="header-mobile-toggle">
+                        <i class="fas fa-bars"></i>
                     </button>
                 </div>
             </div>
-        </div>
+        </header>
 
         <!-- Content Container -->
         <div class="content-container" style="padding: 0;">

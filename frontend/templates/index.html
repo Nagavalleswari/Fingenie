@@ -9,10 +9,83 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 </head>
 <body>
-    <!-- Floating Theme Toggle -->
-    <button class="floating-theme-toggle" title="Toggle theme">
-        <i class="fas fa-moon theme-icon"></i>
-    </button>
+    <!-- Header Navigation -->
+    <header class="header-nav">
+        <div class="header-container">
+            <a href="/" class="header-logo">
+                <div class="header-logo-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <span class="header-logo-text">FinGenie</span>
+            </a>
+
+            <nav class="header-menu">
+                <a href="/" class="header-link active">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a href="#about" class="header-link" onclick="scrollToSection(event, 'about')">
+                    <i class="fas fa-info-circle"></i> About
+                </a>
+                <div class="header-dropdown">
+                    <button class="header-link header-dropdown-toggle">
+                        <i class="fas fa-th"></i> Pages
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="header-dropdown-menu">
+                        <a href="/dashboard" class="header-dropdown-item">
+                            <i class="fas fa-chart-line"></i> Dashboard
+                        </a>
+                        <a href="/chat" class="header-dropdown-item">
+                            <i class="fas fa-comments"></i> AI Assistant
+                        </a>
+                        <div class="header-dropdown-divider"></div>
+                        <a href="/dashboard#analytics" class="header-dropdown-item">
+                            <i class="fas fa-chart-bar"></i> Analytics
+                        </a>
+                        <a href="/dashboard#budget" class="header-dropdown-item">
+                            <i class="fas fa-wallet"></i> Budget
+                        </a>
+                        <a href="/dashboard#investments" class="header-dropdown-item">
+                            <i class="fas fa-chart-pie"></i> Investments
+                        </a>
+                        <a href="/dashboard#transactions" class="header-dropdown-item">
+                            <i class="fas fa-exchange-alt"></i> Transactions
+                        </a>
+                        <a href="/dashboard#goals" class="header-dropdown-item">
+                            <i class="fas fa-bullseye"></i> Goals
+                        </a>
+                        <a href="/dashboard#loans" class="header-dropdown-item">
+                            <i class="fas fa-file-invoice-dollar"></i> Loans
+                        </a>
+                        <div class="header-dropdown-divider"></div>
+                        <a href="/dashboard#reports" class="header-dropdown-item">
+                            <i class="fas fa-file-alt"></i> Reports
+                        </a>
+                        <a href="/dashboard#insights" class="header-dropdown-item">
+                            <i class="fas fa-lightbulb"></i> Insights
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="header-actions">
+                <button class="floating-theme-toggle header-theme-btn" title="Toggle theme">
+                    <i class="fas fa-moon theme-icon"></i>
+                </button>
+                <a href="/login" class="header-btn header-btn-secondary">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </a>
+                <a href="/signup" class="header-btn header-btn-primary">
+                    <i class="fas fa-rocket"></i> Get Started
+                </a>
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <button class="header-mobile-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
 
     <!-- Hero Section -->
     <section class="hero-section">
