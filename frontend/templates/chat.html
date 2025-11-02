@@ -9,131 +9,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 </head>
 <body data-chat-inline="true">
-    <!-- Sidebar Navigation -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <a href="/" class="sidebar-logo">
-                <div class="sidebar-logo-icon">
-                    <i class="fas fa-coins"></i>
-                </div>
-                <span class="sidebar-logo-text">FinGenie</span>
-            </a>
-        </div>
-
-        <div class="sidebar-menu">
-            <div class="menu-section">
-                <div class="menu-section-title">Navigation</div>
-                <a href="/" class="menu-item">
-                    <div class="menu-item-icon"><i class="fas fa-home"></i></div>
-                    <span class="menu-item-text">Home</span>
-                </a>
-                <a href="/dashboard" class="menu-item" onclick="if (event) event.preventDefault(); window.location.href='/dashboard'">
-                    <div class="menu-item-icon"><i class="fas fa-chart-line"></i></div>
-                    <span class="menu-item-text">Dashboard</span>
-                </a>
-                <a href="/chat" class="menu-item active">
-                    <div class="menu-item-icon"><i class="fas fa-comments"></i></div>
-                    <span class="menu-item-text">AI Assistant</span>
-                    <span class="menu-item-badge">New</span>
-                </a>
-                <a href="#analytics" class="menu-item" onclick="showPage('analytics', event)">
-                    <div class="menu-item-icon"><i class="fas fa-chart-bar"></i></div>
-                    <span class="menu-item-text">Analytics</span>
-                </a>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-section-title">Finance</div>
-                <a href="#budget" class="menu-item" onclick="showPage('budget', event)">
-                    <div class="menu-item-icon"><i class="fas fa-wallet"></i></div>
-                    <span class="menu-item-text">Budget</span>
-                </a>
-                <a href="#investments" class="menu-item" onclick="showPage('investments', event)">
-                    <div class="menu-item-icon"><i class="fas fa-chart-pie"></i></div>
-                    <span class="menu-item-text">Investments</span>
-                </a>
-                <a href="#transactions" class="menu-item" onclick="showPage('transactions', event)">
-                    <div class="menu-item-icon"><i class="fas fa-exchange-alt"></i></div>
-                    <span class="menu-item-text">Transactions</span>
-                </a>
-                <a href="#goals" class="menu-item" onclick="showPage('goals', event)">
-                    <div class="menu-item-icon"><i class="fas fa-bullseye"></i></div>
-                    <span class="menu-item-text">Goals</span>
-                </a>
-                <a href="#loans" class="menu-item" onclick="showPage('loans', event)">
-                    <div class="menu-item-icon"><i class="fas fa-file-invoice-dollar"></i></div>
-                    <span class="menu-item-text">Loans & Debt</span>
-                </a>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-section-title">Reports</div>
-                <a href="#reports" class="menu-item" onclick="showPage('reports', event)">
-                    <div class="menu-item-icon"><i class="fas fa-file-alt"></i></div>
-                    <span class="menu-item-text">Reports</span>
-                </a>
-                <a href="#insights" class="menu-item" onclick="showPage('insights', event)">
-                    <div class="menu-item-icon"><i class="fas fa-lightbulb"></i></div>
-                    <span class="menu-item-text">Insights</span>
-                </a>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-section-title">Account</div>
-                <a href="#profile" class="menu-item" onclick="showPage('profile', event)">
-                    <div class="menu-item-icon"><i class="fas fa-user"></i></div>
-                    <span class="menu-item-text">Profile</span>
-                </a>
-                <a href="#settings" class="menu-item" onclick="showPage('settings', event)">
-                    <div class="menu-item-icon"><i class="fas fa-cog"></i></div>
-                    <span class="menu-item-text">Settings</span>
-                </a>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-section-title">More</div>
-                <a href="#about" class="menu-item" onclick="showPage('about', event)">
-                    <div class="menu-item-icon"><i class="fas fa-info-circle"></i></div>
-                    <span class="menu-item-text">About</span>
-                </a>
-                <a href="#help" class="menu-item" onclick="showPage('help', event)">
-                    <div class="menu-item-icon"><i class="fas fa-question-circle"></i></div>
-                    <span class="menu-item-text">Help & Support</span>
-                </a>
-                <a href="#privacy" class="menu-item" onclick="showPage('privacy', event)">
-                    <div class="menu-item-icon"><i class="fas fa-shield-alt"></i></div>
-                    <span class="menu-item-text">Privacy</span>
-                </a>
-                <a href="#terms" class="menu-item" onclick="showPage('terms', event)">
-                    <div class="menu-item-icon"><i class="fas fa-file-contract"></i></div>
-                    <span class="menu-item-text">Terms of Service</span>
-                </a>
-            </div>
-        </div>
-
-        <div class="sidebar-footer">
-            <div class="sidebar-user">
-                <div class="sidebar-user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="sidebar-user-info">
-                    <div class="sidebar-user-name">User</div>
-                    <div class="sidebar-user-email">user@fingenie.com</div>
-                </div>
-                <i class="fas fa-sign-out-alt" id="logoutBtn" style="cursor: pointer; color: var(--text-tertiary);"></i>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Content -->
     <div class="main-content">
         <!-- Header Navigation -->
         <header class="header-nav">
             <div class="header-container">
-                <button class="topbar-action-btn header-sidebar-toggle" id="sidebarToggle" style="display: none;">
-                    <i class="fas fa-bars"></i>
-                </button>
-
                 <a href="/" class="header-logo">
                     <div class="header-logo-icon">
                         <i class="fas fa-coins"></i>
@@ -197,27 +77,29 @@
                 </nav>
 
                 <div class="header-actions">
-                        <!-- Theme Toggle -->
-                        <div class="theme-toggle" title="Toggle theme">
-                            <i class="fas fa-moon theme-toggle-icon moon"></i>
-                            <div class="theme-toggle-slider">
-                                <i class="fas fa-moon theme-icon"></i>
-                            </div>
-                            <i class="fas fa-sun theme-toggle-icon sun"></i>
+                    <!-- Theme Toggle -->
+                    <div class="theme-toggle" title="Toggle theme">
+                        <i class="fas fa-moon theme-toggle-icon moon"></i>
+                        <div class="theme-toggle-slider">
+                            <i class="fas fa-moon theme-icon"></i>
                         </div>
-                        <button class="topbar-action-btn" id="chatHistoryToggleMobile" onclick="toggleChatHistory()" title="Toggle Chat History">
-                            <i class="fas fa-history"></i>
-                        </button>
-                        <button class="topbar-action-btn" onclick="clearChat()" title="Clear Chat">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <i class="fas fa-sun theme-toggle-icon sun"></i>
                     </div>
-
-                    <!-- Mobile Menu Toggle -->
-                    <button class="header-mobile-toggle">
-                        <i class="fas fa-bars"></i>
+                    <button class="topbar-action-btn" id="chatHistoryToggleMobile" onclick="toggleChatHistory()" title="Toggle Chat History">
+                        <i class="fas fa-history"></i>
+                    </button>
+                    <button class="topbar-action-btn" onclick="clearChat()" title="Clear Chat">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="topbar-action-btn" id="logoutBtn" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
+
+                <!-- Mobile Menu Toggle -->
+                <button class="header-mobile-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </header>
 
@@ -381,52 +263,6 @@
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        // Sidebar toggle for mobile - FIXED
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-        
-        // Show toggle button on mobile
-        function updateSidebarToggleVisibility() {
-            if (window.innerWidth <= 1024) {
-                if (sidebarToggle) {
-                    sidebarToggle.style.display = 'flex';
-                }
-                if (sidebar) {
-                    sidebar.classList.remove('active');
-                }
-            } else {
-                if (sidebarToggle) {
-                    sidebarToggle.style.display = 'none';
-                }
-                if (sidebar) {
-                    sidebar.classList.remove('active');
-                }
-            }
-        }
-        
-        // Initialize
-        updateSidebarToggleVisibility();
-        
-        // Add click handler for toggle button
-        if (sidebarToggle && sidebar) {
-            sidebarToggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                sidebar.classList.toggle('active');
-            });
-        }
-
-        document.addEventListener('click', (e) => {
-            if (window.innerWidth <= 1024) {
-                if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
-                    sidebar.classList.remove('active');
-                }
-            }
-        });
-
-        window.addEventListener('resize', () => {
-            updateSidebarToggleVisibility();
-        });
-
         function showPage(page, event) {
             // Prevent default link behavior
             if (event) {
@@ -1531,24 +1367,6 @@ toast.success('Thanks for your feedback!', 2000);
                 button.style.opacity = '0.7';
             }
         }
-
-        // Fix sidebar links - prevent default and navigate
-        document.querySelectorAll('.sidebar .menu-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                const href = this.getAttribute('href');
-                if (href === '#' || !href) {
-                    const onclick = this.getAttribute('onclick');
-                    if (onclick && onclick.includes('showPage')) {
-                        e.preventDefault();
-                        // Extract page name from onclick
-                        const match = onclick.match(/showPage\(['"](.+?)['"]\)/);
-                        if (match) {
-                            showPage(match[1]);
-                        }
-                    }
-                }
-            });
-        });
 
         // Helper function to escape HTML
         function escapeHtml(text) {
