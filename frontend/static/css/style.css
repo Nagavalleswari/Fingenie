@@ -731,7 +731,6 @@ body::before {
    ================================================================ */
 .main-content {
     margin-left: var(--sidebar-width);
-    min-height: 100vh;
     transition: margin-left var(--transition-base);
 }
 
