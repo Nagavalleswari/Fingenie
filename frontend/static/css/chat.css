@@ -566,6 +566,7 @@
     padding: 1.25rem 1.5rem;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    width: 700px;
 }
 
 .chat-input-wrapper:focus-within {
@@ -869,6 +870,137 @@
     outline: none;
     border-color: var(--accent-cyan);
     box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.15);
+}
+
+/* Voice listening card */
+.voice-card {
+   display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.08) 0%, rgba(24, 24, 27, 0.95) 100%);
+    border: 1px solid rgba(34, 211, 238, 0.2);
+    border-radius: var(--radius-2xl);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.voice-card-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.voice-mic-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-hero);
+    color: white;
+    box-shadow: var(--shadow-glow-cyan);
+}
+.voice-status .voice-title {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+.voice-status .voice-subtitle {
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+}
+.voice-wave {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 28px;
+}
+.voice-wave span {
+    width: 3px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent-cyan), rgba(34, 211, 238, 0.5));
+    animation: voiceBar 1.2s ease-in-out infinite;
+    transform-origin: center bottom;
+}
+.voice-wave span:nth-child(1) { height: 8px; animation-delay: 0s; }
+.voice-wave span:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+.voice-wave span:nth-child(3) { height: 20px; animation-delay: 0.2s; }
+.voice-wave span:nth-child(4) { height: 26px; animation-delay: 0.3s; }
+.voice-wave span:nth-child(5) { height: 22px; animation-delay: 0.4s; }
+.voice-wave span:nth-child(6) { height: 16px; animation-delay: 0.5s; }
+.voice-wave span:nth-child(7) { height: 10px; animation-delay: 0.6s; }
+.voice-wave span:nth-child(8) { height: 6px;  animation-delay: 0.7s; }
+
+@keyframes voiceBar {
+    0%, 100% { transform: scaleY(0.6); opacity: 0.7; }
+    50% { transform: scaleY(1); opacity: 1; }
+}
+
+/* Voice listening card */
+.voice-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.08) 0%, rgba(24, 24, 27, 0.95) 100%);
+    border: 1px solid rgba(34, 211, 238, 0.2);
+    border-radius: var(--radius-2xl);
+    backdrop-filter: blur(30px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.voice-card-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.voice-mic-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-hero);
+    color: white;
+    box-shadow: var(--shadow-glow-cyan);
+}
+.voice-status .voice-title {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+.voice-status .voice-subtitle {
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+}
+.voice-wave {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 28px;
+}
+.voice-wave span {
+    width: 3px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent-cyan), rgba(34, 211, 238, 0.5));
+    animation: voiceBar 1.2s ease-in-out infinite;
+    transform-origin: center bottom;
+}
+.voice-wave span:nth-child(1) { height: 8px; animation-delay: 0s; }
+.voice-wave span:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+.voice-wave span:nth-child(3) { height: 20px; animation-delay: 0.2s; }
+.voice-wave span:nth-child(4) { height: 26px; animation-delay: 0.3s; }
+.voice-wave span:nth-child(5) { height: 22px; animation-delay: 0.4s; }
+.voice-wave span:nth-child(6) { height: 16px; animation-delay: 0.5s; }
+.voice-wave span:nth-child(7) { height: 10px; animation-delay: 0.6s; }
+.voice-wave span:nth-child(8) { height: 6px;  animation-delay: 0.7s; }
+
+@keyframes voiceBar {
+    0%, 100% { transform: scaleY(0.6); opacity: 0.7; }
+    50% { transform: scaleY(1); opacity: 1; }
 }
 
 /* Responsive */

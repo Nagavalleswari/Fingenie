@@ -221,6 +221,20 @@
                                 </div>
                             </div>
 
+                            <!-- Voice listening card -->
+                            <div id="voiceCard" class="voice-card" style="display: none;">
+                                <div class="voice-card-left">
+                                    <div class="voice-mic-icon"><i class="fas fa-microphone"></i></div>
+                                    <div class="voice-status">
+                                        <div class="voice-title">Listening...</div>
+                                        <div class="voice-subtitle">Speak now and click the mic to stop</div>
+                                    </div>
+                                </div>
+                                <div class="voice-wave" aria-hidden="true">
+                                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                            </div>
+
                             <form id="chatForm" style="display: flex; gap: 0.875rem; align-items: flex-end;">
                                 <div class="chat-input-wrapper">
                                     <textarea 
@@ -479,6 +493,14 @@
                     recordBtn.classList.toggle('listening', on);
                     recordBtn.title = on ? 'Listening... click to stop' : 'Voice input';
                     recordBtn.innerHTML = on ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
+                    // Toggle voice listening card
+                    const vc = document.getElementById('voiceCard');
+                    if (vc) {
+                        vc.style.display = on ? 'flex' : 'none';
+                        // Update title language if available
+                        const vt = vc.querySelector('.voice-title');
+                        if (vt) vt.textContent = on ? `Listening (${getLang()})...` : 'Listening...';
+                    }
                 };
 
                 recordBtn.addEventListener('click', () => {
@@ -496,6 +518,8 @@
                         messageInput.dispatchEvent(new Event('input'));
                         // Auto-submit
                         document.getElementById('chatForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                        // Hide listening card once we have a result
+                        setListening(false);
                     }
                 });
                 recognition.addEventListener('error', (e) => { console.warn('Speech recognition error', e); setListening(false); });
