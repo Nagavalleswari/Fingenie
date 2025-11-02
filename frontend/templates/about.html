@@ -249,11 +249,20 @@
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        // Check authentication status and hide Get Started button if logged in
-        function checkAuth() {
+        // Check authentication status and hide Get Started/Login buttons if logged in
+        function checkAuthStatus() {
             const token = localStorage.getItem('token');
 
             if (token) {
+                // Hide header Login and Get Started buttons
+                const headerActions = document.querySelector('.header-actions');
+                if (headerActions) {
+                    const loginBtn = headerActions.querySelector('a[href="/login"]');
+                    const signupBtn = headerActions.querySelector('a[href="/signup"]');
+                    if (loginBtn) loginBtn.style.display = 'none';
+                    if (signupBtn) signupBtn.style.display = 'none';
+                }
+
                 // Update CTA section - hide Get Started, show Dashboard
                 const ctaActions = document.querySelector('.cta-actions');
                 if (ctaActions) {
@@ -270,7 +279,7 @@
         }
 
         // Run on page load
-        document.addEventListener('DOMContentLoaded', checkAuth);
+        document.addEventListener('DOMContentLoaded', checkAuthStatus);
     </script>
 </body>
 </html>
