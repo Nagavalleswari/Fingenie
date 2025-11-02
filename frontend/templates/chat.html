@@ -512,10 +512,43 @@
                     loadVoices();
                     window.speechSynthesis.onvoiceschanged = loadVoices;
                 }
-                window.speakText = function(text){
+                // Track current utter/button
+                const tts = {
+                    currentBtn: null,
+                    currentUtter: null,
+                    paused: false,
+                };
+                function resetAllButtons(){
+                    document.querySelectorAll('.message-action-btn[data-tts="1"]').forEach(el => {
+                        el.innerHTML = '<i class="fas fa-volume-up"></i> Listen';
+                        el.title = 'Listen';
+                        el.dataset.state = '';
+                    });
+                    document.querySelectorAll('.message-action-btn[data-tts-restart="1"]').forEach(el => {
+                        el.style.display = 'none';
+                    });
+                }
+                function attachRestartFor(btn){
+                    const actions = btn.parentElement;
+                    if (!actions) return null;
+                    let restartBtn = actions.querySelector('.message-action-btn[data-tts-restart="1"]');
+                    if (!restartBtn){
+                        restartBtn = document.createElement('button');
+                        restartBtn.className = 'message-action-btn';
+                        restartBtn.dataset.ttsRestart = '1';
+                        restartBtn.title = 'Listen from start';
+                        restartBtn.innerHTML = '<i class="fas fa-volume-up"></i> Listen';
+                        restartBtn.style.display = 'none';
+                        actions.insertBefore(restartBtn, btn.nextSibling);
+                    }
+                    return restartBtn;
+                }
+                // Start speaking from the beginning
+                function startSpeak(text, btn){
                     try {
-                        if (!('speechSynthesis' in window)) { return; }
+                        if (!('speechSynthesis' in window)) return;
                         window.speechSynthesis.cancel();
+                        resetAllButtons();
                         const langSel = document.getElementById('langSelect');
                         const lang = (localStorage.getItem('chat_lang') || (langSel && langSel.value) || navigator.language || 'en-US');
                         const utter = new SpeechSynthesisUtterance(String(text || '').replace(/<[^>]*>/g, ''));
@@ -524,8 +557,72 @@
                         const voice = (ttsVoices || []).find(v => v.lang && (v.lang.toLowerCase() === lang.toLowerCase() || v.lang.toLowerCase().startsWith(base)));
                         if (voice) utter.voice = voice;
                         utter.rate = 1; utter.pitch = 1;
-                        speechSynthesis.speak(utter);
-                    } catch (e) { console.error(e); }
+                        const restartBtn = attachRestartFor(btn);
+                        utter.onstart = () => {
+                            tts.currentBtn = btn;
+                            tts.currentUtter = utter;
+                            tts.paused = false;
+                            btn.dataset.state = 'playing';
+                            btn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                            btn.title = 'Pause';
+                            if (restartBtn) restartBtn.style.display = 'inline-flex';
+                        };
+                        const onReset = () => {
+                            tts.currentBtn = null;
+                            tts.currentUtter = null;
+                            tts.paused = false;
+                            resetAllButtons();
+                        };
+                        utter.onend = onReset;
+                        utter.onerror = onReset;
+                        window.speechSynthesis.speak(utter);
+                    } catch(e){ console.error(e); }
+                }
+                function pauseSpeak(btn){
+                    try {
+                        if (!window.speechSynthesis.speaking) return;
+                        window.speechSynthesis.pause();
+                        tts.paused = true;
+                        btn.dataset.state = 'paused';
+                        btn.innerHTML = '<i class="fas fa-play"></i> Resume';
+                        btn.title = 'Resume';
+                        // Ensure restart is visible while paused
+                        const restartBtn = attachRestartFor(btn);
+                        if (restartBtn) restartBtn.style.display = 'inline-flex';
+                    } catch(e){ console.error(e); }
+                }
+                function resumeSpeak(btn){
+                    try {
+                        if (!tts.paused) return;
+                        window.speechSynthesis.resume();
+                        tts.paused = false;
+                        btn.dataset.state = 'playing';
+                        btn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                        btn.title = 'Pause';
+                    } catch(e){ console.error(e); }
+                }
+                function stopSpeak(){
+                    try { window.speechSynthesis.cancel(); resetAllButtons(); tts.currentBtn = null; tts.currentUtter = null; tts.paused = false; } catch(e){ console.error(e); }
+                }
+                // Expose toggles
+                window.toggleSpeak = function(text, btn){
+                    if (!('speechSynthesis' in window)) return;
+                    const state = btn.dataset.state || '';
+                    if (state === 'playing') { // pause
+                        pauseSpeak(btn);
+                        return;
+                    }
+                    if (state === 'paused') { // resume
+                        resumeSpeak(btn);
+                        return;
+                    }
+                    // idle: start from beginning
+                    startSpeak(text, btn);
+                }
+                window.restartSpeak = function(text, btn){
+                    // Stop and start from beginning
+                    stopSpeak();
+                    startSpeak(text, btn);
                 }
             })();
 
@@ -1060,10 +1157,20 @@ toast.success('Export ready');
             if (!isUser) {
                 const listenBtn = document.createElement('button');
                 listenBtn.className = 'message-action-btn';
+                listenBtn.dataset.tts = '1';
                 listenBtn.title = 'Listen';
                 listenBtn.innerHTML = '<i class="fas fa-volume-up"></i> Listen';
-                listenBtn.onclick = () => speakText(text);
+                listenBtn.onclick = () => toggleSpeak(text, listenBtn);
                 actions.appendChild(listenBtn);
+                // Hidden restart (Listen from start) button shown when paused
+                const restartBtn = document.createElement('button');
+                restartBtn.className = 'message-action-btn';
+                restartBtn.dataset.ttsRestart = '1';
+                restartBtn.title = 'Listen from start';
+                restartBtn.innerHTML = '<i class="fas fa-volume-up"></i> Listen';
+                restartBtn.style.display = 'none';
+                restartBtn.onclick = () => restartSpeak(text, listenBtn);
+                actions.appendChild(restartBtn);
                 
                 const likeBtn = document.createElement('button');
                 likeBtn.className = 'message-action-btn';

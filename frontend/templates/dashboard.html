@@ -2565,18 +2565,18 @@
             const priority = document.getElementById('newGoalPriority').value || 'medium';
             const category = document.getElementById('newGoalCategory').value || 'other';
 
-            if (!name || !target || !year) {
-                toast.error('Please fill in all required fields (Name, Target Amount, and Year)', 'error');
+                if (!name || !target || !year) {
+                toast.error('Please fill in all required fields (Name, Target Amount, and Year)');
                 return;
             }
 
             if (target <= 0) {
-                toast.error('Target amount must be greater than 0', 'error');
+                toast.error('Target amount must be greater than 0');
                 return;
             }
 
             if (year < new Date().getFullYear()) {
-                toast.error('Target year must be in the future', 'error');
+                toast.error('Target year must be in the future');
                 return;
             }
 
@@ -2622,7 +2622,7 @@
                         clearFinancialDataCache();
                     }
                     
-                    toast.success('Goal added successfully!', 'success', 3000);
+                    toast.success('Goal added successfully!', 3000);
                     closeModal('addGoalModal');
                     
                     // Reset form
@@ -2643,7 +2643,7 @@
                 }
             } catch (error) {
                 console.error('Error adding goal:', error);
-                toast.error(error.message || 'Failed to add goal. Please try again.', 'error');
+                toast.error(error.message || 'Failed to add goal. Please try again.');
             }
         });
 
@@ -2674,14 +2674,14 @@
 
             try {
                 await apiRequest('/finance/add_data', 'POST', { assets, liabilities, goals });
-                toast.success('Financial data updated successfully!', 'success');
+                toast.success('Financial data updated successfully!');
                 // Reload data using main.js function
                 if (typeof window.loadFinancialData === 'function') {
                     await window.loadFinancialData();
                 }
                 this.reset();
             } catch (error) {
-                toast.error(error.message || 'Failed to update financial data', 'error');
+                toast.error(error.message || 'Failed to update financial data');
             }
         });
 

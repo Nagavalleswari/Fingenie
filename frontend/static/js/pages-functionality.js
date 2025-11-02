@@ -626,7 +626,7 @@ async function saveBudgetToBackend(budget) {
         return true;
     } catch (error) {
         console.error('Error saving budget:', error);
-        toast.error(error.message || 'Failed to save budget', 'error');
+        toast.error(error.message || 'Failed to save budget');
         return false;
     }
 }
@@ -640,7 +640,7 @@ async function updateMonthlyIncome(income) {
         
         const success = await saveBudgetToBackend(budget);
         if (success) {
-            toast.success('Monthly income updated!', 'success');
+            toast.success('Monthly income updated!');
             await loadBudgetData();
         }
     } catch (error) {
@@ -698,7 +698,7 @@ async function showBudgetCategoryModal(categoryId = null) {
             const color = document.getElementById('budgetCategoryColorModal')?.value || '#10b981';
             
             if (!name || amount <= 0) {
-                toast.error('Please enter a valid name and amount', 'error');
+                toast.error('Please enter a valid name and amount');
                 return;
             }
             
@@ -736,7 +736,7 @@ async function showBudgetCategoryModal(categoryId = null) {
                 
                 const success = await saveBudgetToBackend(budget);
                 if (success) {
-                    toast.success(categoryId ? 'Category updated!' : 'Category added!', 'success');
+                    toast.success(categoryId ? 'Category updated!' : 'Category added!');
                     closeModal('addBudgetCategoryModal');
                     await loadBudgetData();
                 }
@@ -766,7 +766,7 @@ async function deleteBudgetCategory(categoryId) {
         
         const success = await saveBudgetToBackend(budget);
         if (success) {
-            toast.success('Category deleted!', 'success');
+            toast.success('Category deleted!');
             await loadBudgetData();
         }
     } catch (error) {
@@ -788,7 +788,7 @@ async function updateBudgetSpent(categoryId, categoryName) {
     
     const spentAmount = parseFloat(newSpent);
     if (isNaN(spentAmount) || spentAmount < 0) {
-        toast.error('Please enter a valid amount', 'error');
+        toast.error('Please enter a valid amount');
         return;
     }
     
@@ -806,7 +806,7 @@ async function updateBudgetSpent(categoryId, categoryName) {
         
         const success = await saveBudgetToBackend(budget);
         if (success) {
-            toast.success('Spent amount updated!', 'success');
+            toast.success('Spent amount updated!');
             await loadBudgetData();
         }
     } catch (error) {
@@ -1192,7 +1192,7 @@ async function saveInvestmentsToBackend(investments) {
         return true;
     } catch (error) {
         console.error('Error saving investments:', error);
-        toast.error(error.message || 'Failed to save investments', 'error');
+        toast.error(error.message || 'Failed to save investments');
         return false;
     }
 }
@@ -1200,7 +1200,7 @@ async function saveInvestmentsToBackend(investments) {
 async function showInvestmentModal(investmentId = null) {
     const modal = document.getElementById('addInvestmentModal');
     if (!modal) {
-        toast.error('Investment modal not found', 'error');
+        toast.error('Investment modal not found');
         return;
     }
     
@@ -1260,7 +1260,7 @@ async function showInvestmentModal(investmentId = null) {
             const maturityDate = document.getElementById('investmentMaturityDateModal').value;
             
             if (!name || amount <= 0) {
-                toast.error('Please enter a valid name and amount', 'error');
+                toast.error('Please enter a valid name and amount');
                 return;
             }
             
@@ -1311,7 +1311,7 @@ async function showInvestmentModal(investmentId = null) {
                 
                 const success = await saveInvestmentsToBackend(investments);
                 if (success) {
-                    toast.success(investmentId ? 'Investment updated!' : 'Investment added!', 'success');
+                    toast.success(investmentId ? 'Investment updated!' : 'Investment added!');
                     closeModal('addInvestmentModal');
                     await loadInvestmentsData();
                 }
@@ -1339,7 +1339,7 @@ async function deleteInvestment(investmentId) {
         
         const success = await saveInvestmentsToBackend(investments);
         if (success) {
-            toast.success('Investment deleted!', 'success');
+            toast.success('Investment deleted!');
             await loadInvestmentsData();
         }
     } catch (error) {
@@ -1361,7 +1361,7 @@ async function updateInvestmentValue(investmentId, investmentName) {
     
     const valueAmount = parseFloat(newValue);
     if (isNaN(valueAmount) || valueAmount < 0) {
-        toast.error('Please enter a valid amount', 'error');
+        toast.error('Please enter a valid amount');
         return;
     }
     
@@ -1379,7 +1379,7 @@ async function updateInvestmentValue(investmentId, investmentName) {
         
         const success = await saveInvestmentsToBackend(investments);
         if (success) {
-            toast.success('Investment value updated!', 'success');
+            toast.success('Investment value updated!');
             await loadInvestmentsData();
         }
     } catch (error) {
@@ -1552,7 +1552,7 @@ function showAddTransactionModal() {
             transactions.push({...transaction, id: Date.now()});
             localStorage.setItem('transactions', JSON.stringify(transactions));
             
-            toast.success('Transaction added successfully!', 'success');
+            toast.success('Transaction added successfully!');
             closeModal('addTransactionModal');
             loadTransactionsData();
         });
@@ -3945,7 +3945,7 @@ window.saveCustomGraph = async function() {
             
             // Show success message
             if (typeof toast !== 'undefined') {
-                toast.success('Graph saved successfully!', 'success');
+                toast.success('Graph saved successfully!');
             } else {
                 alert('Graph saved successfully!');
             }
@@ -3953,7 +3953,7 @@ window.saveCustomGraph = async function() {
     } catch (error) {
         console.error('Error saving graph:', error);
         if (typeof toast !== 'undefined') {
-            toast.error(error.message || 'Failed to save graph', 'error');
+            toast.error(error.message || 'Failed to save graph');
         } else {
             alert('Error: ' + (error.message || 'Failed to save graph'));
         }
@@ -4171,13 +4171,13 @@ window.enhancePrompt = async function() {
             if (enhancedText && enhancedText.length > 10) {
                 textarea.value = enhancedText;
                 if (typeof toast !== 'undefined') {
-                    toast.success('Prompt enhanced successfully!', 'success');
+                    toast.success('Prompt enhanced successfully!');
                 }
             } else {
                 // Fallback: use original if extraction fails
                 textarea.value = originalValue;
                 if (typeof toast !== 'undefined') {
-                    toast.warning('Could not extract enhanced prompt. Please try again.', 'warning');
+                    toast.warning('Could not extract enhanced prompt. Please try again.');
                 }
             }
         } else {
@@ -4187,7 +4187,7 @@ window.enhancePrompt = async function() {
         console.error('Error enhancing prompt:', error);
         textarea.value = originalValue;
         if (typeof toast !== 'undefined') {
-            toast.error('Failed to enhance prompt. Please try again.', 'error');
+            toast.error('Failed to enhance prompt. Please try again.');
         } else {
             alert('Failed to enhance prompt: ' + error.message);
         }
@@ -4212,12 +4212,12 @@ window.deleteCustomGraph = async function(graphId) {
         await loadCustomGraphs();
         
         if (typeof toast !== 'undefined') {
-            toast.success('Graph deleted successfully', 'success');
+            toast.success('Graph deleted successfully');
         }
     } catch (error) {
         console.error('Error deleting graph:', error);
         if (typeof toast !== 'undefined') {
-            toast.error(error.message || 'Failed to delete graph', 'error');
+            toast.error(error.message || 'Failed to delete graph');
         } else {
             alert('Error: ' + (error.message || 'Failed to delete graph'));
         }

@@ -631,7 +631,7 @@ toast.success('Financial data saved successfully!');
                 </div>
             `;
         } catch (error) {
-            toast.error(error.message || 'Failed to save financial data', 'error');
+            toast.error(error.message || 'Failed to save financial data');
         }
     });
 }
@@ -764,13 +764,13 @@ if (document.getElementById('loadMockDataBtn')) {
     document.getElementById('loadMockDataBtn').addEventListener('click', async () => {
         try {
             const result = await apiRequest('/finance/load_mock_data', 'POST');
-            toast.success('Mock data loaded successfully!', 'success');
+            toast.success('Mock data loaded successfully!');
             // Reload data
             if (typeof window.loadFinancialData === 'function') {
                 await window.loadFinancialData();
             }
         } catch (error) {
-            toast.error(error.message || 'Failed to load mock data', 'error');
+            toast.error(error.message || 'Failed to load mock data');
         }
     });
 }
@@ -1584,11 +1584,11 @@ function showInsights() {
             if (analysisDiv && analysisDiv.innerHTML) {
                 showModal('Financial Insights & Analysis', analysisDiv.innerHTML);
             } else {
-                toast.info('View detailed analysis on the dashboard', 'info');
+                toast.info('View detailed analysis on the dashboard');
             }
         })
         .catch(error => {
-            toast.error('Failed to load insights', 'error');
+            toast.error('Failed to load insights');
         });
 }
 
