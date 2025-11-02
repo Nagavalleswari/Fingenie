@@ -249,21 +249,12 @@
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        // Check authentication status and update header
+        // Check authentication status and hide Get Started button if logged in
         function checkAuth() {
             const token = getCookie('token');
-            const headerActions = document.querySelector('.header-actions');
 
             if (token) {
-                // User is logged in
-                headerActions.innerHTML = `
-                    <button id="theme-toggle" class="theme-toggle">
-                        <i class="fas fa-moon theme-icon"></i>
-                    </button>
-                    <a href="/dashboard" class="btn btn-primary">Dashboard</a>
-                `;
-
-                // Update CTA section
+                // Update CTA section - hide Get Started, show Dashboard
                 const ctaActions = document.querySelector('.cta-actions');
                 if (ctaActions) {
                     ctaActions.innerHTML = `
@@ -275,9 +266,6 @@
                         </a>
                     `;
                 }
-
-                // Reinitialize theme toggle
-                initThemeToggle();
             }
         }
 
