@@ -146,7 +146,11 @@ def create_app():
     @app.route('/chat')
     def chat_page():
         return render_template('chat.html')
-    
+
+    @app.route('/about')
+    def about_page():
+        return render_template('about.html')
+
     @app.route('/logout', methods=['POST'])
     def logout():
         """Logout endpoint"""
