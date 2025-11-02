@@ -287,8 +287,9 @@ function checkAuth() {
         return false;
     }
 
-    // If logged in and trying to access auth pages or landing page, redirect to dashboard
-    if (token && (path === '/login' || path === '/signup' || path === '/')) {
+    // If logged in and trying to access auth pages, redirect to dashboard
+    // Allow logged-in users to view the home page
+    if (token && (path === '/login' || path === '/signup')) {
         console.log('Token found, redirecting to dashboard');
         window.location.href = '/dashboard';
         return false;
