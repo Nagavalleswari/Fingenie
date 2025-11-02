@@ -497,65 +497,281 @@ footer {
     font-size: 1rem;
 }
 
-/* Responsive */
+/* Responsive Design */
+
+/* Tablets */
+@media (max-width: 1024px) {
+    .hero-section {
+        padding: 3rem 1.5rem;
+    }
+
+    .hero-title {
+        font-size: 4rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+    }
+
+    .section-title {
+        font-size: 3rem;
+    }
+
+    .features-section {
+        padding: 8rem 1.5rem;
+    }
+
+    .features-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2.5rem;
+    }
+
+    .stats-section {
+        padding: 6rem 1.5rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 3rem;
+    }
+}
+
+/* Mobile Devices */
 @media (max-width: 768px) {
+    .hero-section {
+        min-height: auto;
+        padding: 3rem 1.25rem;
+    }
+
     .hero-logo {
         width: 120px;
         height: 120px;
         font-size: 3.5rem;
+        margin-bottom: 2rem;
     }
 
     .hero-title {
         font-size: 3rem;
+        margin-bottom: 1.5rem;
     }
 
     .hero-subtitle {
         font-size: 1.15rem;
+        margin-bottom: 2.5rem;
     }
 
     .hero-buttons {
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
+        gap: 1rem;
     }
 
     .hero-btn {
         width: 100%;
-        max-width: 320px;
+        max-width: 100%;
         justify-content: center;
-        padding: 1.25rem 2.5rem;
+        padding: 1.25rem 2rem;
+        font-size: 1rem;
     }
 
     .section-title {
         font-size: 2.5rem;
     }
 
+    .section-subtitle {
+        font-size: 1.125rem;
+        margin-bottom: 4rem;
+    }
+
     .features-section {
-        padding: 6rem 1.5rem;
+        padding: 6rem 1.25rem;
     }
 
     .features-grid {
         grid-template-columns: 1fr;
-        gap: 2.5rem;
+        gap: 2rem;
+    }
+
+    .feature-card {
+        padding: 2.5rem 2rem;
+    }
+
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .feature-title {
+        font-size: 1.5rem;
+    }
+
+    .feature-description {
+        font-size: 1rem;
     }
 
     .stats-section {
-        padding: 5rem 1.5rem;
+        padding: 5rem 1.25rem;
     }
 
     .stats-grid {
         grid-template-columns: 1fr 1fr;
-        gap: 3rem;
+        gap: 2rem;
     }
 
     .stat-number {
         font-size: 3rem;
     }
 
+    .stat-label {
+        font-size: 1rem;
+    }
+
     .cta-section {
-        padding: 6rem 1.5rem;
+        padding: 6rem 1.25rem;
     }
 
     .cta-title {
         font-size: 2.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .cta-subtitle {
+        font-size: 1.125rem;
+        margin-bottom: 3rem;
+    }
+
+    footer {
+        padding: 3rem 1.25rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+    .hero-section {
+        padding: 2rem 1rem;
+    }
+
+    .hero-logo {
+        width: 100px;
+        height: 100px;
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .hero-btn {
+        padding: 1rem 1.5rem;
+        font-size: 0.9375rem;
+    }
+
+    .section-title {
+        font-size: 2rem;
+    }
+
+    .section-subtitle {
+        font-size: 1rem;
+    }
+
+    .features-section {
+        padding: 4rem 1rem;
+    }
+
+    .features-grid {
+        gap: 1.5rem;
+    }
+
+    .feature-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 2rem;
+    }
+
+    .feature-title {
+        font-size: 1.25rem;
+    }
+
+    .stats-section {
+        padding: 4rem 1rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.9375rem;
+    }
+
+    .cta-section {
+        padding: 4rem 1rem;
+    }
+
+    .cta-title {
+        font-size: 1.875rem;
+    }
+
+    .cta-subtitle {
+        font-size: 1rem;
+    }
+}
+
+/* Landscape Orientation on Mobile */
+@media (max-width: 900px) and (orientation: landscape) {
+    .hero-section {
+        min-height: auto;
+        padding: 2rem 1.5rem;
+    }
+
+    .hero-logo {
+        width: 80px;
+        height: 80px;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-buttons {
+        flex-direction: row;
+        gap: 1rem;
+    }
+
+    .hero-btn {
+        padding: 0.875rem 1.5rem;
+        font-size: 0.875rem;
+    }
+
+    .stats-section,
+    .features-section,
+    .cta-section {
+        padding: 3rem 1.5rem;
     }
 }

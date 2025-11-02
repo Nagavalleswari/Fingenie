@@ -1406,31 +1406,95 @@ body::before {
 /* ================================================================
    RESPONSIVE DESIGN
    ================================================================ */
+
+/* Large Tablets & Small Laptops */
+@media (max-width: 1280px) {
+    :root {
+        --sidebar-width: 240px;
+    }
+
+    .content-container {
+        max-width: 100%;
+        padding: 1.5rem;
+    }
+}
+
+/* Tablets */
 @media (max-width: 1024px) {
     .sidebar {
         transform: translateX(-100%);
+        position: fixed;
+        z-index: 2000;
     }
 
     .sidebar.active {
         transform: translateX(0);
+        box-shadow: 8px 0 60px rgba(0, 0, 0, 0.6);
     }
 
     .main-content {
         margin-left: 0;
+        width: 100%;
     }
 
     .grid-cols-4 {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .grid-cols-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .topbar {
+        padding: 0 1.5rem;
+    }
+
+    .topbar-search {
+        display: none;
+    }
+
+    .stat-card {
+        padding: 1.5rem;
+    }
 }
 
+/* Mobile Devices */
 @media (max-width: 768px) {
     .topbar {
         padding: 0 1rem;
+        height: 56px;
     }
 
-    .topbar-search-input {
-        width: 180px;
+    :root {
+        --topbar-height: 56px;
+    }
+
+    .topbar-title {
+        font-size: 1.125rem;
+    }
+
+    .topbar-actions {
+        gap: 0.375rem;
+    }
+
+    .topbar-action-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+
+    .theme-toggle {
+        width: 48px;
+        height: 24px;
+    }
+
+    .theme-toggle-slider {
+        width: 18px;
+        height: 18px;
+    }
+
+    [data-theme="light"] .theme-toggle-slider {
+        transform: translateX(24px);
     }
 
     .content-container {
@@ -1443,11 +1507,39 @@ body::before {
         grid-template-columns: 1fr;
     }
 
+    .grid {
+        gap: 1rem;
+    }
+
     .page-title {
         font-size: 1.5rem;
     }
 
+    .page-subtitle {
+        font-size: 0.875rem;
+    }
+
+    .card {
+        padding: 1.25rem;
+        border-radius: var(--radius-xl);
+    }
+
+    .stat-card {
+        padding: 1.25rem;
+    }
+
+    .stat-card-value {
+        font-size: 1.5rem;
+    }
+
+    .stat-card-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.25rem;
+    }
+
     .toast-container {
+        top: calc(var(--topbar-height) + 0.5rem);
         right: 0.5rem;
         left: 0.5rem;
         max-width: none;
@@ -1456,14 +1548,128 @@ body::before {
     .toast {
         min-width: auto;
         width: 100%;
+        padding: 0.875rem 1rem;
     }
 
     .floating-theme-toggle {
-        bottom: 1.5rem;
-        right: 1.5rem;
+        bottom: 1.25rem;
+        right: 1.25rem;
         width: 48px;
         height: 48px;
         font-size: 1.125rem;
+    }
+
+    .btn {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+    }
+
+    .sidebar {
+        width: 280px;
+    }
+
+    .sidebar-header {
+        padding: 1rem 1.25rem;
+    }
+
+    .sidebar-logo-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.125rem;
+    }
+
+    .sidebar-logo-text {
+        font-size: 1.25rem;
+    }
+
+    .menu-item {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+    .topbar {
+        padding: 0 0.75rem;
+    }
+
+    .topbar-title {
+        font-size: 1rem;
+    }
+
+    .content-container {
+        padding: 0.75rem;
+    }
+
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.25rem;
+    }
+
+    .card {
+        padding: 1rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .card-title {
+        font-size: 1rem;
+    }
+
+    .floating-theme-toggle {
+        width: 44px;
+        height: 44px;
+        font-size: 1rem;
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    .sidebar {
+        width: 100%;
+        max-width: 280px;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .menu-item,
+    .btn,
+    .topbar-action-btn,
+    .card-action-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .topbar-action-btn {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* Landscape Orientation on Mobile */
+@media (max-width: 900px) and (orientation: landscape) {
+    .topbar {
+        height: 48px;
+    }
+
+    :root {
+        --topbar-height: 48px;
+    }
+
+    .sidebar {
+        width: 240px;
+    }
+
+    .floating-theme-toggle {
+        width: 40px;
+        height: 40px;
+        font-size: 0.875rem;
     }
 }
 
