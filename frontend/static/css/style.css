@@ -9,47 +9,49 @@
    THEME COLOR SYSTEM
    ================================================================ */
 :root {
-    /* Backgrounds - Deep Navy Theme */
-    --bg-primary: #0b0f19;
-    --bg-secondary: #141824;
-    --bg-tertiary: #1a1f2e;
-    --bg-elevated: #1f2533;
-    --bg-hover: #252b3b;
+    /* Backgrounds - Modern Dark Theme */
+    --bg-primary: #09090b;
+    --bg-secondary: #18181b;
+    --bg-tertiary: #27272a;
+    --bg-elevated: #3f3f46;
+    --bg-hover: #52525b;
 
-    /* Primary Brand Colors - Ocean Blue */
-    --primary-50: #e6f3ff;
-    --primary-100: #b3dcff;
-    --primary-200: #80c5ff;
-    --primary-300: #4daeff;
-    --primary-400: #1a97ff;
-    --primary-500: #0080e6;
-    --primary-600: #0066b3;
-    --primary-700: #004d80;
-    --primary-800: #00334d;
-    --primary-900: #001a26;
+    /* Primary Brand Colors - Vibrant Teal */
+    --primary-50: #ecfeff;
+    --primary-100: #cffafe;
+    --primary-200: #a5f3fc;
+    --primary-300: #67e8f9;
+    --primary-400: #22d3ee;
+    --primary-500: #06b6d4;
+    --primary-600: #0891b2;
+    --primary-700: #0e7490;
+    --primary-800: #155e75;
+    --primary-900: #164e63;
 
-    /* Accent Colors */
-    --accent-teal: #06b6d4;
+    /* Accent Colors - Fresh & Modern */
+    --accent-teal: #14b8a6;
     --accent-emerald: #10b981;
-    --accent-amber: #f59e0b;
-    --accent-rose: #f43f5e;
-    --accent-blue: #3b82f6;
-    /* Added accent palette for consistency across pages */
-    --accent-cyan: #00d4ff;
-    --accent-purple: #a855f7;
+    --accent-amber: #fbbf24;
+    --accent-rose: #fb7185;
+    --accent-blue: #60a5fa;
+    --accent-cyan: #22d3ee;
+    --accent-lime: #84cc16;
     --accent-primary: var(--primary-400);
     --accent-success: var(--success);
     --accent-warning: var(--warning);
     --accent-danger: var(--error);
     --accent-info: var(--info);
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, var(--primary-500) 0%, var(--accent-teal) 100%);
-    --gradient-success: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-    --gradient-danger: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
-    --gradient-warm: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-    --gradient-cool: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-    --gradient-info: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    /* Gradients - Vibrant & Dynamic */
+    --gradient-primary: linear-gradient(135deg, #06b6d4 0%, #14b8a6 50%, #10b981 100%);
+    --gradient-secondary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    --gradient-success: linear-gradient(135deg, #10b981 0%, #84cc16 100%);
+    --gradient-danger: linear-gradient(135deg, #ef4444 0%, #fb7185 100%);
+    --gradient-warm: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    --gradient-cool: linear-gradient(135deg, #22d3ee 0%, #60a5fa 100%);
+    --gradient-info: linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%);
+    --gradient-hero: linear-gradient(135deg, #06b6d4 0%, #10b981 50%, #84cc16 100%);
+    --gradient-mesh: radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.2) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.2) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(132, 204, 22, 0.2) 0px, transparent 50%), radial-gradient(at 0% 100%, rgba(20, 184, 166, 0.2) 0px, transparent 50%);
 
     /* Text Colors */
     --text-primary: #f1f5f9;
@@ -68,26 +70,29 @@
     --error: #ef4444;
     --info: #3b82f6;
 
-    /* Shadows */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.6);
-    --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.7);
-    /* Glow shadows used by landing/auth/chat */
-    --shadow-glow-cyan: 0 8px 24px rgba(0, 212, 255, 0.35);
-    --shadow-glow-teal: 0 8px 24px rgba(16, 185, 129, 0.35);
+    /* Shadows - Elevated & Vibrant */
+    --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.8);
+    --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.85);
+    --shadow-glow-cyan: 0 0 40px rgba(34, 211, 238, 0.4), 0 0 80px rgba(34, 211, 238, 0.2);
+    --shadow-glow-teal: 0 0 40px rgba(20, 184, 166, 0.4), 0 0 80px rgba(20, 184, 166, 0.2);
+    --shadow-glow-green: 0 0 40px rgba(132, 204, 22, 0.4), 0 0 80px rgba(132, 204, 22, 0.2);
 
     /* Spacing */
     --sidebar-width: 260px;
     --topbar-height: 64px;
 
-    /* Border Radius */
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 14px;
-    --radius-xl: 18px;
-    --radius-2xl: 22px;
+    /* Border Radius - More Rounded */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 24px;
+    --radius-3xl: 32px;
+    --radius-full: 9999px;
 
     /* Transitions */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
