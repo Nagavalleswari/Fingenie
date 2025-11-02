@@ -72,12 +72,18 @@
                 <button class="floating-theme-toggle header-theme-btn" title="Toggle theme">
                     <i class="fas fa-moon theme-icon"></i>
                 </button>
-                <a href="/login" class="header-btn header-btn-secondary">
+                <a href="/login" class="header-btn header-btn-secondary auth-only-logged-out">
                     <i class="fas fa-sign-in-alt"></i> Sign In
                 </a>
-                <a href="/signup" class="header-btn header-btn-primary">
+                <a href="/signup" class="header-btn header-btn-primary auth-only-logged-out">
                     <i class="fas fa-rocket"></i> Get Started
                 </a>
+                <a href="/dashboard" class="header-btn header-btn-primary auth-only-logged-in" style="display: none;">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </a>
+                <button id="logoutBtn" class="header-btn header-btn-secondary auth-only-logged-in" style="display: none;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
             </div>
 
             <!-- Mobile Menu Toggle -->
@@ -101,13 +107,17 @@
                 track your goals, and make smarter financial decisions with intelligent insights.
             </p>
             <div class="hero-buttons">
-                <a href="/signup" class="hero-btn hero-btn-primary">
+                <a href="/signup" class="hero-btn hero-btn-primary auth-only-logged-out">
                     <i class="fas fa-rocket"></i>
                     Get Started Free
                 </a>
-                <a href="/login" class="hero-btn hero-btn-secondary">
+                <a href="/login" class="hero-btn hero-btn-secondary auth-only-logged-out">
                     <i class="fas fa-sign-in-alt"></i>
                     Sign In
+                </a>
+                <a href="/dashboard" class="hero-btn hero-btn-primary auth-only-logged-in" style="display: none;">
+                    <i class="fas fa-chart-line"></i>
+                    Go to Dashboard
                 </a>
             </div>
         </div>
@@ -219,13 +229,17 @@
             with FinGenie's AI-powered insights.
         </p>
         <div class="hero-buttons">
-            <a href="/signup" class="hero-btn hero-btn-primary">
+            <a href="/signup" class="hero-btn hero-btn-primary auth-only-logged-out">
                 <i class="fas fa-rocket"></i>
                 Start Free Today
             </a>
-            <a href="/login" class="hero-btn hero-btn-secondary">
+            <a href="/login" class="hero-btn hero-btn-secondary auth-only-logged-out">
                 <i class="fas fa-sign-in-alt"></i>
                 Sign In
+            </a>
+            <a href="/dashboard" class="hero-btn hero-btn-primary auth-only-logged-in" style="display: none;">
+                <i class="fas fa-chart-line"></i>
+                Go to Dashboard
             </a>
         </div>
     </section>
@@ -237,5 +251,65 @@
 
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Check authentication and update UI
+        function updateHomePageUI() {
+            const token = localStorage.getItem('token');
+            const isLoggedIn = !!token;
+
+            // Show/hide elements based on auth status
+            const loggedOutElements = document.querySelectorAll('.auth-only-logged-out');
+            const loggedInElements = document.querySelectorAll('.auth-only-logged-in');
+
+            loggedOutElements.forEach(el => {
+                el.style.display = isLoggedIn ? 'none' : '';
+            });
+
+            loggedInElements.forEach(el => {
+                el.style.display = isLoggedIn ? '' : 'none';
+            });
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', updateHomePageUI);
+
+        // Also run immediately in case DOM is already loaded
+        if (document.readyState !== 'loading') {
+            updateHomePageUI();
+        }
+
+        // Add logout handler
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                try {
+                    await apiRequest('/auth/logout', 'POST');
+                    localStorage.removeItem('token');
+                    updateHomePageUI();
+                    if (typeof toast !== 'undefined') {
+                        toast.success('Logged out successfully');
+                    }
+                    // Refresh page to update UI
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    localStorage.removeItem('token');
+                    window.location.reload();
+                }
+            });
+        }
+
+        // Smooth scroll for about link
+        function scrollToSection(event, sectionId) {
+            event.preventDefault();
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    </script>
 </body>
 </html>
