@@ -26,7 +26,7 @@
                     <a href="/" class="header-link">
                         <i class="fas fa-home"></i> Home
                     </a>
-                    <a href="#about" class="header-link" onclick="showPage('about', event); return false;">
+                    <a href="/about" class="header-link">
                         <i class="fas fa-info-circle"></i> About
                     </a>
                     <div class="header-dropdown">
@@ -1085,7 +1085,6 @@
                 'insights': { title: 'Financial Insights', subtitle: 'AI-powered financial recommendations' },
                 'profile': { title: 'User Profile', subtitle: 'Manage your account information' },
                 'settings': { title: 'Settings', subtitle: 'Customize your FinGenie experience' },
-                'about': { title: 'About FinGenie', subtitle: 'Learn more about your AI-powered finance assistant' },
                 'help': { title: 'Help & Support', subtitle: 'Get help and find answers to common questions' },
                 'privacy': { title: 'Privacy Policy', subtitle: 'How we protect and handle your data' },
                 'terms': { title: 'Terms of Service', subtitle: 'Terms and conditions for using FinGenie' }
@@ -2274,58 +2273,6 @@
                                 <a href="#help" onclick="showPage('help', event); return false;" style="color: var(--accent-primary);"><i class="fas fa-question-circle"></i> Help & Support</a>
                                 <a href="#terms" onclick="showPage('terms', event); return false;" style="color: var(--accent-primary);"><i class="fas fa-file-alt"></i> Terms of Service</a>
                                 <a href="#privacy" onclick="showPage('privacy', event); return false;" style="color: var(--accent-primary);"><i class="fas fa-lock"></i> Privacy Policy</a>
-                            </div>
-                        </div>
-                    </div>
-                `,
-                'about': `
-                    <!-- About FinGenie -->
-                    <div class="card fade-in mb-4">
-                        <div class="card-header">
-                            <h3 class="card-title"><i class="fas fa-info-circle"></i> About FinGenie</h3>
-                        </div>
-                        <div class="card-body" style="line-height: 1.8;">
-                            <div style="text-align: center; margin-bottom: 2rem;">
-                                <div style="width: 120px; height: 120px; margin: 0 auto 1.5rem; background: var(--gradient-hero); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 4rem; box-shadow: var(--shadow-glow-cyan);">
-                                    <i class="fas fa-coins"></i>
-                                </div>
-                                <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">FinGenie</h2>
-                                <p style="color: var(--text-tertiary); font-size: 1.125rem;">Your AI-Powered Personal Finance Assistant</p>
-                                <p style="margin-top: 0.5rem;"><strong>Version:</strong> 1.0.0</p>
-                            </div>
-
-                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Mission</h4>
-                            <p style="color: var(--text-secondary);">
-                                FinGenie is designed to help individuals take control of their financial future through intelligent automation,
-                                insightful analytics, and personalized guidance. We believe everyone deserves access to powerful financial tools.
-                            </p>
-
-                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Features</h4>
-                            <ul style="color: var(--text-secondary); padding-left: 1.5rem;">
-                                <li>AI-powered financial insights and recommendations</li>
-                                <li>Real-time budget tracking and expense management</li>
-                                <li>Investment portfolio analysis and optimization</li>
-                                <li>Goal setting and progress monitoring</li>
-                                <li>Comprehensive financial reports and analytics</li>
-                                <li>Secure, encrypted data storage</li>
-                            </ul>
-
-                            <h4 style="color: var(--accent-cyan); margin: 2rem 0 1rem 0; font-size: 1.25rem;">Technology</h4>
-                            <p style="color: var(--text-secondary);">
-                                Built with cutting-edge AI technology and modern web frameworks to provide a fast,
-                                secure, and intuitive experience across all devices.
-                            </p>
-
-                            <div style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border-primary); display: flex; gap: 1.5rem; flex-wrap: wrap;">
-                                <a href="#help" onclick="showPage('help', event); return false;" class="btn btn-primary">
-                                    <i class="fas fa-question-circle"></i> Help & Support
-                                </a>
-                                <a href="#terms" onclick="showPage('terms', event); return false;" class="btn btn-secondary">
-                                    <i class="fas fa-file-contract"></i> Terms of Service
-                                </a>
-                                <a href="#privacy" onclick="showPage('privacy', event); return false;" class="btn btn-secondary">
-                                    <i class="fas fa-shield-alt"></i> Privacy Policy
-                                </a>
                             </div>
                         </div>
                     </div>
