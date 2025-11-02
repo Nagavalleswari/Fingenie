@@ -449,6 +449,10 @@ body::before {
 
 .main-content {
     margin-top: 70px;
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 /* ================================================================
@@ -730,7 +734,7 @@ body::before {
    MAIN CONTENT
    ================================================================ */
 .main-content {
-    margin-left: var(--sidebar-width);
+    margin-left: 0;
     transition: margin-left var(--transition-base);
 }
 
@@ -865,10 +869,14 @@ body::before {
 .content-container {
     padding: 2rem;
     max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .page-header {
     margin-bottom: 2rem;
+    text-align: left;
 }
 
 .page-title {
